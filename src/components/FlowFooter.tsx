@@ -1,57 +1,49 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import type { Musica } from '@/hooks/useMusicas';
-import { Music, Loader2, Sparkles } from 'lucide-react';
-
-interface MedleySugestao {
-  titulo: string;
-  artista: string;
-  tom: string;
-  motivo: string;
-}
-
-interface MedleyResult {
-  progressao: string;
-  sugestoes: MedleySugestao[];
-}
+import { Loader2, Sparkles, Play } from 'lucide-react';
 
 interface FlowFooterProps {
   musica: Musica;
 }
 
 export function FlowFooter({ musica }: FlowFooterProps) {
-  const [result, setResult] = useState<MedleyResult | null>(null);
+  const [suggestions, setSuggestions] = useState<Musica[] | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   const fetchSuggestions = async () => {
     if (loading) return;
     setLoading(true);
-    setError(null);
     try {
-      const { data, error: fnError } = await supabase.functions.invoke('suggest-medley', {
-        body: {
-          titulo: musica.titulo,
-          tom: musica.tom_original,
-          genero: musica.genero,
-          artista: musica.artista,
-        },
-      });
-      if (fnError) throw fnError;
-      if (data?.error) throw new Error(data.error);
-      setResult(data as MedleyResult);
-    } catch (e: any) {
+      const { data, error } = await supabase
+        .from('musicas')
+        .select('*')
+        .eq('tom_original', musica.tom_original)
+        .eq('genero', musica.genero ?? '')
+        .neq('id', musica.id)
+        .limit(3);
+
+      if (error) throw error;
+      setSuggestions(data as Musica[]);
+    } catch (e) {
       console.error(e);
-      setError('Não foi possível gerar sugestões.');
+      setSuggestions([]);
     } finally {
       setLoading(false);
     }
   };
 
+  const handleSelect = (id: string) => {
+    navigate(`/musica/${id}`);
+    setSuggestions(null);
+  };
+
   return (
     <div className="fixed bottom-0 left-0 right-0 z-10 border-t border-border bg-card/95 backdrop-blur-xl">
       <div className="container mx-auto max-w-3xl px-4 py-3">
-        {!result ? (
+        {!suggestions ? (
           <button
             onClick={fetchSuggestions}
             disabled={loading}
@@ -69,13 +61,11 @@ export function FlowFooter({ musica }: FlowFooterProps) {
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-semibold text-foreground font-body">Próximo Passo do Flow</p>
+              <p className="text-xs font-semibold text-foreground font-body">Sugerir Próxima</p>
               <p className="mt-0.5 text-[11px] text-muted-foreground font-body">
                 {loading
-                  ? 'IA analisando o tom e o ritmo para sugerir a próxima música...'
-                  : error
-                    ? error
-                    : `Toque para sugerir medley em ${musica.tom_original} • ${musica.genero || 'Geral'}`}
+                  ? 'Buscando músicas compatíveis...'
+                  : `Medley em ${musica.tom_original} • ${musica.genero || 'Geral'}`}
               </p>
             </div>
             <div
@@ -90,37 +80,41 @@ export function FlowFooter({ musica }: FlowFooterProps) {
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <p className="text-[11px] font-mono text-muted-foreground">
-                Progressão: <span className="text-chord font-bold">{result.progressao}</span>
+                Sugestões em <span className="text-chord font-bold">{musica.tom_original}</span>
               </p>
               <button
-                onClick={() => setResult(null)}
+                onClick={() => setSuggestions(null)}
                 className="text-[10px] text-muted-foreground hover:text-foreground transition-colors"
               >
                 Fechar
               </button>
             </div>
-            <div className="grid gap-1.5">
-              {result.sugestoes.map((s, i) => (
-                <div
-                  key={i}
-                  className="flex items-center gap-2.5 rounded-lg bg-secondary/60 px-3 py-2"
-                >
-                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-background text-[10px] font-mono font-bold text-chord">
-                    {i + 1}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-semibold text-foreground truncate">{s.titulo}</p>
-                    <p className="text-[10px] text-muted-foreground truncate">
-                      {s.artista} • Tom: {s.tom}
-                    </p>
-                  </div>
-                  <Music className="h-3 w-3 shrink-0 text-muted-foreground" />
-                </div>
-              ))}
-            </div>
-            <p className="text-[10px] text-muted-foreground/60 text-center italic">
-              {result.sugestoes[0]?.motivo}
-            </p>
+            {suggestions.length === 0 ? (
+              <p className="text-[11px] text-muted-foreground text-center py-2">
+                Nenhuma música compatível encontrada.
+              </p>
+            ) : (
+              <div className="grid gap-1.5">
+                {suggestions.map((s, i) => (
+                  <button
+                    key={s.id}
+                    onClick={() => handleSelect(s.id)}
+                    className="flex items-center gap-2.5 rounded-lg bg-secondary/60 px-3 py-2 text-left transition-colors hover:bg-secondary w-full"
+                  >
+                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-background text-[10px] font-mono font-bold text-chord">
+                      {i + 1}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-semibold text-foreground truncate">{s.titulo}</p>
+                      <p className="text-[10px] text-muted-foreground truncate">
+                        {s.artista || 'Artista desconhecido'}
+                      </p>
+                    </div>
+                    <Play className="h-3 w-3 shrink-0 text-chord" />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
