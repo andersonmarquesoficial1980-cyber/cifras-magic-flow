@@ -49,3 +49,7 @@ export function tokenizeChordLine(line: string): ChordToken[] {
 export function chordToGrau(chord: string, key: string): string {
   return chordToDegree(chord, key);
 }
+
+export function chordToOrdinalDegree(chord: string, key: string): string {
+  return chordToOrdinal(chord, key);
+}
