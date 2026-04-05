@@ -1,7 +1,8 @@
 import { chordToDegree, chordToOrdinal } from './transpose';
 
-// Regex to match common chord patterns like G, Am, D/F#, Cmaj7, Bb7, G9, Em7(b5), etc.
-const CHORD_RE = /\b([A-G][#b]?)(m|maj|min|dim|aug|sus[24]?|add)?(5|\d+)?(M)?(\([#b]?\d+\))?(\/[A-G][#b]?)?/g;
+// Regex to match common chord patterns including complex extensions
+// e.g. G, Am, D/F#, Cmaj7, Bb7, G9, Em7(b5), E7(4/9), D9(11), C(add9), F7M
+const CHORD_RE = /\b([A-G][#b]?)(m|maj|min|dim|aug|sus[24]?|add)?(M)?(5|\d+)?(\([^)]*\))*(\/[A-G][#b]?)?/g;
 
 /**
  * Determine if a line is a "chord line" — mostly chords and whitespace, little lyrics.

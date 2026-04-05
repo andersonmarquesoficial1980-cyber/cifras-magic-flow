@@ -341,13 +341,44 @@ const DB: Record<string, ChordDiagram[]> = {
   ],
 };
 
-export function getChordDiagrams(chordName: string): ChordDiagram[] {
-  const baseChord = chordName.split('/')[0];
+/**
+ * Find chord diagrams with progressive fallback:
+ * 1. Exact match (e.g. "D9(11)")
+ * 2. Without bass note (e.g. "D9(11)" from "D9(11)/F#")
+ * 3. Strip parenthesized extensions (e.g. "D9" from "D9(11)")
+ * 4. Strip numeric extension (e.g. "D" from "D9")
+ * 5. Root + quality only (e.g. "Dm" from "Dm7(b5)")
+ * Returns { diagrams, simplified } where simplified=true means fallback was used.
+ */
+export function getChordDiagramsWithFallback(chordName: string): { diagrams: ChordDiagram[]; simplified: boolean } {
   const full = chordName.trim();
+  const baseChord = full.split('/')[0];
 
-  if (DB[full]) return DB[full];
-  if (DB[baseChord]) return DB[baseChord];
-  return [];
+  // 1. Exact match
+  if (DB[full]) return { diagrams: DB[full], simplified: false };
+  // 2. Without bass
+  if (DB[baseChord]) return { diagrams: DB[baseChord], simplified: full !== baseChord };
+
+  // 3. Strip parenthesized parts  e.g. "D9(11)" → "D9"
+  const noParens = baseChord.replace(/\([^)]*\)/g, '');
+  if (noParens !== baseChord && DB[noParens]) return { diagrams: DB[noParens], simplified: true };
+
+  // 4. Strip trailing numbers  e.g. "D9" → "D", "Em7" → "Em"
+  const noNum = noParens.replace(/\d+$/, '');
+  if (noNum !== noParens && DB[noNum]) return { diagrams: DB[noNum], simplified: true };
+
+  // 5. Root + m only  e.g. "Dm" from "Dmadd9"
+  const rootMatch = baseChord.match(/^([A-G][#b]?)(m)?/);
+  if (rootMatch) {
+    const rootKey = rootMatch[1] + (rootMatch[2] || '');
+    if (rootKey !== noNum && DB[rootKey]) return { diagrams: DB[rootKey], simplified: true };
+  }
+
+  return { diagrams: [], simplified: false };
+}
+
+export function getChordDiagrams(chordName: string): ChordDiagram[] {
+  return getChordDiagramsWithFallback(chordName).diagrams;
 }
 
 export function getChordDiagram(chordName: string): ChordDiagram | null {
