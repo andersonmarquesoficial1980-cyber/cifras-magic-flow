@@ -33,7 +33,7 @@ export function CifraViewer({ musica }: CifraViewerProps) {
   const [isFav, setIsFav] = useState(!!musica.is_favorite);
   const [capoFret, setCapoFret] = useState(musica.capo_fret ?? 0);
   const [capoOpen, setCapoOpen] = useState(false);
-  const scrollRef = useRef<number | null>(null);
+  
   const toggleFav = useToggleFavorite();
   const navigate = useNavigate();
 
