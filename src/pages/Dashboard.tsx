@@ -19,7 +19,7 @@ const GRID_ITEMS = [
   {
     label: 'Estude',
     icon: BookOpen,
-    to: '#',
+    to: '/estude',
     color: 'from-[#3B82F6] to-[#2563EB]',
     glow: 'shadow-[0_0_40px_-8px_rgba(59,130,246,0.35)]',
     iconColor: 'text-white',
