@@ -11,6 +11,7 @@ import Afinador from "./pages/Afinador.tsx";
 import Metronomo from "./pages/Metronomo.tsx";
 import Estude from "./pages/Estude.tsx";
 import MestreDoRitmo from "./pages/MestreDoRitmo.tsx";
+import OuvidoBionico from "./pages/OuvidoBionico.tsx";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -26,6 +27,7 @@ const App = () => (
           <Route path="/metronomo" element={<Metronomo />} />
           <Route path="/estude" element={<Estude />} />
           <Route path="/estude/ritmo" element={<MestreDoRitmo />} />
+          <Route path="/estude/ouvido" element={<OuvidoBionico />} />
           <Route path="/musica/:id" element={<MusicaDetail />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
