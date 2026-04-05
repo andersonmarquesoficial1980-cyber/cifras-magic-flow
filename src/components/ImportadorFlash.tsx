@@ -25,6 +25,7 @@ interface SongPreview {
   artista: string;
   tom_original: string;
   bpm: number;
+  capo_fret: number;
   vibe: string[];
   letra_cifrada: string;
 }
