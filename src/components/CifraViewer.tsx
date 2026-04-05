@@ -115,7 +115,6 @@ export function CifraViewer({ musica }: CifraViewerProps) {
             >
               {showHarmonicField ? <EyeOff size={iconSize} /> : <Eye size={iconSize} />}
             </button>
-            </button>
             {/* Performance mode toggle */}
             <button
               onClick={() => setPerformanceMode(!performanceMode)}
