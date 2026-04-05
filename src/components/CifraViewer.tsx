@@ -43,8 +43,18 @@ export function CifraViewer({ musica }: CifraViewerProps) {
 
   const lines = musica.letra_cifrada.split('\n');
 
+  const MODES: DisplayMode[] = ['cifra', 'grau', 'ordinal'];
+  const MODE_LABELS: Record<DisplayMode, string> = { cifra: 'Cifra', grau: 'Grau', ordinal: 'Ordinal' };
+  const MODE_COLORS: Record<DisplayMode, string> = { cifra: 'text-chord', grau: 'text-[#A855F7]', ordinal: 'text-[#10B981]' };
+
+  function cycleMode() {
+    const idx = MODES.indexOf(displayMode);
+    setDisplayMode(MODES[(idx + 1) % MODES.length]);
+  }
+
   function renderChordValue(chord: string): string {
-    if (modoGrau) return chordToGrau(chord, musica.tom_original);
+    if (displayMode === 'grau') return chordToGrau(chord, musica.tom_original);
+    if (displayMode === 'ordinal') return chordToOrdinalDegree(chord, musica.tom_original);
     return chord;
   }
 
