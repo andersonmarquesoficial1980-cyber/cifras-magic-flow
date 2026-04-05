@@ -29,7 +29,9 @@ export function CifraViewer({ musica }: CifraViewerProps) {
   const [transposeSemitones, setTransposeSemitones] = useState(0);
   const [showHarmonicField, setShowHarmonicField] = useState(false);
   const [simplified, setSimplified] = useState(false);
+  const [isFav, setIsFav] = useState(!!musica.is_favorite);
   const scrollRef = useRef<number | null>(null);
+  const toggleFav = useToggleFavorite();
 
   useWakeLock(performanceMode);
 
