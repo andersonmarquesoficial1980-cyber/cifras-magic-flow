@@ -32,7 +32,7 @@ const GRID_ITEMS = [
   {
     label: 'Afinador',
     icon: Guitar,
-    to: '#',
+    to: '/afinador',
     color: 'from-[hsl(24,95%,53%)] to-[hsl(24,95%,38%)]',
     glow: 'shadow-[0_0_30px_-5px_hsl(24,95%,53%,0.3)]',
     iconColor: 'text-white',
