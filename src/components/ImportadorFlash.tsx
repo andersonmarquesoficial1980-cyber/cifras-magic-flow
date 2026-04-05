@@ -197,6 +197,15 @@ export function ImportadorFlash() {
               </div>
             </div>
 
+            {/* Capo indicator */}
+            {preview.capo_fret > 0 && (
+              <div className="p-3 rounded-lg bg-orange-500/10 border border-orange-500/30 flex items-center gap-2">
+                <span className="text-orange-400 font-mono font-bold text-sm">Capo {preview.capo_fret}ª casa</span>
+                <span className="text-xs text-muted-foreground">detectado automaticamente</span>
+              </div>
+            )}
+            </div>
+
             {/* Vibe Tags */}
             <div className="p-4 rounded-lg bg-background border border-border">
               <span className="text-xs text-muted-foreground font-body block mb-3">Vibe da Música (clique para alterar)</span>
