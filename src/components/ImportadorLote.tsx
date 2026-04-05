@@ -144,7 +144,7 @@ export function ImportadorLote() {
       title: `✅ Importação concluída`,
       description: `${successes} de ${importResults.length} músicas importadas com sucesso.`,
     });
-  }, [songs, queryClient, toast]);
+  }, [songs, genero, queryClient, toast]);
 
   const handleAbort = () => {
     abortRef.current = true;
