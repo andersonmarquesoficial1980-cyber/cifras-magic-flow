@@ -13,6 +13,8 @@ import { useWakeLock } from '@/hooks/useWakeLock';
 import { Badge } from '@/components/ui/badge';
 import { HarmonicFieldBar } from '@/components/HarmonicFieldBar';
 import { ChordPopover } from '@/components/ChordPopover';
+import { useToggleFavorite } from '@/hooks/useToggleFavorite';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface CifraViewerProps {
   musica: Musica;
