@@ -68,6 +68,7 @@ export type Database = {
         Row: {
           artista: string | null
           bpm: number | null
+          capo_fret: number | null
           criado_em: string | null
           genero: string | null
           id: string
@@ -80,6 +81,7 @@ export type Database = {
         Insert: {
           artista?: string | null
           bpm?: number | null
+          capo_fret?: number | null
           criado_em?: string | null
           genero?: string | null
           id?: string
@@ -92,6 +94,7 @@ export type Database = {
         Update: {
           artista?: string | null
           bpm?: number | null
+          capo_fret?: number | null
           criado_em?: string | null
           genero?: string | null
           id?: string

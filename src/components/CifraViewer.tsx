@@ -4,7 +4,7 @@ import { ArrowLeft, Zap, Eye, EyeOff, Plus, Minus, Feather, Star } from 'lucide-
 import { Link } from 'react-router-dom';
 import type { Musica } from '@/hooks/useMusicas';
 import { isChordLine, tokenizeChordLine, chordToGrau, chordToOrdinalDegree } from '@/lib/chordDetector';
-import { transposeChord, simplifyChord } from '@/lib/transpose';
+import { transposeChord, simplifyChord, ALL_KEYS } from '@/lib/transpose';
 import type { DisplayMode } from '@/lib/transpose';
 import { Slider } from '@/components/ui/slider';
 import { MetronomBar } from '@/components/MetronomBar';
@@ -14,7 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { HarmonicFieldBar } from '@/components/HarmonicFieldBar';
 import { ChordPopover } from '@/components/ChordPopover';
 import { useToggleFavorite } from '@/hooks/useToggleFavorite';
-import { useQueryClient } from '@tanstack/react-query';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 interface CifraViewerProps {
   musica: Musica;
@@ -30,6 +30,8 @@ export function CifraViewer({ musica }: CifraViewerProps) {
   const [showHarmonicField, setShowHarmonicField] = useState(false);
   const [simplified, setSimplified] = useState(false);
   const [isFav, setIsFav] = useState(!!musica.is_favorite);
+  const [capoFret, setCapoFret] = useState(musica.capo_fret ?? 0);
+  const [capoOpen, setCapoOpen] = useState(false);
   const scrollRef = useRef<number | null>(null);
   const toggleFav = useToggleFavorite();
 
@@ -51,8 +53,14 @@ export function CifraViewer({ musica }: CifraViewerProps) {
 
   const lines = musica.letra_cifrada.split('\n');
 
-  // Compute the displayed key
-  const displayedKey = transposeChord(musica.tom_original, transposeSemitones);
+  // Real key = original key transposed by user's manual transpose
+  const realKey = transposeChord(musica.tom_original, transposeSemitones);
+
+  // Shape key = real key transposed DOWN by capo (i.e., the chord shapes the musician plays)
+  const shapeKey = transposeChord(realKey, -capoFret);
+
+  // The key used for display (shapes are what's shown)
+  const displayedKey = shapeKey;
 
   const MODES: DisplayMode[] = ['cifra', 'grau', 'ordinal'];
   const MODE_LABELS: Record<DisplayMode, string> = { cifra: 'Cifra', grau: 'Grau', ordinal: 'Ordinal' };
@@ -64,17 +72,17 @@ export function CifraViewer({ musica }: CifraViewerProps) {
   }
 
   function renderChordValue(chord: string): string {
-    const transposed = transposeChord(chord, transposeSemitones);
+    // First transpose by user's manual semitones, then DOWN by capo to get shapes
+    const transposed = transposeChord(chord, transposeSemitones - capoFret);
     let result: string;
-    if (displayMode === 'grau') result = chordToGrau(transposed, displayedKey);
-    else if (displayMode === 'ordinal') result = chordToOrdinalDegree(transposed, displayedKey);
+    if (displayMode === 'grau') result = chordToGrau(transposed, shapeKey);
+    else if (displayMode === 'ordinal') result = chordToOrdinalDegree(transposed, shapeKey);
     else result = transposed;
     return simplified ? simplifyChord(result, displayMode) : result;
   }
 
-  // For popover: get the chord name used for diagram lookup
   function getChordForPopover(chord: string): string {
-    const transposed = transposeChord(chord, transposeSemitones);
+    const transposed = transposeChord(chord, transposeSemitones - capoFret);
     return simplified ? simplifyChord(transposed, 'cifra') : transposed;
   }
 
@@ -118,6 +126,41 @@ export function CifraViewer({ musica }: CifraViewerProps) {
             >
               <Feather size={iconSize} />
             </button>
+
+            {/* Capo button */}
+            <Popover open={capoOpen} onOpenChange={setCapoOpen}>
+              <PopoverTrigger asChild>
+                <button
+                  className={`${btnSize} rounded-lg transition-all border text-xs font-mono font-bold ${
+                    capoFret > 0
+                      ? 'bg-orange-500/20 border-orange-500 text-orange-400'
+                      : 'border-border text-muted-foreground hover:text-foreground'
+                  }`}
+                  title="Capotraste"
+                >
+                  C{capoFret > 0 ? capoFret : ''}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-56 bg-background border-border p-3" align="end">
+                <p className="text-xs text-muted-foreground font-body mb-2">Casa do Capotraste</p>
+                <div className="grid grid-cols-6 gap-1">
+                  {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map(fret => (
+                    <button
+                      key={fret}
+                      onClick={() => { setCapoFret(fret); setCapoOpen(false); }}
+                      className={`h-8 rounded text-xs font-mono font-bold transition-all ${
+                        capoFret === fret
+                          ? 'bg-orange-500 text-white'
+                          : 'bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/80'
+                      }`}
+                    >
+                      {fret === 0 ? '—' : fret}
+                    </button>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
+
             {/* Harmonic field toggle */}
             <button
               onClick={() => setShowHarmonicField(!showHarmonicField)}
@@ -180,7 +223,7 @@ export function CifraViewer({ musica }: CifraViewerProps) {
 
       {/* Harmonic field bar */}
       {showHarmonicField && (
-        <HarmonicFieldBar keyName={musica.tom_original} transposeSemitones={transposeSemitones} />
+        <HarmonicFieldBar keyName={shapeKey} transposeSemitones={0} />
       )}
 
       {/* Song info */}
@@ -200,7 +243,7 @@ export function CifraViewer({ musica }: CifraViewerProps) {
                 <Minus size={12} />
               </button>
               <span className="rounded-full bg-secondary px-3 py-1 text-xs text-chord font-mono font-semibold min-w-[70px] text-center">
-                Tom: {displayedKey}
+                Tom: {realKey}
               </span>
               <button
                 onClick={() => setTransposeSemitones(s => s + 1)}
@@ -219,6 +262,14 @@ export function CifraViewer({ musica }: CifraViewerProps) {
               )}
             </div>
           )}
+
+          {/* Capo info display */}
+          {capoFret > 0 && (
+            <span className="rounded-full bg-orange-500/15 px-3 py-1 text-xs text-orange-400 font-mono font-semibold border border-orange-500/30">
+              Shapes em {shapeKey} · Capo {capoFret}ª
+            </span>
+          )}
+
           {musica.genero && (
             <span className="rounded-full bg-secondary px-3 py-1 text-xs text-secondary-foreground font-body">
               {musica.genero}

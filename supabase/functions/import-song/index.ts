@@ -55,7 +55,7 @@ serve(async (req) => {
           type: "function",
           function: {
             name: "extract_song",
-            description: "Extrai dados completos de uma cifra musical de uma página web, incluindo análise de vibe",
+            description: "Extrai dados completos de uma cifra musical de uma página web, incluindo análise de vibe e informação de capotraste",
             parameters: {
               type: "object",
               properties: {
@@ -63,6 +63,7 @@ serve(async (req) => {
                 artista: { type: "string", description: "Nome do artista/banda" },
                 tom_original: { type: "string", description: "Tom original da música (ex: G, Am, D)" },
                 bpm: { type: "number", description: "BPM estimado da música baseado no estilo e ritmo. Se não souber, estime com base no gênero (ex: balada ~70, pop ~120, sertanejo ~130, forró ~150)" },
+                capo_fret: { type: "number", description: "Casa do capotraste indicada na cifra (ex: 'Capotraste na 2ª casa' → 2, 'Capo 3' → 3). Se não houver indicação de capotraste, retorne 0." },
                 vibe: {
                   type: "array",
                   items: {
@@ -76,7 +77,7 @@ serve(async (req) => {
                   description: "Letra completa com cifras posicionadas acima das sílabas correspondentes, no formato texto puro (uma linha de acordes, uma linha de letra, alternando). Mantenha exatamente o formato original de cifras em cima das letras."
                 },
               },
-              required: ["titulo", "artista", "tom_original", "bpm", "vibe", "letra_cifrada"],
+              required: ["titulo", "artista", "tom_original", "bpm", "capo_fret", "vibe", "letra_cifrada"],
               additionalProperties: false,
             },
           },
@@ -85,9 +86,11 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `Você é um curador musical especialista. Extraia o título, artista, tom original, BPM estimado, vibes e a letra cifrada do conteúdo fornecido.
+            content: `Você é um curador musical especialista. Extraia o título, artista, tom original, BPM estimado, casa do capotraste, vibes e a letra cifrada do conteúdo fornecido.
 
 IMPORTANTE para letra_cifrada: Mantenha o formato original com acordes posicionados acima das sílabas correspondentes usando espaços.
+
+Para Capotraste: Procure indicações como "Capotraste na Xª casa", "Capo na X casa", "Capo X", "Tom: X (capo Xª casa)". Se encontrar, retorne o número da casa. Se não houver indicação, retorne 0.
 
 Para BPM: Estime baseado no gênero e estilo. Baladas ~70-80, Pop ~110-130, Sertanejo ~120-140, Forró ~140-160, Rock ~120-150, Worship ~75-90.
 
@@ -137,7 +140,7 @@ Não inclua cabeçalhos, tabs de violão ou informações extras - apenas a letr
     }
 
     const songData = JSON.parse(toolCall.function.arguments);
-    console.log("Extracted:", songData.titulo, "-", songData.artista, "| Vibes:", songData.vibe);
+    console.log("Extracted:", songData.titulo, "-", songData.artista, "| Capo:", songData.capo_fret, "| Vibes:", songData.vibe);
 
     return new Response(JSON.stringify(songData), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -25,6 +25,7 @@ interface SongPreview {
   artista: string;
   tom_original: string;
   bpm: number;
+  capo_fret: number;
   vibe: string[];
   letra_cifrada: string;
 }
@@ -89,6 +90,7 @@ export function ImportadorFlash() {
         artista: preview.artista,
         tom_original: preview.tom_original,
         bpm: preview.bpm || 80,
+        capo_fret: preview.capo_fret || 0,
         vibe: selectedVibes.join(', '),
         letra_cifrada: preview.letra_cifrada,
       });
@@ -194,6 +196,14 @@ export function ImportadorFlash() {
                 </div>
               </div>
             </div>
+
+            {/* Capo indicator */}
+            {preview.capo_fret > 0 && (
+              <div className="p-3 rounded-lg bg-orange-500/10 border border-orange-500/30 flex items-center gap-2">
+                <span className="text-orange-400 font-mono font-bold text-sm">Capo {preview.capo_fret}ª casa</span>
+                <span className="text-xs text-muted-foreground">detectado automaticamente</span>
+              </div>
+            )}
 
             {/* Vibe Tags */}
             <div className="p-4 rounded-lg bg-background border border-border">
