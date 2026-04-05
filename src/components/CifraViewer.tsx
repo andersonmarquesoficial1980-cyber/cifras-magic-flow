@@ -39,19 +39,6 @@ export function CifraViewer({ musica }: CifraViewerProps) {
 
   useWakeLock(performanceMode);
 
-  useEffect(() => {
-    if (autoScrollSpeed > 0 && performanceMode) {
-      const pxPerFrame = autoScrollSpeed * 0.4;
-      const scroll = () => {
-        window.scrollBy(0, pxPerFrame);
-        scrollRef.current = requestAnimationFrame(scroll);
-      };
-      scrollRef.current = requestAnimationFrame(scroll);
-      return () => { if (scrollRef.current) cancelAnimationFrame(scrollRef.current); };
-    } else {
-      if (scrollRef.current) cancelAnimationFrame(scrollRef.current);
-    }
-  }, [autoScrollSpeed, performanceMode]);
 
   const lines = musica.letra_cifrada.split('\n');
 
