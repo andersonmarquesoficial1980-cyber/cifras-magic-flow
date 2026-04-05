@@ -1,6 +1,6 @@
 import { ReactNode, useState } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { getChordDiagrams } from '@/lib/chordDiagrams';
+import { getChordDiagramsWithFallback } from '@/lib/chordDiagrams';
 import { ChordDiagramSVG } from '@/components/ChordDiagramSVG';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -10,7 +10,7 @@ interface Props {
 }
 
 export function ChordPopover({ chordName, children }: Props) {
-  const diagrams = getChordDiagrams(chordName);
+  const { diagrams, simplified } = getChordDiagramsWithFallback(chordName);
   const [idx, setIdx] = useState(0);
 
   if (diagrams.length === 0) {
@@ -35,6 +35,11 @@ export function ChordPopover({ chordName, children }: Props) {
           <span className="text-xs font-mono font-bold" style={{ color: '#FACC15' }}>
             {chordName}
           </span>
+          {simplified && (
+            <span className="text-[9px] font-mono px-1.5 py-0.5 rounded" style={{ color: '#F59E0B', background: '#F59E0B15' }}>
+              Versão simplificada
+            </span>
+          )}
           <ChordDiagramSVG diagram={current} />
           {current.label && (
             <span className="text-[10px] font-mono" style={{ color: '#94A3B8' }}>
