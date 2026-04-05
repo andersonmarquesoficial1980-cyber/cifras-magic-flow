@@ -99,10 +99,10 @@ export function CifraViewer({ musica }: CifraViewerProps) {
       <div className="sticky top-0 z-10 border-b border-border bg-background/95 backdrop-blur-xl">
         <div className="container mx-auto flex items-center justify-between px-4 py-3 max-w-3xl">
           <div className="flex items-center gap-2">
-            <Link to="/" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+            <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
               <ArrowLeft className="h-4 w-4" />
               <span className="text-sm font-body">Voltar</span>
-            </Link>
+            </button>
             <button
               onClick={() => {
                 setIsFav(!isFav);
