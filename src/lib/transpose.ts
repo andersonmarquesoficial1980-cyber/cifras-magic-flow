@@ -199,3 +199,20 @@ export function parseCifraLine(line: string): CifraSegment[] {
 export function hasChords(line: string): boolean {
   return /\[[^\]]+\]/.test(line);
 }
+
+/**
+ * Simplify a chord by removing extensions and inversions, keeping only root + minor indicator.
+ * Works for all display modes: cifra (C7M → C), grau (IV7M → IV), ordinal (4º7M → 4º).
+ */
+export function simplifyChord(chord: string, mode: DisplayMode): string {
+  if (mode === 'grau') {
+    // Roman numeral mode: keep I-VII + optional 'm', strip everything else including /bass
+    return chord.replace(/^(b?(?:VII|VI|IV|V|III|II|I))(m?).*$/, '$1$2');
+  }
+  if (mode === 'ordinal') {
+    // Ordinal mode: keep Nº + optional 'm', strip rest
+    return chord.replace(/^(\d+º)(m?).*$/, '$1$2');
+  }
+  // Cifra mode: keep root note (A-G with # or b) + optional 'm', strip extensions and slash
+  return chord.replace(/^([A-G][#b]?m?).*$/, '$1');
+}
