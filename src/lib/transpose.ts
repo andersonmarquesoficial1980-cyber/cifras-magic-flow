@@ -89,28 +89,20 @@ export function chordToDegree(chord: string, key: string): string {
 
   let degree = accidental + DEGREE_LABELS[degreeIdx];
 
-  // Minor chords → lowercase
   const isMinor = suffix.startsWith('m') && !suffix.startsWith('maj');
   const isDim = suffix.startsWith('dim') || suffix.startsWith('°');
   const isAug = suffix.startsWith('aug') || suffix.startsWith('+');
 
-  if (isMinor || isDim) {
-    degree = degree.toLowerCase();
-  }
-
-  // Add remaining quality
-  let qualitySuffix = suffix;
+  // Build quality suffix (everything after the root note)
+  let qualitySuffix = '';
   if (isMinor) {
-    qualitySuffix = suffix.slice(1); // remove leading 'm'
-  }
-  if (isDim) {
-    qualitySuffix = '°' + suffix.slice(3);
-  }
-  if (isAug) {
-    qualitySuffix = '+' + (suffix.startsWith('aug') ? suffix.slice(3) : suffix.slice(1));
-  }
-  if (!isMinor && !isDim && !isAug) {
-    qualitySuffix = suffix;
+    qualitySuffix = 'm' + suffix.slice(1); // keep 'm' + rest (e.g. m7, m9)
+  } else if (isDim) {
+    qualitySuffix = 'dim' + suffix.slice(suffix.startsWith('dim') ? 3 : 1);
+  } else if (isAug) {
+    qualitySuffix = 'aug' + (suffix.startsWith('aug') ? suffix.slice(3) : suffix.slice(1));
+  } else {
+    qualitySuffix = suffix; // e.g. "7", "9", "maj7", "sus4"
   }
 
   return degree + qualitySuffix;
