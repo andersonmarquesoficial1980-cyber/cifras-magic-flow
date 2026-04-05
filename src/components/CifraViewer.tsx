@@ -1,12 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Zap } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { Musica } from '@/hooks/useMusicas';
 import { isChordLine, tokenizeChordLine, chordToGrau } from '@/lib/chordDetector';
 import { Slider } from '@/components/ui/slider';
 import { MetronomBar } from '@/components/MetronomBar';
 import { FlowFooter } from '@/components/FlowFooter';
+import { useWakeLock } from '@/hooks/useWakeLock';
 
 interface CifraViewerProps {
   musica: Musica;
@@ -16,19 +17,44 @@ export function CifraViewer({ musica }: CifraViewerProps) {
   const [modoGrau, setModoGrau] = useState(false);
   const [fontSize, setFontSize] = useState(16);
   const [metronomeActive, setMetronomeActive] = useState(false);
+  const [performanceMode, setPerformanceMode] = useState(false);
+  const [autoScrollSpeed, setAutoScrollSpeed] = useState(0); // 0 = off, 1-10
+  const scrollRef = useRef<number | null>(null);
+
+  useWakeLock(performanceMode);
+
+  // Auto-scroll logic
+  useEffect(() => {
+    if (autoScrollSpeed > 0 && performanceMode) {
+      const pxPerFrame = autoScrollSpeed * 0.4;
+      const scroll = () => {
+        window.scrollBy(0, pxPerFrame);
+        scrollRef.current = requestAnimationFrame(scroll);
+      };
+      scrollRef.current = requestAnimationFrame(scroll);
+      return () => {
+        if (scrollRef.current) cancelAnimationFrame(scrollRef.current);
+      };
+    } else {
+      if (scrollRef.current) cancelAnimationFrame(scrollRef.current);
+    }
+  }, [autoScrollSpeed, performanceMode]);
 
   const lines = musica.letra_cifrada.split('\n');
 
   function renderChordValue(chord: string): string {
-    if (modoGrau) {
-      return chordToGrau(chord, musica.tom_original);
-    }
+    if (modoGrau) return chordToGrau(chord, musica.tom_original);
     return chord;
   }
+
+  const btnSize = performanceMode ? 'p-3' : 'p-1.5';
+  const btnText = performanceMode ? 'px-5 py-2.5 text-sm' : 'px-4 py-1.5 text-xs';
+  const iconSize = performanceMode ? 20 : 16;
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="min-h-screen pb-16">
       <MetronomBar bpm={musica.bpm ?? 0} active={metronomeActive} />
+
       {/* Sticky header */}
       <div className="sticky top-0 z-10 border-b border-border bg-background/95 backdrop-blur-xl">
         <div className="container mx-auto flex items-center justify-between px-4 py-3 max-w-3xl">
@@ -40,23 +66,35 @@ export function CifraViewer({ musica }: CifraViewerProps) {
             <span className="text-sm font-body">Voltar</span>
           </Link>
 
-          <div className="flex items-center gap-3">
+          <div className={`flex items-center ${performanceMode ? 'gap-4' : 'gap-3'}`}>
+            {/* Performance mode toggle */}
+            <button
+              onClick={() => setPerformanceMode(!performanceMode)}
+              className={`${btnSize} rounded-lg transition-all border ${
+                performanceMode
+                  ? 'bg-chord/20 border-chord text-chord'
+                  : 'border-border text-muted-foreground hover:text-foreground'
+              }`}
+              title="Modo Performance"
+            >
+              <Zap size={iconSize} />
+            </button>
             {/* Metronome toggle */}
             <button
               onClick={() => setMetronomeActive(!metronomeActive)}
-              className={`p-1.5 rounded-lg transition-all border ${
+              className={`${btnSize} rounded-lg transition-all border ${
                 metronomeActive
                   ? 'bg-chord/20 border-chord text-chord'
                   : 'border-border text-muted-foreground hover:text-foreground'
               }`}
               title="Metrônomo visual"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v4"/><path d="m15.2 7.6 2.4-2.4"/><path d="M16 12h4"/><path d="M7.8 16.4 5.4 18.8"/><path d="M12 18v4"/><path d="M4 12H2"/><circle cx="12" cy="12" r="4"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v4"/><path d="m15.2 7.6 2.4-2.4"/><path d="M16 12h4"/><path d="M7.8 16.4 5.4 18.8"/><path d="M12 18v4"/><path d="M4 12H2"/><circle cx="12" cy="12" r="4"/></svg>
             </button>
             {/* Mode toggle */}
             <button
               onClick={() => setModoGrau(!modoGrau)}
-              className={`px-4 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all border ${
+              className={`${btnText} rounded-lg font-mono font-semibold transition-all border ${
                 modoGrau
                   ? 'bg-grau text-white border-grau'
                   : 'border-border text-muted-foreground hover:text-foreground hover:border-chord'
@@ -131,7 +169,6 @@ export function CifraViewer({ musica }: CifraViewerProps) {
                 </div>
               );
             }
-            // Regular lyrics or empty line
             return (
               <div key={idx} className="min-h-[1.2em]">
                 {line || '\u00A0'}
@@ -140,6 +177,25 @@ export function CifraViewer({ musica }: CifraViewerProps) {
           })}
         </pre>
       </div>
+
+      {/* Auto-scroll slider — fixed right side, visible only in performance mode */}
+      {performanceMode && (
+        <div className="fixed right-3 top-1/2 -translate-y-1/2 z-20 flex flex-col items-center gap-2">
+          <span className="text-[10px] font-mono text-chord rotate-0">▲</span>
+          <Slider
+            orientation="vertical"
+            min={0}
+            max={10}
+            step={1}
+            value={[autoScrollSpeed]}
+            onValueChange={([v]) => setAutoScrollSpeed(v)}
+            className="h-32"
+          />
+          <span className="text-[10px] font-mono text-muted-foreground">
+            {autoScrollSpeed > 0 ? autoScrollSpeed : 'Off'}
+          </span>
+        </div>
+      )}
 
       <FlowFooter musica={musica} />
     </motion.div>
