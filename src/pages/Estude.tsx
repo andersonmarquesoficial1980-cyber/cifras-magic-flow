@@ -116,6 +116,7 @@ const TRAIL = [
 type GameState = 'trail' | 'playing' | 'result';
 
 const Estude = () => {
+  const navigate = useNavigate();
   const [gameState, setGameState] = useState<GameState>('trail');
   const [questionIdx, setQuestionIdx] = useState(0);
   const [score, setScore] = useState(0);
