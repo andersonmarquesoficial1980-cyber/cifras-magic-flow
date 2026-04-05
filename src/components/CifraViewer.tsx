@@ -298,8 +298,8 @@ export function CifraViewer({ musica }: CifraViewerProps) {
       {/* Cifra content */}
       <div className="container mx-auto px-4 pb-24 max-w-3xl">
         <pre
-          className="mt-6 font-mono leading-relaxed whitespace-pre-wrap break-words text-foreground/85"
-          style={{ fontSize: `${fontSize}px` }}
+          className="mt-6 leading-relaxed whitespace-pre overflow-x-auto text-foreground/85"
+          style={{ fontSize: `${fontSize}px`, fontFamily: "'Roboto Mono', 'Courier New', Courier, monospace" }}
         >
           {lines.map((line, idx) => {
             if (isChordLine(line)) {
