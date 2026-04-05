@@ -11,6 +11,7 @@ import Afinador from "./pages/Afinador.tsx";
 import Metronomo from "./pages/Metronomo.tsx";
 import Estude from "./pages/Estude.tsx";
 import MestreDoRitmo from "./pages/MestreDoRitmo.tsx";
+import OuvidoBionico from "./pages/OuvidoBionico.tsx";
 const queryClient = new QueryClient();
 
 const App = () => (
