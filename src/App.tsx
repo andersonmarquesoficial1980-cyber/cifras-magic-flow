@@ -9,6 +9,7 @@ import MusicaDetail from "./pages/MusicaDetail.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import Afinador from "./pages/Afinador.tsx";
 import Metronomo from "./pages/Metronomo.tsx";
+import Estude from "./pages/Estude.tsx";
 const queryClient = new QueryClient();
 
 const App = () => (
