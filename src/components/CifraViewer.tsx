@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Music } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { Musica } from '@/hooks/useMusicas';
 import { isChordLine, tokenizeChordLine, chordToGrau } from '@/lib/chordDetector';
 import { Slider } from '@/components/ui/slider';
+import { MetronomBar } from '@/components/MetronomBar';
+import { FlowFooter } from '@/components/FlowFooter';
 
 interface CifraViewerProps {
   musica: Musica;
@@ -13,6 +15,7 @@ interface CifraViewerProps {
 export function CifraViewer({ musica }: CifraViewerProps) {
   const [modoGrau, setModoGrau] = useState(false);
   const [fontSize, setFontSize] = useState(16);
+  const [metronomeActive, setMetronomeActive] = useState(false);
 
   const lines = musica.letra_cifrada.split('\n');
 
@@ -24,7 +27,8 @@ export function CifraViewer({ musica }: CifraViewerProps) {
   }
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="min-h-screen">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="min-h-screen pb-16">
+      <MetronomBar bpm={musica.bpm ?? 0} active={metronomeActive} />
       {/* Sticky header */}
       <div className="sticky top-0 z-10 border-b border-border bg-background/95 backdrop-blur-xl">
         <div className="container mx-auto flex items-center justify-between px-4 py-3 max-w-3xl">
@@ -36,7 +40,19 @@ export function CifraViewer({ musica }: CifraViewerProps) {
             <span className="text-sm font-body">Voltar</span>
           </Link>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            {/* Metronome toggle */}
+            <button
+              onClick={() => setMetronomeActive(!metronomeActive)}
+              className={`p-1.5 rounded-lg transition-all border ${
+                metronomeActive
+                  ? 'bg-chord/20 border-chord text-chord'
+                  : 'border-border text-muted-foreground hover:text-foreground'
+              }`}
+              title="Metrônomo visual"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v4"/><path d="m15.2 7.6 2.4-2.4"/><path d="M16 12h4"/><path d="M7.8 16.4 5.4 18.8"/><path d="M12 18v4"/><path d="M4 12H2"/><circle cx="12" cy="12" r="4"/></svg>
+            </button>
             {/* Mode toggle */}
             <button
               onClick={() => setModoGrau(!modoGrau)}
@@ -124,6 +140,8 @@ export function CifraViewer({ musica }: CifraViewerProps) {
           })}
         </pre>
       </div>
+
+      <FlowFooter />
     </motion.div>
   );
 }
