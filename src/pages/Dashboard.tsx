@@ -80,31 +80,33 @@ const Dashboard = () => {
         </div>
       </motion.div>
 
-      {/* 2x2 Grid */}
-      <div className="px-6 pt-6">
-        <div className="grid grid-cols-2 gap-4">
-          {GRID_ITEMS.map((item, i) => (
-            <motion.div
-              key={item.label}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.08 + i * 0.06, duration: 0.3 }}
+      {/* Vertical Stack */}
+      <div className="px-6 pt-6 flex flex-col gap-3">
+        {GRID_ITEMS.map((item, i) => (
+          <motion.div
+            key={item.label}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.08 + i * 0.05, duration: 0.3 }}
+          >
+            <Link
+              to={item.to}
+              className={`group flex items-center gap-4 rounded-2xl border border-white/[0.08] bg-white/[0.03] px-5 py-4 transition-all hover:bg-white/[0.06] hover:border-white/[0.12] active:scale-[0.98] ${item.glow}`}
             >
-              <Link
-                to={item.to}
-                className={`group relative flex flex-col items-center justify-center gap-2 rounded-2xl border border-white/[0.08] bg-gradient-to-br ${item.color} p-7 aspect-square transition-all hover:scale-[1.03] active:scale-[0.97] ${item.glow}`}
-              >
-                <item.icon className={`h-10 w-10 ${item.iconColor} drop-shadow-lg`} />
-                <span className={`text-sm font-display font-bold ${item.iconColor} tracking-wide`}>
+              <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${item.color}`}>
+                <item.icon className={`h-5 w-5 ${item.iconColor}`} />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-sm font-display font-bold text-foreground tracking-wide">
                   {item.label}
                 </span>
-                <span className={`text-[10px] ${item.iconColor} opacity-70`}>
+                <span className="text-[11px] text-muted-foreground">
                   {item.desc}
                 </span>
-              </Link>
-            </motion.div>
-          ))}
-        </div>
+              </div>
+            </Link>
+          </motion.div>
+        ))}
       </div>
 
       {/* Favorites Section */}
