@@ -6,28 +6,28 @@ interface AutoScrollBarProps {
   bpm?: number | null;
 }
 
-// Exponential curve: ultra-smooth at low levels, aggressive at high
-function speedToPxPerFrame(level: number): number {
-  // level 1→0.05, 2→0.12, 3→0.28, 4→0.55, 5→0.95, 6→1.5, 7→2.3, 8→3.5, 9→5.2, 10→7.5
-  return 0.05 * Math.pow(2.15, level - 1);
+// Ultra-fine curve: 1-40 nearly flat (0.01–0.4px/frame), 40-100 ramps up
+function speedToPx(level: number): number {
+  if (level <= 40) return level * 0.01;           // 0.01 → 0.40
+  return 0.4 + Math.pow((level - 40) / 60, 1.8) * 6; // 0.4 → ~6.4
 }
 
-function bpmToDefaultSpeed(bpm: number): number {
-  if (bpm <= 0) return 3;
-  if (bpm < 70) return 2;
-  if (bpm < 100) return 3;
-  if (bpm < 130) return 4;
-  if (bpm < 160) return 5;
-  return 6;
+function bpmToDefault(bpm: number): number {
+  if (bpm <= 0) return 15;
+  if (bpm < 70) return 10;
+  if (bpm < 100) return 18;
+  if (bpm < 130) return 25;
+  if (bpm < 160) return 35;
+  return 45;
 }
 
 export function AutoScrollBar({ bpm }: AutoScrollBarProps) {
-  const defaultSpeed = bpm && bpm > 0 ? bpmToDefaultSpeed(bpm) : 2;
+  const def = bpm && bpm > 0 ? bpmToDefault(bpm) : 15;
   const [playing, setPlaying] = useState(false);
-  const [speed, setSpeed] = useState(defaultSpeed);
+  const [speed, setSpeed] = useState(def);
   const rafRef = useRef<number | null>(null);
   const playingRef = useRef(false);
-  const accumRef = useRef(0);
+  const accum = useRef(0);
 
   useEffect(() => {
     const pause = () => { if (playingRef.current) setPlaying(false); };
@@ -46,15 +46,15 @@ export function AutoScrollBar({ bpm }: AutoScrollBarProps) {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       return;
     }
-    const pxPerFrame = speedToPxPerFrame(speed);
-    accumRef.current = 0;
+    const pxPerFrame = speedToPx(speed);
+    accum.current = 0;
 
     const tick = () => {
-      accumRef.current += pxPerFrame;
-      if (accumRef.current >= 1) {
-        const whole = Math.floor(accumRef.current);
-        window.scrollBy(0, whole);
-        accumRef.current -= whole;
+      accum.current += pxPerFrame;
+      if (accum.current >= 1) {
+        const px = Math.floor(accum.current);
+        window.scrollBy(0, px);
+        accum.current -= px;
       }
       rafRef.current = requestAnimationFrame(tick);
     };
@@ -70,12 +70,12 @@ export function AutoScrollBar({ bpm }: AutoScrollBarProps) {
       >
         {playing ? <Pause size={18} /> : <Play size={18} />}
       </button>
-      <button onClick={() => setSpeed(s => Math.max(1, s - 1))} className="p-1 text-muted-foreground hover:text-foreground transition-colors">
+      <button onClick={() => setSpeed(s => Math.max(1, s - 5))} className="p-1 text-muted-foreground hover:text-foreground transition-colors">
         <Minus size={14} />
       </button>
-      <Slider min={1} max={10} step={1} value={[speed]} onValueChange={([v]) => setSpeed(v)} className="w-24" />
-      <span className="text-xs font-mono text-muted-foreground w-4 text-center">{speed}</span>
-      <button onClick={() => setSpeed(s => Math.min(10, s + 1))} className="p-1 text-muted-foreground hover:text-foreground transition-colors">
+      <Slider min={1} max={100} step={1} value={[speed]} onValueChange={([v]) => setSpeed(v)} className="w-32" />
+      <span className="text-[11px] font-mono text-muted-foreground min-w-[24px] text-center">{speed}</span>
+      <button onClick={() => setSpeed(s => Math.min(100, s + 5))} className="p-1 text-muted-foreground hover:text-foreground transition-colors">
         <Plus size={14} />
       </button>
     </div>
