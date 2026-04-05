@@ -1,53 +1,167 @@
 const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-const FLAT_NOTES = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
 
-function normalizeNote(note: string): number {
-  const flatToSharp: Record<string, string> = {
-    'Db': 'C#', 'Eb': 'D#', 'Fb': 'E', 'Gb': 'F#',
-    'Ab': 'G#', 'Bb': 'A#', 'Cb': 'B',
-  };
-  const n = flatToSharp[note] || note;
-  const idx = NOTES.indexOf(n);
-  return idx >= 0 ? idx : -1;
+const NOTE_ALIASES: Record<string, string> = {
+  'Db': 'C#', 'Eb': 'D#', 'Fb': 'E', 'Gb': 'F#',
+  'Ab': 'G#', 'Bb': 'A#', 'Cb': 'B',
+};
+
+function noteIndex(note: string): number {
+  const normalized = NOTE_ALIASES[note] ?? note;
+  return NOTES.indexOf(normalized);
 }
+
+// --- Transpose ---
 
 export function transposeChord(chord: string, semitones: number): string {
   if (semitones === 0) return chord;
-  
+
+  // Handle slash chords
+  const slashIdx = chord.indexOf('/');
+  if (slashIdx > 0) {
+    const main = chord.slice(0, slashIdx);
+    const bass = chord.slice(slashIdx + 1);
+    return transposeChord(main, semitones) + '/' + transposeChord(bass, semitones);
+  }
+
   const match = chord.match(/^([A-G][#b]?)(.*)/);
   if (!match) return chord;
-  
   const [, root, suffix] = match;
-  const idx = normalizeNote(root);
+
+  const idx = noteIndex(root);
   if (idx < 0) return chord;
-  
+
   const newIdx = ((idx + semitones) % 12 + 12) % 12;
-  const useFlats = root.includes('b');
-  const newRoot = useFlats ? FLAT_NOTES[newIdx] : NOTES[newIdx];
-  
-  return newRoot + suffix;
+  return NOTES[newIdx] + suffix;
 }
 
-export function transposeLine(line: string, semitones: number): string {
-  if (semitones === 0) return line;
-  return line.replace(/\b([A-G][#b]?(?:m|7|maj7|m7|dim|aug|sus[24]|add9|6|9|11|13|\/[A-G][#b]?)?)\b/g, 
-    (match) => {
-      const slashIdx = match.indexOf('/');
-      if (slashIdx > 0) {
-        const main = match.slice(0, slashIdx);
-        const bass = match.slice(slashIdx + 1);
-        return transposeChord(main, semitones) + '/' + transposeChord(bass, semitones);
-      }
-      return transposeChord(match, semitones);
+// --- Harmonic field (major scale) ---
+
+const MAJOR_INTERVALS = [0, 2, 4, 5, 7, 9, 11]; // W W H W W W H
+const DEGREE_LABELS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
+
+// Common chord quality → degree quality mapping
+function degreeQuality(suffix: string): string {
+  // Strip leading 'm' distinction — we handle it via degree case
+  const s = suffix.trim();
+  if (s.startsWith('m7') || s === 'm' || s.startsWith('m(') || s.startsWith('m9') || s.startsWith('m6') || s.startsWith('m11')) {
+    return s; // keep it, we'll lowercase the degree
+  }
+  return s;
+}
+
+export function chordToDegree(chord: string, key: string): string {
+  // Handle slash chords
+  const slashIdx = chord.indexOf('/');
+  if (slashIdx > 0) {
+    const main = chord.slice(0, slashIdx);
+    const bass = chord.slice(slashIdx + 1);
+    return chordToDegree(main, key) + '/' + chordToDegree(bass, key);
+  }
+
+  const match = chord.match(/^([A-G][#b]?)(.*)/);
+  if (!match) return chord;
+  const [, root, suffix] = match;
+
+  const keyIdx = noteIndex(key);
+  const chordIdx = noteIndex(root);
+  if (keyIdx < 0 || chordIdx < 0) return chord;
+
+  const interval = ((chordIdx - keyIdx) % 12 + 12) % 12;
+
+  // Find closest degree
+  let degreeIdx = MAJOR_INTERVALS.indexOf(interval);
+  let accidental = '';
+
+  if (degreeIdx < 0) {
+    // Check if it's a flat version of a degree
+    const sharpIdx = MAJOR_INTERVALS.indexOf((interval + 1) % 12);
+    const flatIdx = MAJOR_INTERVALS.indexOf((interval - 1 + 12) % 12);
+    if (sharpIdx >= 0) {
+      degreeIdx = sharpIdx;
+      accidental = 'b';
+    } else if (flatIdx >= 0) {
+      degreeIdx = flatIdx;
+      accidental = '#';
+    } else {
+      return chord; // can't map
     }
-  );
+  }
+
+  let degree = accidental + DEGREE_LABELS[degreeIdx];
+
+  // Minor chords → lowercase
+  const isMinor = suffix.startsWith('m') && !suffix.startsWith('maj');
+  const isDim = suffix.startsWith('dim') || suffix.startsWith('°');
+  const isAug = suffix.startsWith('aug') || suffix.startsWith('+');
+
+  if (isMinor || isDim) {
+    degree = degree.toLowerCase();
+  }
+
+  // Add remaining quality
+  let qualitySuffix = suffix;
+  if (isMinor) {
+    qualitySuffix = suffix.slice(1); // remove leading 'm'
+  }
+  if (isDim) {
+    qualitySuffix = '°' + suffix.slice(3);
+  }
+  if (isAug) {
+    qualitySuffix = '+' + (suffix.startsWith('aug') ? suffix.slice(3) : suffix.slice(1));
+  }
+  if (!isMinor && !isDim && !isAug) {
+    qualitySuffix = suffix;
+  }
+
+  return degree + qualitySuffix;
 }
 
-export function getSemitonesDiff(from: string, to: string): number {
-  const fromIdx = normalizeNote(from);
-  const toIdx = normalizeNote(to);
-  if (fromIdx < 0 || toIdx < 0) return 0;
-  return ((toIdx - fromIdx) % 12 + 12) % 12;
+export const ALL_KEYS = NOTES;
+
+export type DisplayMode = 'cifra' | 'grau';
+
+/**
+ * Parse a line like "[Am]Hello [G]world" into segments
+ */
+export interface CifraSegment {
+  chord: string | null;
+  text: string;
 }
 
-export const ALL_KEYS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+export function parseCifraLine(line: string): CifraSegment[] {
+  const segments: CifraSegment[] = [];
+  const regex = /\[([^\]]+)\]/g;
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = regex.exec(line)) !== null) {
+    // Text before this chord (if any, and no chord)
+    if (match.index > lastIndex) {
+      const textBefore = line.slice(lastIndex, match.index);
+      if (segments.length > 0) {
+        // Append to previous segment's text
+        segments[segments.length - 1].text += textBefore;
+      } else {
+        segments.push({ chord: null, text: textBefore });
+      }
+    }
+    segments.push({ chord: match[1], text: '' });
+    lastIndex = regex.lastIndex;
+  }
+
+  // Remaining text
+  const remaining = line.slice(lastIndex);
+  if (remaining) {
+    if (segments.length > 0) {
+      segments[segments.length - 1].text += remaining;
+    } else {
+      segments.push({ chord: null, text: remaining });
+    }
+  }
+
+  return segments;
+}
+
+export function hasChords(line: string): boolean {
+  return /\[[^\]]+\]/.test(line);
+}
