@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Trophy, BookOpen, Lock, Star, ChevronRight, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Trophy, BookOpen, Lock, Star, ChevronRight, RotateCcw, Zap } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
