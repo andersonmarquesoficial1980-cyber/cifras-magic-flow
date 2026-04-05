@@ -6,6 +6,7 @@ import { useMusicas } from '@/hooks/useMusicas';
 import { SongCard } from '@/components/SongCard';
 import { Input } from '@/components/ui/input';
 import { ImportadorFlash } from '@/components/ImportadorFlash';
+import { ImportadorLote } from '@/components/ImportadorLote';
 
 const VIBES = ['Todas', 'Animada', 'Romântica', 'Adoração', 'Pra Pular', 'Modão', 'Introspectiva'] as const;
 
