@@ -7,6 +7,7 @@ import Dashboard from "./pages/Dashboard.tsx";
 import Index from "./pages/Index.tsx";
 import MusicaDetail from "./pages/MusicaDetail.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import Afinador from "./pages/Afinador.tsx";
 const queryClient = new QueryClient();
 
 const App = () => (
