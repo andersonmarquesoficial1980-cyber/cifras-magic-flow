@@ -5,29 +5,48 @@ interface Props {
 }
 
 export function ChordDiagramSVG({ diagram }: Props) {
-  const { frets, baseFret, barres = [] } = diagram;
+  const { frets, fingers, baseFret, barres = [] } = diagram;
   const numFrets = 4;
   const numStrings = 6;
-  const stringSpacing = 16;
-  const fretSpacing = 18;
-  const padLeft = 22;
-  const padTop = 20;
-  const w = padLeft + (numStrings - 1) * stringSpacing + 14;
-  const h = padTop + numFrets * fretSpacing + 10;
-  const dotR = 5;
+  const stringSpacing = 18;
+  const fretSpacing = 22;
+  const padLeft = 28;
+  const padTop = 24;
+  const w = padLeft + (numStrings - 1) * stringSpacing + 16;
+  const h = padTop + numFrets * fretSpacing + 12;
+  const dotR = 7;
+
+  const fingerLabel = (f: number) => (f === 5 ? 'T' : f > 0 ? String(f) : '');
 
   return (
     <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="block">
+      {/* Background */}
+      <rect x={0} y={0} width={w} height={h} rx={6} fill="#1E1E2E" />
+
       {/* Nut or fret indicator */}
       {baseFret === 1 ? (
-        <rect x={padLeft - 1} y={padTop - 3} width={(numStrings - 1) * stringSpacing + 2} height={4} rx={1} fill="hsl(var(--foreground))" />
+        <rect
+          x={padLeft - 1}
+          y={padTop - 3}
+          width={(numStrings - 1) * stringSpacing + 2}
+          height={5}
+          rx={2}
+          fill="#E2E8F0"
+        />
       ) : (
-        <text x={padLeft - 14} y={padTop + fretSpacing / 2 + 4} fontSize={10} fill="hsl(var(--muted-foreground))" fontFamily="monospace">
+        <text
+          x={padLeft - 18}
+          y={padTop + fretSpacing / 2 + 4}
+          fontSize={11}
+          fill="#94A3B8"
+          fontFamily="monospace"
+          fontWeight="bold"
+        >
           {baseFret}
         </text>
       )}
 
-      {/* Frets (horizontal lines) */}
+      {/* Frets (horizontal) */}
       {Array.from({ length: numFrets + 1 }).map((_, i) => (
         <line
           key={`f${i}`}
@@ -35,12 +54,12 @@ export function ChordDiagramSVG({ diagram }: Props) {
           y1={padTop + i * fretSpacing}
           x2={padLeft + (numStrings - 1) * stringSpacing}
           y2={padTop + i * fretSpacing}
-          stroke="hsl(var(--border))"
+          stroke="#475569"
           strokeWidth={1}
         />
       ))}
 
-      {/* Strings (vertical lines) */}
+      {/* Strings (vertical) */}
       {Array.from({ length: numStrings }).map((_, i) => (
         <line
           key={`s${i}`}
@@ -48,8 +67,8 @@ export function ChordDiagramSVG({ diagram }: Props) {
           y1={padTop}
           x2={padLeft + i * stringSpacing}
           y2={padTop + numFrets * fretSpacing}
-          stroke="hsl(var(--border))"
-          strokeWidth={1}
+          stroke="#64748B"
+          strokeWidth={i < 3 ? 1.5 : 1}
         />
       ))}
 
@@ -72,31 +91,61 @@ export function ChordDiagramSVG({ diagram }: Props) {
             height={dotR * 2}
             rx={dotR}
             fill="#FACC15"
-            opacity={0.7}
+            opacity={0.85}
           />
         );
       })}
 
-      {/* Dots & open/mute markers */}
+      {/* Dots with finger numbers & markers */}
       {frets.map((fret, i) => {
         const x = padLeft + i * stringSpacing;
         if (fret === -1) {
           return (
-            <text key={i} x={x} y={padTop - 7} fontSize={10} textAnchor="middle" fill="hsl(var(--muted-foreground))" fontFamily="monospace">
-              ×
+            <text
+              key={i}
+              x={x}
+              y={padTop - 8}
+              fontSize={13}
+              textAnchor="middle"
+              fill="#EF4444"
+              fontFamily="sans-serif"
+              fontWeight="bold"
+            >
+              ✕
             </text>
           );
         }
         if (fret === 0) {
           return (
-            <circle key={i} cx={x} cy={padTop - 8} r={3.5} fill="none" stroke="hsl(var(--foreground))" strokeWidth={1.5} />
+            <g key={i}>
+              <circle cx={x} cy={padTop - 9} r={5} fill="none" stroke="#E2E8F0" strokeWidth={2} />
+              <text x={x} y={padTop - 6} fontSize={7} textAnchor="middle" fill="#E2E8F0" fontWeight="bold">
+                O
+              </text>
+            </g>
           );
         }
-        // If part of a barre, skip individual dot
-        if (barres.includes(fret)) return null;
+        // Skip if part of barre (barre already drawn)
+        const isBarre = barres.includes(fret) && fingers[i] === fingers[barres.indexOf(fret) !== -1 ? frets.indexOf(fret) : i];
         const y = padTop + (fret - baseFret + 0.5) * fretSpacing;
+        const finger = fingers[i];
         return (
-          <circle key={i} cx={x} cy={y} r={dotR} fill="#FACC15" />
+          <g key={i}>
+            <circle cx={x} cy={y} r={dotR} fill="#FACC15" />
+            {finger > 0 && (
+              <text
+                x={x}
+                y={y + 4}
+                fontSize={10}
+                textAnchor="middle"
+                fill="#1E1E2E"
+                fontWeight="bold"
+                fontFamily="sans-serif"
+              >
+                {fingerLabel(finger)}
+              </text>
+            )}
+          </g>
         );
       })}
     </svg>

@@ -1,94 +1,317 @@
-// Guitar chord diagram data: fret positions for common open chords
-// Format: [E, A, D, G, B, e] where -1 = muted, 0 = open, 1+ = fret number
-// baseFret: starting fret (1 for open chords)
+// Professional guitar chord diagram data with finger numbers and multiple variations
+// Format: frets [E,A,D,G,B,e] -1=muted, 0=open, 1+=fret
+// fingers [E,A,D,G,B,e] 0=none, 1=index, 2=middle, 3=ring, 4=pinky, T=thumb(5)
 
 export interface ChordDiagram {
   name: string;
   frets: number[];
+  fingers: number[];
   baseFret: number;
   barres?: number[];
+  label?: string; // e.g. "Forma aberta", "Com pestana"
 }
 
-const DIAGRAMS: Record<string, ChordDiagram> = {
-  'C':    { name: 'C',    frets: [-1, 3, 2, 0, 1, 0], baseFret: 1 },
-  'D':    { name: 'D',    frets: [-1, -1, 0, 2, 3, 2], baseFret: 1 },
-  'E':    { name: 'E',    frets: [0, 2, 2, 1, 0, 0], baseFret: 1 },
-  'F':    { name: 'F',    frets: [1, 3, 3, 2, 1, 1], baseFret: 1, barres: [1] },
-  'G':    { name: 'G',    frets: [3, 2, 0, 0, 0, 3], baseFret: 1 },
-  'A':    { name: 'A',    frets: [-1, 0, 2, 2, 2, 0], baseFret: 1 },
-  'B':    { name: 'B',    frets: [-1, 2, 4, 4, 4, 2], baseFret: 1, barres: [2] },
+const DB: Record<string, ChordDiagram[]> = {
+  // ─── MAIORES ───────────────────────────────────────────
+  'C': [
+    { name:'C', frets:[-1,3,2,0,1,0], fingers:[0,3,2,0,1,0], baseFret:1, label:'Aberto' },
+    { name:'C', frets:[3,3,5,5,5,3], fingers:[1,1,2,3,4,1], baseFret:1, barres:[3], label:'Pestana 3ª' },
+    { name:'C', frets:[-1,3,5,5,5,0], fingers:[0,1,3,3,3,0], baseFret:1, label:'Forma A' },
+  ],
+  'D': [
+    { name:'D', frets:[-1,-1,0,2,3,2], fingers:[0,0,0,1,3,2], baseFret:1, label:'Aberto' },
+    { name:'D', frets:[-1,5,7,7,7,5], fingers:[0,1,2,3,4,1], baseFret:1, barres:[5], label:'Pestana 5ª' },
+  ],
+  'E': [
+    { name:'E', frets:[0,2,2,1,0,0], fingers:[0,2,3,1,0,0], baseFret:1, label:'Aberto' },
+    { name:'E', frets:[0,2,2,4,5,4], fingers:[0,1,1,2,4,3], baseFret:1, label:'Forma alta' },
+  ],
+  'F': [
+    { name:'F', frets:[1,3,3,2,1,1], fingers:[1,3,4,2,1,1], baseFret:1, barres:[1], label:'Pestana 1ª' },
+    { name:'F', frets:[-1,-1,3,2,1,1], fingers:[0,0,3,2,1,1], baseFret:1, label:'Simplificado' },
+    { name:'F', frets:[-1,3,3,2,1,1], fingers:[0,3,4,2,1,1], baseFret:1, barres:[1], label:'Sem 6ª corda' },
+  ],
+  'G': [
+    { name:'G', frets:[3,2,0,0,0,3], fingers:[2,1,0,0,0,3], baseFret:1, label:'Aberto' },
+    { name:'G', frets:[3,2,0,0,3,3], fingers:[2,1,0,0,3,4], baseFret:1, label:'Aberto v2' },
+    { name:'G', frets:[3,5,5,4,3,3], fingers:[1,3,4,2,1,1], baseFret:1, barres:[3], label:'Pestana 3ª' },
+  ],
+  'A': [
+    { name:'A', frets:[-1,0,2,2,2,0], fingers:[0,0,1,2,3,0], baseFret:1, label:'Aberto' },
+    { name:'A', frets:[5,7,7,6,5,5], fingers:[1,3,4,2,1,1], baseFret:1, barres:[5], label:'Pestana 5ª' },
+  ],
+  'B': [
+    { name:'B', frets:[-1,2,4,4,4,2], fingers:[0,1,2,3,4,1], baseFret:1, barres:[2], label:'Pestana 2ª' },
+    { name:'B', frets:[7,9,9,8,7,7], fingers:[1,3,4,2,1,1], baseFret:1, barres:[7], label:'Pestana 7ª' },
+  ],
 
-  'Am':   { name: 'Am',   frets: [-1, 0, 2, 2, 1, 0], baseFret: 1 },
-  'Bm':   { name: 'Bm',   frets: [-1, 2, 4, 4, 3, 2], baseFret: 1, barres: [2] },
-  'Cm':   { name: 'Cm',   frets: [-1, 3, 5, 5, 4, 3], baseFret: 1, barres: [3] },
-  'Dm':   { name: 'Dm',   frets: [-1, -1, 0, 2, 3, 1], baseFret: 1 },
-  'Em':   { name: 'Em',   frets: [0, 2, 2, 0, 0, 0], baseFret: 1 },
-  'Fm':   { name: 'Fm',   frets: [1, 3, 3, 1, 1, 1], baseFret: 1, barres: [1] },
-  'Gm':   { name: 'Gm',   frets: [3, 5, 5, 3, 3, 3], baseFret: 1, barres: [3] },
+  // ─── MENORES ───────────────────────────────────────────
+  'Am': [
+    { name:'Am', frets:[-1,0,2,2,1,0], fingers:[0,0,2,3,1,0], baseFret:1, label:'Aberto' },
+    { name:'Am', frets:[5,7,7,5,5,5], fingers:[1,3,4,1,1,1], baseFret:1, barres:[5], label:'Pestana 5ª' },
+  ],
+  'Bm': [
+    { name:'Bm', frets:[-1,2,4,4,3,2], fingers:[0,1,3,4,2,1], baseFret:1, barres:[2], label:'Pestana 2ª' },
+    { name:'Bm', frets:[7,9,9,7,7,7], fingers:[1,3,4,1,1,1], baseFret:1, barres:[7], label:'Pestana 7ª' },
+  ],
+  'Cm': [
+    { name:'Cm', frets:[-1,3,5,5,4,3], fingers:[0,1,3,4,2,1], baseFret:1, barres:[3], label:'Pestana 3ª' },
+    { name:'Cm', frets:[8,10,10,8,8,8], fingers:[1,3,4,1,1,1], baseFret:1, barres:[8], label:'Pestana 8ª' },
+  ],
+  'Dm': [
+    { name:'Dm', frets:[-1,-1,0,2,3,1], fingers:[0,0,0,2,3,1], baseFret:1, label:'Aberto' },
+    { name:'Dm', frets:[-1,5,7,7,6,5], fingers:[0,1,3,4,2,1], baseFret:1, barres:[5], label:'Pestana 5ª' },
+  ],
+  'Em': [
+    { name:'Em', frets:[0,2,2,0,0,0], fingers:[0,2,3,0,0,0], baseFret:1, label:'Aberto' },
+    { name:'Em', frets:[0,2,2,0,0,0], fingers:[0,1,2,0,0,0], baseFret:1, label:'Aberto v2' },
+  ],
+  'Fm': [
+    { name:'Fm', frets:[1,3,3,1,1,1], fingers:[1,3,4,1,1,1], baseFret:1, barres:[1], label:'Pestana 1ª' },
+  ],
+  'Gm': [
+    { name:'Gm', frets:[3,5,5,3,3,3], fingers:[1,3,4,1,1,1], baseFret:1, barres:[3], label:'Pestana 3ª' },
+    { name:'Gm', frets:[-1,-1,5,3,3,3], fingers:[0,0,3,1,1,1], baseFret:1, barres:[3], label:'Parcial' },
+  ],
 
-  'C7':   { name: 'C7',   frets: [-1, 3, 2, 3, 1, 0], baseFret: 1 },
-  'D7':   { name: 'D7',   frets: [-1, -1, 0, 2, 1, 2], baseFret: 1 },
-  'E7':   { name: 'E7',   frets: [0, 2, 0, 1, 0, 0], baseFret: 1 },
-  'G7':   { name: 'G7',   frets: [3, 2, 0, 0, 0, 1], baseFret: 1 },
-  'A7':   { name: 'A7',   frets: [-1, 0, 2, 0, 2, 0], baseFret: 1 },
-  'B7':   { name: 'B7',   frets: [-1, 2, 1, 2, 0, 2], baseFret: 1 },
-  'F7':   { name: 'F7',   frets: [1, 3, 1, 2, 1, 1], baseFret: 1, barres: [1] },
+  // ─── SÉTIMA (7) ────────────────────────────────────────
+  'C7': [
+    { name:'C7', frets:[-1,3,2,3,1,0], fingers:[0,3,2,4,1,0], baseFret:1, label:'Aberto' },
+  ],
+  'D7': [
+    { name:'D7', frets:[-1,-1,0,2,1,2], fingers:[0,0,0,2,1,3], baseFret:1, label:'Aberto' },
+  ],
+  'E7': [
+    { name:'E7', frets:[0,2,0,1,0,0], fingers:[0,2,0,1,0,0], baseFret:1, label:'Aberto' },
+    { name:'E7', frets:[0,2,2,1,3,0], fingers:[0,1,2,3,4,0], baseFret:1, label:'Variação' },
+  ],
+  'F7': [
+    { name:'F7', frets:[1,3,1,2,1,1], fingers:[1,3,1,2,1,1], baseFret:1, barres:[1], label:'Pestana' },
+  ],
+  'G7': [
+    { name:'G7', frets:[3,2,0,0,0,1], fingers:[3,2,0,0,0,1], baseFret:1, label:'Aberto' },
+    { name:'G7', frets:[3,5,3,4,3,3], fingers:[1,3,1,2,1,1], baseFret:1, barres:[3], label:'Pestana' },
+  ],
+  'A7': [
+    { name:'A7', frets:[-1,0,2,0,2,0], fingers:[0,0,1,0,3,0], baseFret:1, label:'Aberto' },
+  ],
+  'B7': [
+    { name:'B7', frets:[-1,2,1,2,0,2], fingers:[0,2,1,3,0,4], baseFret:1, label:'Aberto' },
+  ],
 
-  'Am7':  { name: 'Am7',  frets: [-1, 0, 2, 0, 1, 0], baseFret: 1 },
-  'Dm7':  { name: 'Dm7',  frets: [-1, -1, 0, 2, 1, 1], baseFret: 1 },
-  'Em7':  { name: 'Em7',  frets: [0, 2, 0, 0, 0, 0], baseFret: 1 },
+  // ─── MENOR COM 7 (m7) ─────────────────────────────────
+  'Am7': [
+    { name:'Am7', frets:[-1,0,2,0,1,0], fingers:[0,0,2,0,1,0], baseFret:1, label:'Aberto' },
+  ],
+  'Dm7': [
+    { name:'Dm7', frets:[-1,-1,0,2,1,1], fingers:[0,0,0,2,1,1], baseFret:1, label:'Aberto' },
+  ],
+  'Em7': [
+    { name:'Em7', frets:[0,2,0,0,0,0], fingers:[0,1,0,0,0,0], baseFret:1, label:'Aberto' },
+    { name:'Em7', frets:[0,2,2,0,3,0], fingers:[0,1,2,0,3,0], baseFret:1, label:'Variação' },
+  ],
+  'Bm7': [
+    { name:'Bm7', frets:[-1,2,4,2,3,2], fingers:[0,1,3,1,2,1], baseFret:1, barres:[2], label:'Pestana' },
+  ],
+  'F#m7': [
+    { name:'F#m7', frets:[2,4,2,2,2,2], fingers:[1,3,1,1,1,1], baseFret:1, barres:[2], label:'Pestana' },
+  ],
+  'C#m7': [
+    { name:'C#m7', frets:[-1,4,6,4,5,4], fingers:[0,1,3,1,2,1], baseFret:1, barres:[4], label:'Pestana' },
+  ],
+  'Gm7': [
+    { name:'Gm7', frets:[3,5,3,3,3,3], fingers:[1,3,1,1,1,1], baseFret:1, barres:[3], label:'Pestana' },
+  ],
 
-  'C7M':  { name: 'C7M',  frets: [-1, 3, 2, 0, 0, 0], baseFret: 1 },
-  'F7M':  { name: 'F7M',  frets: [1, 3, 3, 2, 1, 0], baseFret: 1, barres: [1] },
-  'G7M':  { name: 'G7M',  frets: [3, 2, 0, 0, 0, 2], baseFret: 1 },
-  'D7M':  { name: 'D7M',  frets: [-1, -1, 0, 2, 2, 2], baseFret: 1 },
-  'A7M':  { name: 'A7M',  frets: [-1, 0, 2, 1, 2, 0], baseFret: 1 },
+  // ─── SÉTIMA MAIOR (7M / maj7) ─────────────────────────
+  'C7M': [
+    { name:'C7M', frets:[-1,3,2,0,0,0], fingers:[0,3,2,0,0,0], baseFret:1, label:'Aberto' },
+  ],
+  'D7M': [
+    { name:'D7M', frets:[-1,-1,0,2,2,2], fingers:[0,0,0,1,2,3], baseFret:1, label:'Aberto' },
+  ],
+  'F7M': [
+    { name:'F7M', frets:[1,3,3,2,1,0], fingers:[1,3,4,2,1,0], baseFret:1, barres:[1], label:'Pestana' },
+    { name:'F7M', frets:[-1,-1,3,2,1,0], fingers:[0,0,3,2,1,0], baseFret:1, label:'Simplificado' },
+  ],
+  'G7M': [
+    { name:'G7M', frets:[3,2,0,0,0,2], fingers:[2,1,0,0,0,3], baseFret:1, label:'Aberto' },
+  ],
+  'A7M': [
+    { name:'A7M', frets:[-1,0,2,1,2,0], fingers:[0,0,2,1,3,0], baseFret:1, label:'Aberto' },
+  ],
+  'E7M': [
+    { name:'E7M', frets:[0,2,1,1,0,0], fingers:[0,3,1,2,0,0], baseFret:1, label:'Aberto' },
+  ],
+  'B7M': [
+    { name:'B7M', frets:[-1,2,4,3,4,2], fingers:[0,1,3,2,4,1], baseFret:1, barres:[2], label:'Pestana' },
+  ],
+  'Bb7M': [
+    { name:'Bb7M', frets:[-1,1,3,2,3,1], fingers:[0,1,3,2,4,1], baseFret:1, barres:[1], label:'Pestana' },
+  ],
 
-  'Cmaj7': { name: 'Cmaj7', frets: [-1, 3, 2, 0, 0, 0], baseFret: 1 },
-  'Fmaj7': { name: 'Fmaj7', frets: [1, 3, 3, 2, 1, 0], baseFret: 1, barres: [1] },
-  'Gmaj7': { name: 'Gmaj7', frets: [3, 2, 0, 0, 0, 2], baseFret: 1 },
+  // Aliases
+  'Cmaj7': [
+    { name:'Cmaj7', frets:[-1,3,2,0,0,0], fingers:[0,3,2,0,0,0], baseFret:1, label:'Aberto' },
+  ],
+  'Fmaj7': [
+    { name:'Fmaj7', frets:[-1,-1,3,2,1,0], fingers:[0,0,3,2,1,0], baseFret:1, label:'Simplificado' },
+  ],
+  'Gmaj7': [
+    { name:'Gmaj7', frets:[3,2,0,0,0,2], fingers:[2,1,0,0,0,3], baseFret:1, label:'Aberto' },
+  ],
 
-  'Dsus4': { name: 'Dsus4', frets: [-1, -1, 0, 2, 3, 3], baseFret: 1 },
-  'Asus4': { name: 'Asus4', frets: [-1, 0, 2, 2, 3, 0], baseFret: 1 },
-  'Esus4': { name: 'Esus4', frets: [0, 2, 2, 2, 0, 0], baseFret: 1 },
-  'Dsus2': { name: 'Dsus2', frets: [-1, -1, 0, 2, 3, 0], baseFret: 1 },
-  'Asus2': { name: 'Asus2', frets: [-1, 0, 2, 2, 0, 0], baseFret: 1 },
+  // ─── SUS ───────────────────────────────────────────────
+  'Dsus4': [
+    { name:'Dsus4', frets:[-1,-1,0,2,3,3], fingers:[0,0,0,1,2,3], baseFret:1, label:'Aberto' },
+  ],
+  'Asus4': [
+    { name:'Asus4', frets:[-1,0,2,2,3,0], fingers:[0,0,1,2,3,0], baseFret:1, label:'Aberto' },
+  ],
+  'Esus4': [
+    { name:'Esus4', frets:[0,2,2,2,0,0], fingers:[0,2,3,4,0,0], baseFret:1, label:'Aberto' },
+  ],
+  'Dsus2': [
+    { name:'Dsus2', frets:[-1,-1,0,2,3,0], fingers:[0,0,0,1,3,0], baseFret:1, label:'Aberto' },
+  ],
+  'Asus2': [
+    { name:'Asus2', frets:[-1,0,2,2,0,0], fingers:[0,0,1,2,0,0], baseFret:1, label:'Aberto' },
+  ],
 
-  'C#':   { name: 'C#',   frets: [-1, 4, 3, 1, 2, 1], baseFret: 1, barres: [1] },
-  'D#':   { name: 'D#',   frets: [-1, -1, 1, 3, 4, 3], baseFret: 1 },
-  'F#':   { name: 'F#',   frets: [2, 4, 4, 3, 2, 2], baseFret: 1, barres: [2] },
-  'G#':   { name: 'G#',   frets: [4, 3, 1, 1, 1, 4], baseFret: 1, barres: [1] },
-  'A#':   { name: 'A#',   frets: [-1, 1, 3, 3, 3, 1], baseFret: 1, barres: [1] },
-  'Bb':   { name: 'Bb',   frets: [-1, 1, 3, 3, 3, 1], baseFret: 1, barres: [1] },
-  'Eb':   { name: 'Eb',   frets: [-1, -1, 1, 3, 4, 3], baseFret: 1 },
-  'Ab':   { name: 'Ab',   frets: [4, 3, 1, 1, 1, 4], baseFret: 1, barres: [1] },
-  'Db':   { name: 'Db',   frets: [-1, 4, 3, 1, 2, 1], baseFret: 1, barres: [1] },
-  'Gb':   { name: 'Gb',   frets: [2, 4, 4, 3, 2, 2], baseFret: 1, barres: [2] },
+  // ─── SUSTENIDOS / BEMÓIS ──────────────────────────────
+  'C#': [
+    { name:'C#', frets:[-1,4,6,6,6,4], fingers:[0,1,3,3,3,1], baseFret:1, barres:[4], label:'Pestana 4ª' },
+  ],
+  'Db': [
+    { name:'Db', frets:[-1,4,6,6,6,4], fingers:[0,1,3,3,3,1], baseFret:1, barres:[4], label:'Pestana 4ª' },
+  ],
+  'D#': [
+    { name:'D#', frets:[-1,-1,1,3,4,3], fingers:[0,0,1,2,4,3], baseFret:1, label:'Parcial' },
+  ],
+  'Eb': [
+    { name:'Eb', frets:[-1,-1,1,3,4,3], fingers:[0,0,1,2,4,3], baseFret:1, label:'Parcial' },
+    { name:'Eb', frets:[-1,6,8,8,8,6], fingers:[0,1,3,3,3,1], baseFret:1, barres:[6], label:'Pestana 6ª' },
+  ],
+  'F#': [
+    { name:'F#', frets:[2,4,4,3,2,2], fingers:[1,3,4,2,1,1], baseFret:1, barres:[2], label:'Pestana 2ª' },
+  ],
+  'Gb': [
+    { name:'Gb', frets:[2,4,4,3,2,2], fingers:[1,3,4,2,1,1], baseFret:1, barres:[2], label:'Pestana 2ª' },
+  ],
+  'G#': [
+    { name:'G#', frets:[4,6,6,5,4,4], fingers:[1,3,4,2,1,1], baseFret:1, barres:[4], label:'Pestana 4ª' },
+  ],
+  'Ab': [
+    { name:'Ab', frets:[4,6,6,5,4,4], fingers:[1,3,4,2,1,1], baseFret:1, barres:[4], label:'Pestana 4ª' },
+  ],
+  'A#': [
+    { name:'A#', frets:[-1,1,3,3,3,1], fingers:[0,1,2,3,4,1], baseFret:1, barres:[1], label:'Pestana 1ª' },
+  ],
+  'Bb': [
+    { name:'Bb', frets:[-1,1,3,3,3,1], fingers:[0,1,2,3,4,1], baseFret:1, barres:[1], label:'Pestana 1ª' },
+    { name:'Bb', frets:[6,8,8,7,6,6], fingers:[1,3,4,2,1,1], baseFret:1, barres:[6], label:'Pestana 6ª' },
+  ],
 
-  'C#m':  { name: 'C#m',  frets: [-1, 4, 2, 1, 2, 0], baseFret: 1 },
-  'F#m':  { name: 'F#m',  frets: [2, 4, 4, 2, 2, 2], baseFret: 1, barres: [2] },
-  'G#m':  { name: 'G#m',  frets: [4, 6, 6, 4, 4, 4], baseFret: 1, barres: [4] },
-  'Bbm':  { name: 'Bbm',  frets: [-1, 1, 3, 3, 2, 1], baseFret: 1, barres: [1] },
-  'Ebm':  { name: 'Ebm',  frets: [-1, -1, 1, 3, 4, 2], baseFret: 1 },
+  // ─── MENORES COM # / b ────────────────────────────────
+  'C#m': [
+    { name:'C#m', frets:[-1,4,6,6,5,4], fingers:[0,1,3,4,2,1], baseFret:1, barres:[4], label:'Pestana 4ª' },
+  ],
+  'F#m': [
+    { name:'F#m', frets:[2,4,4,2,2,2], fingers:[1,3,4,1,1,1], baseFret:1, barres:[2], label:'Pestana 2ª' },
+  ],
+  'G#m': [
+    { name:'G#m', frets:[4,6,6,4,4,4], fingers:[1,3,4,1,1,1], baseFret:1, barres:[4], label:'Pestana 4ª' },
+  ],
+  'Bbm': [
+    { name:'Bbm', frets:[-1,1,3,3,2,1], fingers:[0,1,3,4,2,1], baseFret:1, barres:[1], label:'Pestana 1ª' },
+  ],
+  'Ebm': [
+    { name:'Ebm', frets:[-1,6,8,8,7,6], fingers:[0,1,3,4,2,1], baseFret:1, barres:[6], label:'Pestana 6ª' },
+  ],
 
-  'Ddim': { name: 'Ddim', frets: [-1, -1, 0, 1, 3, 1], baseFret: 1 },
-  'Bdim': { name: 'Bdim', frets: [-1, 2, 3, 4, 3, -1], baseFret: 1 },
-  'F#dim':{ name: 'F#dim',frets: [2, 3, 4, 2, -1, -1], baseFret: 1 },
+  // ─── DIMINUTOS ─────────────────────────────────────────
+  'Ddim': [
+    { name:'Ddim', frets:[-1,-1,0,1,3,1], fingers:[0,0,0,1,3,2], baseFret:1, label:'Aberto' },
+  ],
+  'Bdim': [
+    { name:'Bdim', frets:[-1,2,3,4,3,-1], fingers:[0,1,2,4,3,0], baseFret:1, label:'Parcial' },
+  ],
+  'F#dim': [
+    { name:'F#dim', frets:[2,3,4,2,-1,-1], fingers:[1,2,3,1,0,0], baseFret:1, label:'Parcial' },
+  ],
 
-  'G9':   { name: 'G9',   frets: [3, 2, 0, 2, 0, 1], baseFret: 1 },
-  'A9':   { name: 'A9',   frets: [-1, 0, 2, 4, 2, 3], baseFret: 1 },
-  'D9':   { name: 'D9',   frets: [-1, -1, 0, 2, 1, 0], baseFret: 1 },
+  // ─── NONA (9) ──────────────────────────────────────────
+  'G9': [
+    { name:'G9', frets:[3,2,0,2,0,1], fingers:[3,2,0,4,0,1], baseFret:1, label:'Aberto' },
+  ],
+  'A9': [
+    { name:'A9', frets:[-1,0,2,4,2,3], fingers:[0,0,1,3,1,2], baseFret:1, label:'Aberto' },
+  ],
+  'D9': [
+    { name:'D9', frets:[-1,-1,0,2,1,0], fingers:[0,0,0,2,1,0], baseFret:1, label:'Aberto' },
+  ],
+
+  // ─── INVERSÕES POPULARES ──────────────────────────────
+  'D/F#': [
+    { name:'D/F#', frets:[2,-1,0,2,3,2], fingers:[5,0,0,1,3,2], baseFret:1, label:'Polegar na 6ª' },
+    { name:'D/F#', frets:[-1,-1,4,2,3,2], fingers:[0,0,4,1,3,2], baseFret:1, label:'Sem baixas' },
+  ],
+  'G/B': [
+    { name:'G/B', frets:[-1,2,0,0,0,3], fingers:[0,1,0,0,0,3], baseFret:1, label:'Aberto' },
+    { name:'G/B', frets:[-1,2,0,0,3,3], fingers:[0,1,0,0,3,4], baseFret:1, label:'Variação' },
+  ],
+  'C/E': [
+    { name:'C/E', frets:[0,3,2,0,1,0], fingers:[0,3,2,0,1,0], baseFret:1, label:'Aberto' },
+  ],
+  'C/G': [
+    { name:'C/G', frets:[3,3,2,0,1,0], fingers:[3,4,2,0,1,0], baseFret:1, label:'Aberto' },
+  ],
+  'Am/G': [
+    { name:'Am/G', frets:[3,0,2,2,1,0], fingers:[4,0,3,2,1,0], baseFret:1, label:'Aberto' },
+  ],
+  'Am/E': [
+    { name:'Am/E', frets:[0,0,2,2,1,0], fingers:[0,0,2,3,1,0], baseFret:1, label:'Aberto' },
+  ],
+  'Em/D': [
+    { name:'Em/D', frets:[-1,-1,0,0,0,0], fingers:[0,0,0,0,0,0], baseFret:1, label:'Super simples' },
+  ],
+  'F/C': [
+    { name:'F/C', frets:[-1,3,3,2,1,1], fingers:[0,3,4,2,1,1], baseFret:1, barres:[1], label:'Pestana' },
+  ],
+  'A/C#': [
+    { name:'A/C#', frets:[-1,4,2,2,2,0], fingers:[0,4,1,2,3,0], baseFret:1, label:'Aberto' },
+  ],
+  'D/A': [
+    { name:'D/A', frets:[-1,0,0,2,3,2], fingers:[0,0,0,1,3,2], baseFret:1, label:'Aberto' },
+  ],
+
+  // ─── OUTROS ────────────────────────────────────────────
+  'Cadd9': [
+    { name:'Cadd9', frets:[-1,3,2,0,3,0], fingers:[0,2,1,0,3,0], baseFret:1, label:'Aberto' },
+  ],
+  'Gadd9': [
+    { name:'Gadd9', frets:[3,2,0,2,0,3], fingers:[2,1,0,3,0,4], baseFret:1, label:'Aberto' },
+  ],
+  'Dadd9': [
+    { name:'Dadd9', frets:[-1,-1,0,2,3,0], fingers:[0,0,0,1,3,0], baseFret:1, label:'Aberto' },
+  ],
+  'A6': [
+    { name:'A6', frets:[-1,0,2,2,2,2], fingers:[0,0,1,1,1,1], baseFret:1, barres:[2], label:'Aberto' },
+  ],
 };
 
-// Alias common enharmonic names
-const ALIASES: Record<string, string> = {
-  'Cmaj7': 'C7M', 'Fmaj7': 'F7M', 'Gmaj7': 'G7M',
-};
-
-export function getChordDiagram(chordName: string): ChordDiagram | null {
-  // Strip slash (bass note) for lookup
+export function getChordDiagrams(chordName: string): ChordDiagram[] {
   const baseChord = chordName.split('/')[0];
-  if (DIAGRAMS[baseChord]) return DIAGRAMS[baseChord];
-  if (ALIASES[baseChord] && DIAGRAMS[ALIASES[baseChord]]) return DIAGRAMS[ALIASES[baseChord]];
-  return null;
+  const full = chordName.trim();
+
+  // Try full name first (for inversions like D/F#)
+  if (DB[full]) return DB[full];
+  if (DB[baseChord]) return DB[baseChord];
+  return [];
+}
+
+// Backwards compat
+export function getChordDiagram(chordName: string): ChordDiagram | null {
+  const list = getChordDiagrams(chordName);
+  return list.length > 0 ? list[0] : null;
 }
