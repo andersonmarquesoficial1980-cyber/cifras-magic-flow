@@ -29,6 +29,7 @@ interface ImportResult {
 export function ImportadorLote() {
   const [open, setOpen] = useState(false);
   const [url, setUrl] = useState('');
+  const [genero, setGenero] = useState('');
   const [songs, setSongs] = useState<SongLink[]>([]);
   const [status, setStatus] = useState<ImportStatus>('idle');
   const [scanError, setScanError] = useState('');
