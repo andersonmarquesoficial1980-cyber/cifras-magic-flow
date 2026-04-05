@@ -34,6 +34,7 @@ export function CifraViewer({ musica }: CifraViewerProps) {
   const [capoOpen, setCapoOpen] = useState(false);
   const scrollRef = useRef<number | null>(null);
   const toggleFav = useToggleFavorite();
+  const navigate = useNavigate();
 
   useWakeLock(performanceMode);
 
