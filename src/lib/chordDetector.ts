@@ -1,4 +1,4 @@
-import { chordToDegree } from './transpose';
+import { chordToDegree, chordToOrdinal } from './transpose';
 
 // Regex to match common chord patterns like G, Am, D/F#, Cmaj7, Bb7, G9, Em7(b5), etc.
 const CHORD_RE = /\b([A-G][#b]?)(m|maj|min|dim|aug|sus[24]?|add)?(\d+)?(M)?(\([#b]?\d+\))?(\/[A-G][#b]?)?/g;
@@ -48,4 +48,8 @@ export function tokenizeChordLine(line: string): ChordToken[] {
  */
 export function chordToGrau(chord: string, key: string): string {
   return chordToDegree(chord, key);
+}
+
+export function chordToOrdinalDegree(chord: string, key: string): string {
+  return chordToOrdinal(chord, key);
 }

@@ -3,18 +3,20 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, Zap } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { Musica } from '@/hooks/useMusicas';
-import { isChordLine, tokenizeChordLine, chordToGrau } from '@/lib/chordDetector';
+import { isChordLine, tokenizeChordLine, chordToGrau, chordToOrdinalDegree } from '@/lib/chordDetector';
+import type { DisplayMode } from '@/lib/transpose';
 import { Slider } from '@/components/ui/slider';
 import { MetronomBar } from '@/components/MetronomBar';
 import { FlowFooter } from '@/components/FlowFooter';
 import { useWakeLock } from '@/hooks/useWakeLock';
+import { Badge } from '@/components/ui/badge';
 
 interface CifraViewerProps {
   musica: Musica;
 }
 
 export function CifraViewer({ musica }: CifraViewerProps) {
-  const [modoGrau, setModoGrau] = useState(false);
+  const [displayMode, setDisplayMode] = useState<DisplayMode>('cifra');
   const [fontSize, setFontSize] = useState(16);
   const [metronomeActive, setMetronomeActive] = useState(false);
   const [performanceMode, setPerformanceMode] = useState(false);
@@ -42,8 +44,18 @@ export function CifraViewer({ musica }: CifraViewerProps) {
 
   const lines = musica.letra_cifrada.split('\n');
 
+  const MODES: DisplayMode[] = ['cifra', 'grau', 'ordinal'];
+  const MODE_LABELS: Record<DisplayMode, string> = { cifra: 'Cifra', grau: 'Grau', ordinal: 'Ordinal' };
+  const MODE_COLORS: Record<DisplayMode, string> = { cifra: 'text-chord', grau: 'text-[#A855F7]', ordinal: 'text-[#10B981]' };
+
+  function cycleMode() {
+    const idx = MODES.indexOf(displayMode);
+    setDisplayMode(MODES[(idx + 1) % MODES.length]);
+  }
+
   function renderChordValue(chord: string): string {
-    if (modoGrau) return chordToGrau(chord, musica.tom_original);
+    if (displayMode === 'grau') return chordToGrau(chord, musica.tom_original);
+    if (displayMode === 'ordinal') return chordToOrdinalDegree(chord, musica.tom_original);
     return chord;
   }
 
@@ -91,16 +103,25 @@ export function CifraViewer({ musica }: CifraViewerProps) {
             >
               <svg xmlns="http://www.w3.org/2000/svg" width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v4"/><path d="m15.2 7.6 2.4-2.4"/><path d="M16 12h4"/><path d="M7.8 16.4 5.4 18.8"/><path d="M12 18v4"/><path d="M4 12H2"/><circle cx="12" cy="12" r="4"/></svg>
             </button>
-            {/* Mode toggle */}
+            {/* Mode cycle toggle */}
             <button
-              onClick={() => setModoGrau(!modoGrau)}
-              className={`${btnText} rounded-lg font-mono font-semibold transition-all border ${
-                modoGrau
-                  ? 'bg-grau text-white border-grau'
+              onClick={cycleMode}
+              className={`${btnText} rounded-lg font-mono font-semibold transition-all border flex items-center gap-2 ${
+                displayMode !== 'cifra'
+                  ? displayMode === 'grau'
+                    ? 'bg-[#A855F7]/20 text-[#A855F7] border-[#A855F7]'
+                    : 'bg-[#10B981]/20 text-[#10B981] border-[#10B981]'
                   : 'border-border text-muted-foreground hover:text-foreground hover:border-chord'
               }`}
             >
-              {modoGrau ? 'Modo Grau' : 'Modo Cifra'}
+              {MODE_LABELS[displayMode]}
+              <Badge className={`text-[10px] px-1.5 py-0 ${
+                displayMode === 'cifra' ? 'bg-chord/20 text-chord border-chord' :
+                displayMode === 'grau' ? 'bg-[#A855F7]/20 text-[#A855F7] border-[#A855F7]' :
+                'bg-[#10B981]/20 text-[#10B981] border-[#10B981]'
+              }`} variant="outline">
+                {displayMode === 'cifra' ? '1' : displayMode === 'grau' ? '2' : '3'}
+              </Badge>
             </button>
           </div>
         </div>
@@ -158,7 +179,7 @@ export function CifraViewer({ musica }: CifraViewerProps) {
                     tok.type === 'chord' ? (
                       <span
                         key={ti}
-                        className={`font-bold ${modoGrau ? 'text-[#A855F7]' : 'text-chord'}`}
+                        className={`font-bold ${MODE_COLORS[displayMode]}`}
                       >
                         {renderChordValue(tok.value)}
                       </span>
