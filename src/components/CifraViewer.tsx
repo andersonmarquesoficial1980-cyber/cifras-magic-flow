@@ -17,6 +17,7 @@ interface CifraViewerProps {
 
 export function CifraViewer({ musica }: CifraViewerProps) {
   const [displayMode, setDisplayMode] = useState<DisplayMode>('cifra');
+  const [fontSize, setFontSize] = useState(16);
   const [metronomeActive, setMetronomeActive] = useState(false);
   const [performanceMode, setPerformanceMode] = useState(false);
   const [autoScrollSpeed, setAutoScrollSpeed] = useState(0); // 0 = off, 1-10
