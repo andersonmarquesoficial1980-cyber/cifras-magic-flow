@@ -1,7 +1,8 @@
 import { motion } from 'framer-motion';
-import { Music } from 'lucide-react';
+import { Music, Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { Musica } from '@/hooks/useMusicas';
+import { useToggleFavorite } from '@/hooks/useToggleFavorite';
 
 interface SongCardProps {
   musica: Musica;
@@ -23,6 +24,7 @@ function getVibeStyle(vibe: string): string {
 }
 
 export function SongCard({ musica, index }: SongCardProps) {
+  const toggleFav = useToggleFavorite();
   const vibes = musica.vibe
     ? musica.vibe.split(',').map(v => v.trim()).filter(Boolean)
     : [];
@@ -70,6 +72,21 @@ export function SongCard({ musica, index }: SongCardProps) {
             <span className="text-[10px] text-muted-foreground font-mono">{musica.bpm} bpm</span>
           )}
         </div>
+
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleFav.mutate({ id: musica.id, isFavorite: !!musica.is_favorite });
+          }}
+          className="shrink-0 p-1.5 rounded-full hover:bg-white/10 transition-colors"
+        >
+          <Star
+            className={`h-4 w-4 transition-colors ${
+              musica.is_favorite ? 'text-chord fill-chord' : 'text-muted-foreground hover:text-chord'
+            }`}
+          />
+        </button>
       </Link>
     </motion.div>
   );
