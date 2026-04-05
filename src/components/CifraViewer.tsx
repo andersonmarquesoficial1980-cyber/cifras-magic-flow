@@ -9,6 +9,7 @@ import type { DisplayMode } from '@/lib/transpose';
 import { Slider } from '@/components/ui/slider';
 import { MetronomBar } from '@/components/MetronomBar';
 import { FlowFooter } from '@/components/FlowFooter';
+import { AutoScrollBar } from '@/components/AutoScrollBar';
 import { useWakeLock } from '@/hooks/useWakeLock';
 import { Badge } from '@/components/ui/badge';
 import { HarmonicFieldBar } from '@/components/HarmonicFieldBar';
