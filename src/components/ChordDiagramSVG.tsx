@@ -37,12 +37,12 @@ export function ChordDiagramSVG({ diagram }: Props) {
         <text
           x={padLeft - 18}
           y={padTop + fretSpacing / 2 + 4}
-          fontSize={11}
+          fontSize={10}
           fill="#94A3B8"
           fontFamily="monospace"
           fontWeight="bold"
         >
-          {baseFret}
+          {baseFret}ª
         </text>
       )}
 
