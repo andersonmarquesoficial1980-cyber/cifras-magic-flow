@@ -186,7 +186,7 @@ const Estude = () => {
               transition={{ delay: i * 0.08 }}
             >
               <button
-                onClick={() => card.unlocked && startGame()}
+                onClick={() => card.unlocked && (card.route ? navigate(card.route) : startGame())}
                 disabled={!card.unlocked}
                 className={`w-full flex items-center gap-4 rounded-2xl border p-5 text-left transition-all ${
                   card.unlocked
