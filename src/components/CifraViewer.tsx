@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Zap, Eye, EyeOff, Plus, Minus, Feather } from 'lucide-react';
+import { ArrowLeft, Zap, Eye, EyeOff, Plus, Minus, Feather, Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { Musica } from '@/hooks/useMusicas';
 import { isChordLine, tokenizeChordLine, chordToGrau, chordToOrdinalDegree } from '@/lib/chordDetector';
@@ -13,6 +13,8 @@ import { useWakeLock } from '@/hooks/useWakeLock';
 import { Badge } from '@/components/ui/badge';
 import { HarmonicFieldBar } from '@/components/HarmonicFieldBar';
 import { ChordPopover } from '@/components/ChordPopover';
+import { useToggleFavorite } from '@/hooks/useToggleFavorite';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface CifraViewerProps {
   musica: Musica;
@@ -27,7 +29,9 @@ export function CifraViewer({ musica }: CifraViewerProps) {
   const [transposeSemitones, setTransposeSemitones] = useState(0);
   const [showHarmonicField, setShowHarmonicField] = useState(false);
   const [simplified, setSimplified] = useState(false);
+  const [isFav, setIsFav] = useState(!!musica.is_favorite);
   const scrollRef = useRef<number | null>(null);
+  const toggleFav = useToggleFavorite();
 
   useWakeLock(performanceMode);
 
@@ -85,10 +89,21 @@ export function CifraViewer({ musica }: CifraViewerProps) {
       {/* Sticky header */}
       <div className="sticky top-0 z-10 border-b border-border bg-background/95 backdrop-blur-xl">
         <div className="container mx-auto flex items-center justify-between px-4 py-3 max-w-3xl">
-          <Link to="/" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
-            <ArrowLeft className="h-4 w-4" />
-            <span className="text-sm font-body">Voltar</span>
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link to="/cifras" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+              <ArrowLeft className="h-4 w-4" />
+              <span className="text-sm font-body">Voltar</span>
+            </Link>
+            <button
+              onClick={() => {
+                setIsFav(!isFav);
+                toggleFav.mutate({ id: musica.id, isFavorite: isFav });
+              }}
+              className="p-1.5 rounded-full hover:bg-white/10 transition-colors"
+            >
+              <Star className={`h-4 w-4 transition-colors ${isFav ? 'text-chord fill-chord' : 'text-muted-foreground'}`} />
+            </button>
+          </div>
 
           <div className={`flex items-center ${performanceMode ? 'gap-4' : 'gap-3'}`}>
             {/* Simplified toggle */}
