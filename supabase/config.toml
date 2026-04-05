@@ -2,3 +2,6 @@ project_id = "duqzvstpszcaxizgmafj"
 
 [functions.suggest-medley]
 verify_jwt = false
+
+[functions.import-song]
+verify_jwt = false

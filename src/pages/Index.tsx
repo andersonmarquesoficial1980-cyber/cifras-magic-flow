@@ -4,6 +4,7 @@ import { Search, Music2 } from 'lucide-react';
 import { useMusicas } from '@/hooks/useMusicas';
 import { SongCard } from '@/components/SongCard';
 import { Input } from '@/components/ui/input';
+import { ImportadorFlash } from '@/components/ImportadorFlash';
 
 const Index = () => {
   const { data: musicas, isLoading } = useMusicas();
@@ -40,6 +41,15 @@ const Index = () => {
           >
             Cifras e letras com transposição e campo harmônico.
           </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.15 }}
+            className="mt-4"
+          >
+            <ImportadorFlash />
+          </motion.div>
 
           <motion.div
             initial={{ opacity: 0, y: 8 }}
