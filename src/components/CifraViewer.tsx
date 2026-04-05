@@ -285,7 +285,7 @@ export function CifraViewer({ musica }: CifraViewerProps) {
       </div>
 
       {/* Cifra content */}
-      <div className="container mx-auto px-4 pb-24 max-w-3xl">
+      <div className="container mx-auto px-4 pb-24 max-w-3xl" style={{ willChange: 'transform' }}>
         <pre
           className="mt-6 leading-relaxed whitespace-pre overflow-x-auto text-foreground/85"
           style={{ fontSize: `${fontSize}px`, fontFamily: "'Roboto Mono', 'Courier New', Courier, monospace" }}
