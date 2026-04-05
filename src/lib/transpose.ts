@@ -62,7 +62,12 @@ export function chordToDegree(chord: string, key: string): string {
   if (!match) return chord;
   const [, root, suffix] = match;
 
-  const keyIdx = noteIndex(key);
+  // Extract just the root note from the key (e.g., "Am" → "A", "C#m" → "C#")
+  const keyMatch = key.match(/^([A-G][#b]?)/);
+  if (!keyMatch) return chord;
+  const keyRoot = keyMatch[1];
+
+  const keyIdx = noteIndex(keyRoot);
   const chordIdx = noteIndex(root);
   if (keyIdx < 0 || chordIdx < 0) return chord;
 
