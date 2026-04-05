@@ -116,6 +116,7 @@ export function ImportadorLote() {
           tom_original: data.tom_original,
           bpm: data.bpm || 80,
           capo_fret: data.capo_fret || 0,
+          genero: genero || null,
           vibe: (data.vibe || []).join(', '),
           letra_cifrada: data.letra_cifrada,
         });
