@@ -115,7 +115,7 @@ export function chordToDegree(chord: string, key: string): string {
 
 export const ALL_KEYS = NOTES;
 
-export type DisplayMode = 'cifra' | 'grau';
+export type DisplayMode = 'cifra' | 'grau' | 'ordinal';
 
 /**
  * Parse a line like "[Am]Hello [G]world" into segments
