@@ -1,12 +1,19 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Music2, ArrowLeft } from 'lucide-react';
+import { Search, Music2, ArrowLeft, ChevronDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useMusicas } from '@/hooks/useMusicas';
 import { SongCard } from '@/components/SongCard';
 import { Input } from '@/components/ui/input';
 import { ImportadorFlash } from '@/components/ImportadorFlash';
 import { ImportadorLote } from '@/components/ImportadorLote';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 
 const VIBES = ['Todas', 'Animada', 'Romântica', 'Adoração', 'Pra Pular', 'Modão', 'Introspectiva'] as const;
 
@@ -27,8 +34,8 @@ const Index = () => {
   const [search, setSearch] = useState('');
   const [vibeFilter, setVibeFilter] = useState<string>('Todas');
   const [keyFilter, setKeyFilter] = useState<string>('');
+  const [activeTab, setActiveTab] = useState('todas');
 
-  // Get unique keys from the data
   const availableKeys = useMemo(() => {
     if (!musicas) return [];
     const keys = new Set(musicas.map(m => m.tom_original).filter(Boolean));
@@ -46,6 +53,74 @@ const Index = () => {
       return matchSearch && matchVibe && matchKey;
     });
   }, [musicas, search, vibeFilter, keyFilter]);
+
+  // Group by artist
+  const groupedByArtist = useMemo(() => {
+    const map = new Map<string, typeof filtered>();
+    filtered.forEach(m => {
+      const artist = m.artista || 'Sem artista';
+      if (!map.has(artist)) map.set(artist, []);
+      map.get(artist)!.push(m);
+    });
+    return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b));
+  }, [filtered]);
+
+  // Group by genre
+  const groupedByGenre = useMemo(() => {
+    const map = new Map<string, typeof filtered>();
+    filtered.forEach(m => {
+      const genre = m.genero || 'Sem gênero';
+      if (!map.has(genre)) map.set(genre, []);
+      map.get(genre)!.push(m);
+    });
+    return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b));
+  }, [filtered]);
+
+  const renderSkeletons = () => (
+    <div className="space-y-3">
+      {[...Array(5)].map((_, i) => (
+        <div key={i} className="h-[72px] animate-pulse rounded-lg bg-card" />
+      ))}
+    </div>
+  );
+
+  const renderEmpty = () => (
+    <div className="py-16 text-center">
+      <Music2 className="mx-auto h-10 w-10 text-muted-foreground/20" />
+      <p className="mt-3 text-sm text-muted-foreground font-body">
+        {search || vibeFilter !== 'Todas' || keyFilter
+          ? 'Nenhuma música encontrada com esses filtros.'
+          : 'Nenhuma música cadastrada.'}
+      </p>
+    </div>
+  );
+
+  const renderAccordionGroup = (groups: [string, typeof filtered][]) => (
+    <Accordion type="multiple" className="space-y-2">
+      {groups.map(([groupName, songs]) => (
+        <AccordionItem key={groupName} value={groupName} className="border border-border rounded-lg bg-card/50 overflow-hidden">
+          <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-card/80">
+            <div className="flex items-center gap-3">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/10">
+                <Music2 className="h-4 w-4 text-primary" />
+              </div>
+              <span className="font-display text-sm font-semibold text-foreground">{groupName}</span>
+              <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-mono text-muted-foreground">
+                {songs.length}
+              </span>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="px-2 pb-2">
+            <div className="space-y-1.5">
+              {songs.map((musica, i) => (
+                <SongCard key={musica.id} musica={musica} index={i} />
+              ))}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      ))}
+    </Accordion>
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -173,30 +248,43 @@ const Index = () => {
         </div>
       </div>
 
-      {/* List */}
+      {/* Content with tabs */}
       <div className="container mx-auto px-4 py-5 max-w-3xl">
-        {isLoading ? (
-          <div className="space-y-3">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="h-[72px] animate-pulse rounded-lg bg-card" />
-            ))}
-          </div>
-        ) : filtered && filtered.length > 0 ? (
-          <div className="space-y-2">
-            {filtered.map((musica, i) => (
-              <SongCard key={musica.id} musica={musica} index={i} />
-            ))}
-          </div>
-        ) : (
-          <div className="py-16 text-center">
-            <Music2 className="mx-auto h-10 w-10 text-muted-foreground/20" />
-            <p className="mt-3 text-sm text-muted-foreground font-body">
-              {search || vibeFilter !== 'Todas' || keyFilter
-                ? 'Nenhuma música encontrada com esses filtros.'
-                : 'Nenhuma música cadastrada.'}
-            </p>
-          </div>
-        )}
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="w-full bg-card border border-border mb-5">
+            <TabsTrigger value="todas" className="flex-1 text-xs font-body data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
+              Todas
+            </TabsTrigger>
+            <TabsTrigger value="artistas" className="flex-1 text-xs font-body data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
+              Artistas
+            </TabsTrigger>
+            <TabsTrigger value="generos" className="flex-1 text-xs font-body data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
+              Gêneros
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="todas">
+            {isLoading ? renderSkeletons() : filtered.length > 0 ? (
+              <div className="space-y-2">
+                {filtered.map((musica, i) => (
+                  <SongCard key={musica.id} musica={musica} index={i} />
+                ))}
+              </div>
+            ) : renderEmpty()}
+          </TabsContent>
+
+          <TabsContent value="artistas">
+            {isLoading ? renderSkeletons() : groupedByArtist.length > 0
+              ? renderAccordionGroup(groupedByArtist)
+              : renderEmpty()}
+          </TabsContent>
+
+          <TabsContent value="generos">
+            {isLoading ? renderSkeletons() : groupedByGenre.length > 0
+              ? renderAccordionGroup(groupedByGenre)
+              : renderEmpty()}
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
