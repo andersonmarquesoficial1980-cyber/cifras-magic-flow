@@ -221,6 +221,23 @@ export function ImportadorLote() {
             )}
           </div>
 
+          {/* Genre Selector */}
+          <div className="space-y-1">
+            <label className="text-xs text-muted-foreground font-body">
+              Gênero (aplicado a todas as músicas importadas)
+            </label>
+            <Select value={genero} onValueChange={setGenero}>
+              <SelectTrigger className="bg-background border-border text-sm">
+                <SelectValue placeholder="Selecione o gênero..." />
+              </SelectTrigger>
+              <SelectContent>
+                {GENEROS.map(g => (
+                  <SelectItem key={g} value={g}>{g}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* Song List */}
           {songs.length > 0 && status !== 'done' && (
             <>
