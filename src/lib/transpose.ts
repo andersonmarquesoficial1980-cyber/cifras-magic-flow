@@ -115,6 +115,43 @@ export function chordToDegree(chord: string, key: string): string {
 
 export const ALL_KEYS = NOTES;
 
+const ORDINAL_LABELS = ['1º', '2º', '3º', '4º', '5º', '6º', '7º'];
+
+export function chordToOrdinal(chord: string, key: string): string {
+  // Handle slash chords
+  const slashIdx = chord.indexOf('/');
+  if (slashIdx > 0) {
+    const main = chord.slice(0, slashIdx);
+    const bass = chord.slice(slashIdx + 1);
+    return chordToOrdinal(main, key) + '/' + chordToOrdinal(bass, key);
+  }
+
+  const match = chord.match(/^([A-G][#b]?)(.*)/);
+  if (!match) return chord;
+  const [, root, suffix] = match;
+
+  const keyMatch = key.match(/^([A-G][#b]?)/);
+  if (!keyMatch) return chord;
+  const keyRoot = keyMatch[1];
+
+  const keyIdx = noteIndex(keyRoot);
+  const chordIdx = noteIndex(root);
+  if (keyIdx < 0 || chordIdx < 0) return chord;
+
+  const interval = ((chordIdx - keyIdx) % 12 + 12) % 12;
+
+  let degreeIdx = MAJOR_INTERVALS.indexOf(interval);
+  if (degreeIdx < 0) {
+    const sharpIdx = MAJOR_INTERVALS.indexOf((interval + 1) % 12);
+    const flatIdx = MAJOR_INTERVALS.indexOf((interval - 1 + 12) % 12);
+    if (sharpIdx >= 0) degreeIdx = sharpIdx;
+    else if (flatIdx >= 0) degreeIdx = flatIdx;
+    else return chord;
+  }
+
+  return ORDINAL_LABELS[degreeIdx] + suffix;
+}
+
 export type DisplayMode = 'cifra' | 'grau' | 'ordinal';
 
 /**
