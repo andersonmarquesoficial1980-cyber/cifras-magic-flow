@@ -103,16 +103,25 @@ export function CifraViewer({ musica }: CifraViewerProps) {
             >
               <svg xmlns="http://www.w3.org/2000/svg" width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v4"/><path d="m15.2 7.6 2.4-2.4"/><path d="M16 12h4"/><path d="M7.8 16.4 5.4 18.8"/><path d="M12 18v4"/><path d="M4 12H2"/><circle cx="12" cy="12" r="4"/></svg>
             </button>
-            {/* Mode toggle */}
+            {/* Mode cycle toggle */}
             <button
-              onClick={() => setModoGrau(!modoGrau)}
-              className={`${btnText} rounded-lg font-mono font-semibold transition-all border ${
-                modoGrau
-                  ? 'bg-grau text-white border-grau'
+              onClick={cycleMode}
+              className={`${btnText} rounded-lg font-mono font-semibold transition-all border flex items-center gap-2 ${
+                displayMode !== 'cifra'
+                  ? displayMode === 'grau'
+                    ? 'bg-[#A855F7]/20 text-[#A855F7] border-[#A855F7]'
+                    : 'bg-[#10B981]/20 text-[#10B981] border-[#10B981]'
                   : 'border-border text-muted-foreground hover:text-foreground hover:border-chord'
               }`}
             >
-              {modoGrau ? 'Modo Grau' : 'Modo Cifra'}
+              {MODE_LABELS[displayMode]}
+              <Badge className={`text-[10px] px-1.5 py-0 ${
+                displayMode === 'cifra' ? 'bg-chord/20 text-chord border-chord' :
+                displayMode === 'grau' ? 'bg-[#A855F7]/20 text-[#A855F7] border-[#A855F7]' :
+                'bg-[#10B981]/20 text-[#10B981] border-[#10B981]'
+              }`} variant="outline">
+                {displayMode === 'cifra' ? '1' : displayMode === 'grau' ? '2' : '3'}
+              </Badge>
             </button>
           </div>
         </div>
