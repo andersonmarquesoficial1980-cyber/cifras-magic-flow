@@ -179,7 +179,7 @@ export function CifraViewer({ musica }: CifraViewerProps) {
                     tok.type === 'chord' ? (
                       <span
                         key={ti}
-                        className={`font-bold ${modoGrau ? 'text-[#A855F7]' : 'text-chord'}`}
+                        className={`font-bold ${MODE_COLORS[displayMode]}`}
                       >
                         {renderChordValue(tok.value)}
                       </span>
