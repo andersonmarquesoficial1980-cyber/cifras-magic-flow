@@ -16,7 +16,7 @@ export function ChordDiagramSVG({ diagram }: Props) {
   const h = padTop + numFrets * fretSpacing + 12;
   const dotR = 7;
 
-  const fingerLabel = (f: number) => (f === 5 ? 'T' : f > 0 ? String(f) : '');
+  const fingerLabel = (f: number) => (f > 0 && f <= 4 ? String(f) : '');
 
   return (
     <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="block">
