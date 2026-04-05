@@ -49,18 +49,23 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="border-b border-border">
-        <div className="container mx-auto px-4 pt-10 pb-6 max-w-3xl">
+      <div className="sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur-xl">
+        <div className="container mx-auto px-4 pt-6 pb-4 max-w-3xl">
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             className="flex items-center gap-3"
           >
+            <Link to="/" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mr-2">
+              <ArrowLeft className="h-5 w-5" />
+              <span className="text-sm font-body">Voltar</span>
+            </Link>
+            <div className="h-5 w-px bg-border" />
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
               <Music2 className="h-5 w-5 text-primary-foreground" />
             </div>
-            <h1 className="font-display text-3xl font-bold text-foreground tracking-tight">
-              Cifras Flow
+            <h1 className="font-display text-2xl font-bold text-foreground tracking-tight">
+              Cifras
             </h1>
           </motion.div>
           <motion.p
