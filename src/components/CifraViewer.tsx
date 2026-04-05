@@ -91,6 +91,18 @@ export function CifraViewer({ musica }: CifraViewerProps) {
           </Link>
 
           <div className={`flex items-center ${performanceMode ? 'gap-4' : 'gap-3'}`}>
+            {/* Simplified toggle */}
+            <button
+              onClick={() => setSimplified(!simplified)}
+              className={`${btnSize} rounded-lg transition-all border ${
+                simplified
+                  ? 'bg-[#F97316]/20 border-[#F97316] text-[#F97316]'
+                  : 'border-border text-muted-foreground hover:text-foreground'
+              }`}
+              title="Cifra Simplificada"
+            >
+              <Feather size={iconSize} />
+            </button>
             {/* Harmonic field toggle */}
             <button
               onClick={() => setShowHarmonicField(!showHarmonicField)}
@@ -102,6 +114,7 @@ export function CifraViewer({ musica }: CifraViewerProps) {
               title="Campo Harmônico"
             >
               {showHarmonicField ? <EyeOff size={iconSize} /> : <Eye size={iconSize} />}
+            </button>
             </button>
             {/* Performance mode toggle */}
             <button
