@@ -92,7 +92,7 @@ export function chordToDegree(chord: string, key: string): string {
     }
   }
 
-  let degree = accidental + DEGREE_LABELS[degreeIdx];
+  let degree = DEGREE_LABELS[degreeIdx];
 
   const isMinor = suffix.startsWith('m') && !suffix.startsWith('maj');
   const isDim = suffix.startsWith('dim') || suffix.startsWith('°');
