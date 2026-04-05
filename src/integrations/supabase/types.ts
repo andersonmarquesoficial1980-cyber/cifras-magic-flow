@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      assinaturas: {
+        Row: {
+          id: string
+          plano: string | null
+          status: string | null
+          user_id: string | null
+          vencimento: string | null
+        }
+        Insert: {
+          id?: string
+          plano?: string | null
+          status?: string | null
+          user_id?: string | null
+          vencimento?: string | null
+        }
+        Update: {
+          id?: string
+          plano?: string | null
+          status?: string | null
+          user_id?: string | null
+          vencimento?: string | null
+        }
+        Relationships: []
+      }
       historico_flow: {
         Row: {
           id: string
@@ -47,6 +71,7 @@ export type Database = {
           criado_em: string | null
           genero: string | null
           id: string
+          is_favorite: boolean | null
           letra_cifrada: string
           titulo: string
           tom_original: string
@@ -58,6 +83,7 @@ export type Database = {
           criado_em?: string | null
           genero?: string | null
           id?: string
+          is_favorite?: boolean | null
           letra_cifrada: string
           titulo: string
           tom_original: string
@@ -69,6 +95,7 @@ export type Database = {
           criado_em?: string | null
           genero?: string | null
           id?: string
+          is_favorite?: boolean | null
           letra_cifrada?: string
           titulo?: string
           tom_original?: string
