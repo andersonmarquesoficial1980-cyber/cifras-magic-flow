@@ -6,6 +6,7 @@ import { useMusicas } from '@/hooks/useMusicas';
 import { SongCard } from '@/components/SongCard';
 import { Input } from '@/components/ui/input';
 import { ImportadorFlash } from '@/components/ImportadorFlash';
+import { ImportadorLote } from '@/components/ImportadorLote';
 
 const VIBES = ['Todas', 'Animada', 'Romântica', 'Adoração', 'Pra Pular', 'Modão', 'Introspectiva'] as const;
 
@@ -83,7 +84,10 @@ const Index = () => {
             transition={{ delay: 0.15 }}
             className="mt-4"
           >
-            <ImportadorFlash />
+            <div className="flex flex-wrap gap-2">
+              <ImportadorFlash />
+              <ImportadorLote />
+            </div>
           </motion.div>
 
           {/* Search */}
