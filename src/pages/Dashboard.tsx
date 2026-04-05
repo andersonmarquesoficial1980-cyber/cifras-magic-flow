@@ -24,7 +24,7 @@ const GRID_ITEMS = [
   {
     label: 'Metrônomo',
     icon: Timer,
-    to: '#',
+    to: '/metronomo',
     color: 'from-[hsl(160,84%,39%)] to-[hsl(160,84%,28%)]',
     glow: 'shadow-[0_0_30px_-5px_hsl(160,84%,39%,0.3)]',
     iconColor: 'text-white',
