@@ -27,6 +27,7 @@ const App = () => (
           <Route path="/metronomo" element={<Metronomo />} />
           <Route path="/estude" element={<Estude />} />
           <Route path="/estude/ritmo" element={<MestreDoRitmo />} />
+          <Route path="/estude/ouvido" element={<OuvidoBionico />} />
           <Route path="/musica/:id" element={<MusicaDetail />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
