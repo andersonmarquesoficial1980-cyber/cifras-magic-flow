@@ -84,7 +84,10 @@ const Index = () => {
             transition={{ delay: 0.15 }}
             className="mt-4"
           >
-            <ImportadorFlash />
+            <div className="flex flex-wrap gap-2">
+              <ImportadorFlash />
+              <ImportadorLote />
+            </div>
           </motion.div>
 
           {/* Search */}
