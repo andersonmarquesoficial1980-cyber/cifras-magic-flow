@@ -109,6 +109,7 @@ const TOTAL_QUESTIONS = 10;
 const TRAIL = [
   { id: 'harmonic-field', title: 'Mestre do Campo Harmônico', desc: 'Identifique os graus de qualquer tom', icon: Star, unlocked: true, route: null },
   { id: 'rhythm-master', title: 'Mestre do Ritmo', desc: 'Treine batidas e levadas no tempo', icon: BookOpen, unlocked: true, route: '/estude/ritmo' },
+  { id: 'ear-training', title: 'Ouvido Biônico', desc: 'Identifique intervalos musicais de ouvido', icon: Zap, unlocked: true, route: '/estude/ouvido' },
   { id: 'inversions', title: 'Inversões & Baixos', desc: 'Domine acordes invertidos', icon: BookOpen, unlocked: false, route: null },
   { id: 'progressions', title: 'Progressões Famosas', desc: 'Reconheça I-V-VIm-IV e mais', icon: Trophy, unlocked: false, route: null },
 ];
