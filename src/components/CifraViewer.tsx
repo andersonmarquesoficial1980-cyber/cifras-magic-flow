@@ -3,11 +3,13 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, Zap } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { Musica } from '@/hooks/useMusicas';
-import { isChordLine, tokenizeChordLine, chordToGrau } from '@/lib/chordDetector';
+import { isChordLine, tokenizeChordLine, chordToGrau, chordToOrdinalDegree } from '@/lib/chordDetector';
+import type { DisplayMode } from '@/lib/transpose';
 import { Slider } from '@/components/ui/slider';
 import { MetronomBar } from '@/components/MetronomBar';
 import { FlowFooter } from '@/components/FlowFooter';
 import { useWakeLock } from '@/hooks/useWakeLock';
+import { Badge } from '@/components/ui/badge';
 
 interface CifraViewerProps {
   musica: Musica;
