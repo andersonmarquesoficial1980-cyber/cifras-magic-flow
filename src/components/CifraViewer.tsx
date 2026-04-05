@@ -1,15 +1,18 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Zap } from 'lucide-react';
+import { ArrowLeft, Zap, Eye, EyeOff, Plus, Minus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { Musica } from '@/hooks/useMusicas';
 import { isChordLine, tokenizeChordLine, chordToGrau, chordToOrdinalDegree } from '@/lib/chordDetector';
+import { transposeChord } from '@/lib/transpose';
 import type { DisplayMode } from '@/lib/transpose';
 import { Slider } from '@/components/ui/slider';
 import { MetronomBar } from '@/components/MetronomBar';
 import { FlowFooter } from '@/components/FlowFooter';
 import { useWakeLock } from '@/hooks/useWakeLock';
 import { Badge } from '@/components/ui/badge';
+import { HarmonicFieldBar } from '@/components/HarmonicFieldBar';
+import { ChordPopover } from '@/components/ChordPopover';
 
 interface CifraViewerProps {
   musica: Musica;
@@ -20,12 +23,13 @@ export function CifraViewer({ musica }: CifraViewerProps) {
   const [fontSize, setFontSize] = useState(16);
   const [metronomeActive, setMetronomeActive] = useState(false);
   const [performanceMode, setPerformanceMode] = useState(false);
-  const [autoScrollSpeed, setAutoScrollSpeed] = useState(0); // 0 = off, 1-10
+  const [autoScrollSpeed, setAutoScrollSpeed] = useState(0);
+  const [transposeSemitones, setTransposeSemitones] = useState(0);
+  const [showHarmonicField, setShowHarmonicField] = useState(false);
   const scrollRef = useRef<number | null>(null);
 
   useWakeLock(performanceMode);
 
-  // Auto-scroll logic
   useEffect(() => {
     if (autoScrollSpeed > 0 && performanceMode) {
       const pxPerFrame = autoScrollSpeed * 0.4;
@@ -34,15 +38,16 @@ export function CifraViewer({ musica }: CifraViewerProps) {
         scrollRef.current = requestAnimationFrame(scroll);
       };
       scrollRef.current = requestAnimationFrame(scroll);
-      return () => {
-        if (scrollRef.current) cancelAnimationFrame(scrollRef.current);
-      };
+      return () => { if (scrollRef.current) cancelAnimationFrame(scrollRef.current); };
     } else {
       if (scrollRef.current) cancelAnimationFrame(scrollRef.current);
     }
   }, [autoScrollSpeed, performanceMode]);
 
   const lines = musica.letra_cifrada.split('\n');
+
+  // Compute the displayed key
+  const displayedKey = transposeChord(musica.tom_original, transposeSemitones);
 
   const MODES: DisplayMode[] = ['cifra', 'grau', 'ordinal'];
   const MODE_LABELS: Record<DisplayMode, string> = { cifra: 'Cifra', grau: 'Grau', ordinal: 'Ordinal' };
@@ -54,9 +59,15 @@ export function CifraViewer({ musica }: CifraViewerProps) {
   }
 
   function renderChordValue(chord: string): string {
-    if (displayMode === 'grau') return chordToGrau(chord, musica.tom_original);
-    if (displayMode === 'ordinal') return chordToOrdinalDegree(chord, musica.tom_original);
-    return chord;
+    const transposed = transposeChord(chord, transposeSemitones);
+    if (displayMode === 'grau') return chordToGrau(transposed, displayedKey);
+    if (displayMode === 'ordinal') return chordToOrdinalDegree(transposed, displayedKey);
+    return transposed;
+  }
+
+  // For popover: get the transposed chord name
+  function getTransposedChord(chord: string): string {
+    return transposeChord(chord, transposeSemitones);
   }
 
   const btnSize = performanceMode ? 'p-3' : 'p-1.5';
@@ -70,15 +81,24 @@ export function CifraViewer({ musica }: CifraViewerProps) {
       {/* Sticky header */}
       <div className="sticky top-0 z-10 border-b border-border bg-background/95 backdrop-blur-xl">
         <div className="container mx-auto flex items-center justify-between px-4 py-3 max-w-3xl">
-          <Link
-            to="/"
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-          >
+          <Link to="/" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="h-4 w-4" />
             <span className="text-sm font-body">Voltar</span>
           </Link>
 
           <div className={`flex items-center ${performanceMode ? 'gap-4' : 'gap-3'}`}>
+            {/* Harmonic field toggle */}
+            <button
+              onClick={() => setShowHarmonicField(!showHarmonicField)}
+              className={`${btnSize} rounded-lg transition-all border ${
+                showHarmonicField
+                  ? 'bg-chord/20 border-chord text-chord'
+                  : 'border-border text-muted-foreground hover:text-foreground'
+              }`}
+              title="Campo Harmônico"
+            >
+              {showHarmonicField ? <EyeOff size={iconSize} /> : <Eye size={iconSize} />}
+            </button>
             {/* Performance mode toggle */}
             <button
               onClick={() => setPerformanceMode(!performanceMode)}
@@ -127,6 +147,11 @@ export function CifraViewer({ musica }: CifraViewerProps) {
         </div>
       </div>
 
+      {/* Harmonic field bar */}
+      {showHarmonicField && (
+        <HarmonicFieldBar keyName={musica.tom_original} transposeSemitones={transposeSemitones} />
+      )}
+
       {/* Song info */}
       <div className="container mx-auto px-4 pt-8 pb-2 max-w-3xl">
         <h1 className="font-display text-3xl font-bold text-foreground">{musica.titulo}</h1>
@@ -135,9 +160,33 @@ export function CifraViewer({ musica }: CifraViewerProps) {
         </p>
         <div className="mt-3 flex flex-wrap items-center gap-3">
           {musica.tom_original && (
-            <span className="rounded-full bg-secondary px-3 py-1 text-xs text-chord font-mono font-semibold">
-              Tom: {musica.tom_original}
-            </span>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setTransposeSemitones(s => s - 1)}
+                className="flex h-6 w-6 items-center justify-center rounded-md border border-border bg-secondary text-muted-foreground hover:text-foreground hover:border-chord transition-colors"
+                title="Meio tom abaixo"
+              >
+                <Minus size={12} />
+              </button>
+              <span className="rounded-full bg-secondary px-3 py-1 text-xs text-chord font-mono font-semibold min-w-[70px] text-center">
+                Tom: {displayedKey}
+              </span>
+              <button
+                onClick={() => setTransposeSemitones(s => s + 1)}
+                className="flex h-6 w-6 items-center justify-center rounded-md border border-border bg-secondary text-muted-foreground hover:text-foreground hover:border-chord transition-colors"
+                title="Meio tom acima"
+              >
+                <Plus size={12} />
+              </button>
+              {transposeSemitones !== 0 && (
+                <button
+                  onClick={() => setTransposeSemitones(0)}
+                  className="text-[10px] text-muted-foreground hover:text-foreground ml-1 font-mono underline"
+                >
+                  Reset
+                </button>
+              )}
+            </div>
           )}
           {musica.genero && (
             <span className="rounded-full bg-secondary px-3 py-1 text-xs text-secondary-foreground font-body">
@@ -177,12 +226,11 @@ export function CifraViewer({ musica }: CifraViewerProps) {
                 <div key={idx} className="min-h-[1.2em]">
                   {tokens.map((tok, ti) =>
                     tok.type === 'chord' ? (
-                      <span
-                        key={ti}
-                        className={`font-bold ${MODE_COLORS[displayMode]}`}
-                      >
-                        {renderChordValue(tok.value)}
-                      </span>
+                      <ChordPopover key={ti} chordName={getTransposedChord(tok.value)}>
+                        <span className={`font-bold cursor-pointer hover:underline ${MODE_COLORS[displayMode]}`}>
+                          {renderChordValue(tok.value)}
+                        </span>
+                      </ChordPopover>
                     ) : (
                       <span key={ti}>{tok.value}</span>
                     )
@@ -199,10 +247,10 @@ export function CifraViewer({ musica }: CifraViewerProps) {
         </pre>
       </div>
 
-      {/* Auto-scroll slider — fixed right side, visible only in performance mode */}
+      {/* Auto-scroll slider */}
       {performanceMode && (
         <div className="fixed right-3 top-1/2 -translate-y-1/2 z-20 flex flex-col items-center gap-2">
-          <span className="text-[10px] font-mono text-chord rotate-0">▲</span>
+          <span className="text-[10px] font-mono text-chord">▲</span>
           <Slider
             orientation="vertical"
             min={0}
