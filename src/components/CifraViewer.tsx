@@ -89,10 +89,21 @@ export function CifraViewer({ musica }: CifraViewerProps) {
       {/* Sticky header */}
       <div className="sticky top-0 z-10 border-b border-border bg-background/95 backdrop-blur-xl">
         <div className="container mx-auto flex items-center justify-between px-4 py-3 max-w-3xl">
-          <Link to="/" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
-            <ArrowLeft className="h-4 w-4" />
-            <span className="text-sm font-body">Voltar</span>
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link to="/cifras" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+              <ArrowLeft className="h-4 w-4" />
+              <span className="text-sm font-body">Voltar</span>
+            </Link>
+            <button
+              onClick={() => {
+                setIsFav(!isFav);
+                toggleFav.mutate({ id: musica.id, isFavorite: isFav });
+              }}
+              className="p-1.5 rounded-full hover:bg-white/10 transition-colors"
+            >
+              <Star className={`h-4 w-4 transition-colors ${isFav ? 'text-chord fill-chord' : 'text-muted-foreground'}`} />
+            </button>
+          </div>
 
           <div className={`flex items-center ${performanceMode ? 'gap-4' : 'gap-3'}`}>
             {/* Simplified toggle */}
