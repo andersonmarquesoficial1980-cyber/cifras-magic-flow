@@ -306,7 +306,7 @@ export function CifraViewer({ musica }: CifraViewerProps) {
             if (isChordLine(line)) {
               const tokens = tokenizeChordLine(line);
               return (
-                <div key={idx} className="min-h-[1.2em]">
+                <span key={idx} className="min-h-[1.2em] block">
                   {tokens.map((tok, ti) =>
                     tok.type === 'chord' ? (
                       <ChordPopover key={ti} chordName={getChordForPopover(tok.value)}>
@@ -315,10 +315,10 @@ export function CifraViewer({ musica }: CifraViewerProps) {
                         </span>
                       </ChordPopover>
                     ) : (
-                      <span key={ti}>{tok.value}</span>
+                      <span key={ti} style={{ whiteSpace: 'pre' }}>{tok.value}</span>
                     )
                   )}
-                </div>
+                </span>
               );
             }
             return (
