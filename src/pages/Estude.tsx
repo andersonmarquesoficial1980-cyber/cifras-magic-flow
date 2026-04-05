@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Trophy, BookOpen, Lock, Star, ChevronRight, RotateCcw } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 
@@ -107,14 +107,16 @@ const TOTAL_QUESTIONS = 10;
 // ── Trail cards ──
 
 const TRAIL = [
-  { id: 'harmonic-field', title: 'Mestre do Campo Harmônico', desc: 'Identifique os graus de qualquer tom', icon: Star, unlocked: true },
-  { id: 'inversions', title: 'Inversões & Baixos', desc: 'Domine acordes invertidos', icon: BookOpen, unlocked: false },
-  { id: 'progressions', title: 'Progressões Famosas', desc: 'Reconheça I-V-VIm-IV e mais', icon: Trophy, unlocked: false },
+  { id: 'harmonic-field', title: 'Mestre do Campo Harmônico', desc: 'Identifique os graus de qualquer tom', icon: Star, unlocked: true, route: null },
+  { id: 'rhythm-master', title: 'Mestre do Ritmo', desc: 'Treine batidas e levadas no tempo', icon: BookOpen, unlocked: true, route: '/estude/ritmo' },
+  { id: 'inversions', title: 'Inversões & Baixos', desc: 'Domine acordes invertidos', icon: BookOpen, unlocked: false, route: null },
+  { id: 'progressions', title: 'Progressões Famosas', desc: 'Reconheça I-V-VIm-IV e mais', icon: Trophy, unlocked: false, route: null },
 ];
 
 type GameState = 'trail' | 'playing' | 'result';
 
 const Estude = () => {
+  const navigate = useNavigate();
   const [gameState, setGameState] = useState<GameState>('trail');
   const [questionIdx, setQuestionIdx] = useState(0);
   const [score, setScore] = useState(0);
@@ -184,7 +186,7 @@ const Estude = () => {
               transition={{ delay: i * 0.08 }}
             >
               <button
-                onClick={() => card.unlocked && startGame()}
+                onClick={() => card.unlocked && (card.route ? navigate(card.route) : startGame())}
                 disabled={!card.unlocked}
                 className={`w-full flex items-center gap-4 rounded-2xl border p-5 text-left transition-all ${
                   card.unlocked

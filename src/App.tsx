@@ -10,6 +10,7 @@ import NotFound from "./pages/NotFound.tsx";
 import Afinador from "./pages/Afinador.tsx";
 import Metronomo from "./pages/Metronomo.tsx";
 import Estude from "./pages/Estude.tsx";
+import MestreDoRitmo from "./pages/MestreDoRitmo.tsx";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -24,6 +25,7 @@ const App = () => (
           <Route path="/afinador" element={<Afinador />} />
           <Route path="/metronomo" element={<Metronomo />} />
           <Route path="/estude" element={<Estude />} />
+          <Route path="/estude/ritmo" element={<MestreDoRitmo />} />
           <Route path="/musica/:id" element={<MusicaDetail />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
