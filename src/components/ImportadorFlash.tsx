@@ -204,7 +204,6 @@ export function ImportadorFlash() {
                 <span className="text-xs text-muted-foreground">detectado automaticamente</span>
               </div>
             )}
-            </div>
 
             {/* Vibe Tags */}
             <div className="p-4 rounded-lg bg-background border border-border">
