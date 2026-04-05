@@ -90,6 +90,7 @@ export function ImportadorFlash() {
         artista: preview.artista,
         tom_original: preview.tom_original,
         bpm: preview.bpm || 80,
+        capo_fret: preview.capo_fret || 0,
         vibe: selectedVibes.join(', '),
         letra_cifrada: preview.letra_cifrada,
       });
