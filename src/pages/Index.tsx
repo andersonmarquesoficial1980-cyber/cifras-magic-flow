@@ -4,6 +4,7 @@ import { Search, Music2 } from 'lucide-react';
 import { useMusicas } from '@/hooks/useMusicas';
 import { SongCard } from '@/components/SongCard';
 import { Input } from '@/components/ui/input';
+import { ImportadorFlash } from '@/components/ImportadorFlash';
 
 const Index = () => {
   const { data: musicas, isLoading } = useMusicas();
