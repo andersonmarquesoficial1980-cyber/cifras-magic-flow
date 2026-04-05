@@ -6,12 +6,10 @@ interface AutoScrollBarProps {
   bpm?: number | null;
 }
 
-// Progressive speed curve: slow crawl at 1, linear 2-6, aggressive 7-10
-function speedToPx(level: number): number {
-  if (level <= 1) return 0.2;
-  if (level <= 6) return 0.2 + (level - 1) * 0.3; // 0.5, 0.8, 1.1, 1.4, 1.7
-  // 7-10: exponential ramp
-  return 1.7 + Math.pow(level - 6, 1.6) * 0.8; // ~2.5, 3.7, 5.3, 7.3
+// Exponential curve: ultra-smooth at low levels, aggressive at high
+function speedToPxPerFrame(level: number): number {
+  // level 1→0.05, 2→0.12, 3→0.28, 4→0.55, 5→0.95, 6→1.5, 7→2.3, 8→3.5, 9→5.2, 10→7.5
+  return 0.05 * Math.pow(2.15, level - 1);
 }
 
 function bpmToDefaultSpeed(bpm: number): number {
@@ -29,9 +27,8 @@ export function AutoScrollBar({ bpm }: AutoScrollBarProps) {
   const [speed, setSpeed] = useState(defaultSpeed);
   const rafRef = useRef<number | null>(null);
   const playingRef = useRef(false);
-  const accRef = useRef(0);
+  const accumRef = useRef(0);
 
-  // Pause on manual scroll/touch
   useEffect(() => {
     const pause = () => { if (playingRef.current) setPlaying(false); };
     window.addEventListener('wheel', pause, { passive: true });
@@ -45,23 +42,24 @@ export function AutoScrollBar({ bpm }: AutoScrollBarProps) {
   useEffect(() => { playingRef.current = playing; }, [playing]);
 
   useEffect(() => {
-    if (playing && speed > 0) {
-      const pxPerFrame = speedToPx(speed);
-      accRef.current = 0;
-      const scroll = () => {
-        accRef.current += pxPerFrame;
-        if (accRef.current >= 1) {
-          const px = Math.floor(accRef.current);
-          window.scrollBy(0, px);
-          accRef.current -= px;
-        }
-        rafRef.current = requestAnimationFrame(scroll);
-      };
-      rafRef.current = requestAnimationFrame(scroll);
-      return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
-    } else {
+    if (!playing) {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      return;
     }
+    const pxPerFrame = speedToPxPerFrame(speed);
+    accumRef.current = 0;
+
+    const tick = () => {
+      accumRef.current += pxPerFrame;
+      if (accumRef.current >= 1) {
+        const whole = Math.floor(accumRef.current);
+        window.scrollBy(0, whole);
+        accumRef.current -= whole;
+      }
+      rafRef.current = requestAnimationFrame(tick);
+    };
+    rafRef.current = requestAnimationFrame(tick);
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
   }, [playing, speed]);
 
   return (
@@ -72,29 +70,12 @@ export function AutoScrollBar({ bpm }: AutoScrollBarProps) {
       >
         {playing ? <Pause size={18} /> : <Play size={18} />}
       </button>
-
-      <button
-        onClick={() => setSpeed(s => Math.max(1, s - 1))}
-        className="p-1 text-muted-foreground hover:text-foreground transition-colors"
-      >
+      <button onClick={() => setSpeed(s => Math.max(1, s - 1))} className="p-1 text-muted-foreground hover:text-foreground transition-colors">
         <Minus size={14} />
       </button>
-
-      <Slider
-        min={1}
-        max={10}
-        step={1}
-        value={[speed]}
-        onValueChange={([v]) => setSpeed(v)}
-        className="w-24"
-      />
-
+      <Slider min={1} max={10} step={1} value={[speed]} onValueChange={([v]) => setSpeed(v)} className="w-24" />
       <span className="text-xs font-mono text-muted-foreground w-4 text-center">{speed}</span>
-
-      <button
-        onClick={() => setSpeed(s => Math.min(10, s + 1))}
-        className="p-1 text-muted-foreground hover:text-foreground transition-colors"
-      >
+      <button onClick={() => setSpeed(s => Math.min(10, s + 1))} className="p-1 text-muted-foreground hover:text-foreground transition-colors">
         <Plus size={14} />
       </button>
     </div>
