@@ -318,25 +318,7 @@ export function CifraViewer({ musica }: CifraViewerProps) {
         </pre>
       </div>
 
-      {/* Auto-scroll slider */}
-      {performanceMode && (
-        <div className="fixed right-3 top-1/2 -translate-y-1/2 z-20 flex flex-col items-center gap-2">
-          <span className="text-[10px] font-mono text-chord">▲</span>
-          <Slider
-            orientation="vertical"
-            min={0}
-            max={10}
-            step={1}
-            value={[autoScrollSpeed]}
-            onValueChange={([v]) => setAutoScrollSpeed(v)}
-            className="h-32"
-          />
-          <span className="text-[10px] font-mono text-muted-foreground">
-            {autoScrollSpeed > 0 ? autoScrollSpeed : 'Off'}
-          </span>
-        </div>
-      )}
-
+      <AutoScrollBar />
       <FlowFooter musica={musica} />
     </motion.div>
   );
