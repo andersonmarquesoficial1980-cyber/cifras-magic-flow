@@ -230,7 +230,7 @@ export function CifraViewer({ musica }: CifraViewerProps) {
                 <div key={idx} className="min-h-[1.2em]">
                   {tokens.map((tok, ti) =>
                     tok.type === 'chord' ? (
-                      <ChordPopover key={ti} chordName={getTransposedChord(tok.value)}>
+                      <ChordPopover key={ti} chordName={getChordForPopover(tok.value)}>
                         <span className={`font-bold cursor-pointer hover:underline ${MODE_COLORS[displayMode]}`}>
                           {renderChordValue(tok.value)}
                         </span>
