@@ -5,9 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
+
+const GENEROS = ['Gospel', 'Rock', 'MPB', 'Sertanejo', 'Pop', 'Forró', 'Pagode', 'Axé', 'Reggae', 'Blues', 'Jazz', 'Country', 'Funk', 'Worship', 'Outro'] as const;
 
 interface SongLink {
   titulo: string;
@@ -26,6 +29,7 @@ interface ImportResult {
 export function ImportadorLote() {
   const [open, setOpen] = useState(false);
   const [url, setUrl] = useState('');
+  const [genero, setGenero] = useState('');
   const [songs, setSongs] = useState<SongLink[]>([]);
   const [status, setStatus] = useState<ImportStatus>('idle');
   const [scanError, setScanError] = useState('');
@@ -38,6 +42,7 @@ export function ImportadorLote() {
 
   const reset = () => {
     setUrl('');
+    setGenero('');
     setSongs([]);
     setStatus('idle');
     setScanError('');
@@ -111,6 +116,7 @@ export function ImportadorLote() {
           tom_original: data.tom_original,
           bpm: data.bpm || 80,
           capo_fret: data.capo_fret || 0,
+          genero: genero || null,
           vibe: (data.vibe || []).join(', '),
           letra_cifrada: data.letra_cifrada,
         });
@@ -138,7 +144,7 @@ export function ImportadorLote() {
       title: `✅ Importação concluída`,
       description: `${successes} de ${importResults.length} músicas importadas com sucesso.`,
     });
-  }, [songs, queryClient, toast]);
+  }, [songs, genero, queryClient, toast]);
 
   const handleAbort = () => {
     abortRef.current = true;
@@ -213,6 +219,23 @@ export function ImportadorLote() {
                 <span className="text-sm text-destructive font-body">{scanError}</span>
               </div>
             )}
+          </div>
+
+          {/* Genre Selector */}
+          <div className="space-y-1">
+            <label className="text-xs text-muted-foreground font-body">
+              Gênero (aplicado a todas as músicas importadas)
+            </label>
+            <Select value={genero} onValueChange={setGenero}>
+              <SelectTrigger className="bg-background border-border text-sm">
+                <SelectValue placeholder="Selecione o gênero..." />
+              </SelectTrigger>
+              <SelectContent>
+                {GENEROS.map(g => (
+                  <SelectItem key={g} value={g}>{g}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Song List */}
