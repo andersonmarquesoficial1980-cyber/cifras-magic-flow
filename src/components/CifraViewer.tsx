@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Music } from 'lucide-react';
+import { ArrowLeft, MetronomeIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { Musica } from '@/hooks/useMusicas';
 import { isChordLine, tokenizeChordLine, chordToGrau } from '@/lib/chordDetector';
 import { Slider } from '@/components/ui/slider';
+import { MetronomBar } from '@/components/MetronomBar';
+import { FlowFooter } from '@/components/FlowFooter';
 
 interface CifraViewerProps {
   musica: Musica;
@@ -13,6 +15,7 @@ interface CifraViewerProps {
 export function CifraViewer({ musica }: CifraViewerProps) {
   const [modoGrau, setModoGrau] = useState(false);
   const [fontSize, setFontSize] = useState(16);
+  const [metronomeActive, setMetronomeActive] = useState(false);
 
   const lines = musica.letra_cifrada.split('\n');
 
