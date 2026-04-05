@@ -1,43 +1,60 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Play, Pause, Minus, Plus } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 
-export function AutoScrollBar() {
+interface AutoScrollBarProps {
+  bpm?: number | null;
+}
+
+// Progressive speed curve: slow crawl at 1, linear 2-6, aggressive 7-10
+function speedToPx(level: number): number {
+  if (level <= 1) return 0.2;
+  if (level <= 6) return 0.2 + (level - 1) * 0.3; // 0.5, 0.8, 1.1, 1.4, 1.7
+  // 7-10: exponential ramp
+  return 1.7 + Math.pow(level - 6, 1.6) * 0.8; // ~2.5, 3.7, 5.3, 7.3
+}
+
+function bpmToDefaultSpeed(bpm: number): number {
+  if (bpm <= 0) return 3;
+  if (bpm < 70) return 2;
+  if (bpm < 100) return 3;
+  if (bpm < 130) return 4;
+  if (bpm < 160) return 5;
+  return 6;
+}
+
+export function AutoScrollBar({ bpm }: AutoScrollBarProps) {
+  const defaultSpeed = bpm && bpm > 0 ? bpmToDefaultSpeed(bpm) : 2;
   const [playing, setPlaying] = useState(false);
-  const [speed, setSpeed] = useState(2);
+  const [speed, setSpeed] = useState(defaultSpeed);
   const rafRef = useRef<number | null>(null);
   const playingRef = useRef(false);
+  const accRef = useRef(0);
 
-  // Pause on manual scroll
+  // Pause on manual scroll/touch
   useEffect(() => {
-    let timeout: ReturnType<typeof setTimeout>;
-    const onWheel = () => {
-      if (playingRef.current) {
-        setPlaying(false);
-      }
-    };
-    const onTouchStart = () => {
-      if (playingRef.current) {
-        setPlaying(false);
-      }
-    };
-    window.addEventListener('wheel', onWheel, { passive: true });
-    window.addEventListener('touchstart', onTouchStart, { passive: true });
+    const pause = () => { if (playingRef.current) setPlaying(false); };
+    window.addEventListener('wheel', pause, { passive: true });
+    window.addEventListener('touchstart', pause, { passive: true });
     return () => {
-      window.removeEventListener('wheel', onWheel);
-      window.removeEventListener('touchstart', onTouchStart);
+      window.removeEventListener('wheel', pause);
+      window.removeEventListener('touchstart', pause);
     };
   }, []);
 
-  useEffect(() => {
-    playingRef.current = playing;
-  }, [playing]);
+  useEffect(() => { playingRef.current = playing; }, [playing]);
 
   useEffect(() => {
     if (playing && speed > 0) {
-      const pxPerFrame = speed * 0.35;
+      const pxPerFrame = speedToPx(speed);
+      accRef.current = 0;
       const scroll = () => {
-        window.scrollBy(0, pxPerFrame);
+        accRef.current += pxPerFrame;
+        if (accRef.current >= 1) {
+          const px = Math.floor(accRef.current);
+          window.scrollBy(0, px);
+          accRef.current -= px;
+        }
         rafRef.current = requestAnimationFrame(scroll);
       };
       rafRef.current = requestAnimationFrame(scroll);
