@@ -27,7 +27,8 @@ export function CifraViewer({ musica }: CifraViewerProps) {
   }
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="min-h-screen">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="min-h-screen pb-16">
+      <MetronomBar bpm={musica.bpm ?? 0} active={metronomeActive} />
       {/* Sticky header */}
       <div className="sticky top-0 z-10 border-b border-border bg-background/95 backdrop-blur-xl">
         <div className="container mx-auto flex items-center justify-between px-4 py-3 max-w-3xl">
