@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Zap, Eye, EyeOff, Plus, Minus } from 'lucide-react';
+import { ArrowLeft, Zap, Eye, EyeOff, Plus, Minus, Feather } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { Musica } from '@/hooks/useMusicas';
 import { isChordLine, tokenizeChordLine, chordToGrau, chordToOrdinalDegree } from '@/lib/chordDetector';
-import { transposeChord } from '@/lib/transpose';
+import { transposeChord, simplifyChord } from '@/lib/transpose';
 import type { DisplayMode } from '@/lib/transpose';
 import { Slider } from '@/components/ui/slider';
 import { MetronomBar } from '@/components/MetronomBar';
@@ -26,6 +26,7 @@ export function CifraViewer({ musica }: CifraViewerProps) {
   const [autoScrollSpeed, setAutoScrollSpeed] = useState(0);
   const [transposeSemitones, setTransposeSemitones] = useState(0);
   const [showHarmonicField, setShowHarmonicField] = useState(false);
+  const [simplified, setSimplified] = useState(false);
   const scrollRef = useRef<number | null>(null);
 
   useWakeLock(performanceMode);
@@ -60,14 +61,17 @@ export function CifraViewer({ musica }: CifraViewerProps) {
 
   function renderChordValue(chord: string): string {
     const transposed = transposeChord(chord, transposeSemitones);
-    if (displayMode === 'grau') return chordToGrau(transposed, displayedKey);
-    if (displayMode === 'ordinal') return chordToOrdinalDegree(transposed, displayedKey);
-    return transposed;
+    let result: string;
+    if (displayMode === 'grau') result = chordToGrau(transposed, displayedKey);
+    else if (displayMode === 'ordinal') result = chordToOrdinalDegree(transposed, displayedKey);
+    else result = transposed;
+    return simplified ? simplifyChord(result, displayMode) : result;
   }
 
-  // For popover: get the transposed chord name
-  function getTransposedChord(chord: string): string {
-    return transposeChord(chord, transposeSemitones);
+  // For popover: get the chord name used for diagram lookup
+  function getChordForPopover(chord: string): string {
+    const transposed = transposeChord(chord, transposeSemitones);
+    return simplified ? simplifyChord(transposed, 'cifra') : transposed;
   }
 
   const btnSize = performanceMode ? 'p-3' : 'p-1.5';
