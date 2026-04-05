@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Zap, Eye, EyeOff, Plus, Minus, Feather } from 'lucide-react';
+import { ArrowLeft, Zap, Eye, EyeOff, Plus, Minus, Feather, Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { Musica } from '@/hooks/useMusicas';
 import { isChordLine, tokenizeChordLine, chordToGrau, chordToOrdinalDegree } from '@/lib/chordDetector';
