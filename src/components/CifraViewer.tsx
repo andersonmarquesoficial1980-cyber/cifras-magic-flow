@@ -140,6 +140,8 @@ export function CifraViewer({ musica }: CifraViewerProps) {
           })}
         </pre>
       </div>
+
+      <FlowFooter />
     </motion.div>
   );
 }
