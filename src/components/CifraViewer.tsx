@@ -318,7 +318,7 @@ export function CifraViewer({ musica }: CifraViewerProps) {
         </pre>
       </div>
 
-      <AutoScrollBar />
+      <AutoScrollBar bpm={musica.bpm} />
       <FlowFooter musica={musica} />
     </motion.div>
   );
