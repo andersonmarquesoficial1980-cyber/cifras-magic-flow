@@ -141,7 +141,7 @@ export function CifraViewer({ musica }: CifraViewerProps) {
         </pre>
       </div>
 
-      <FlowFooter />
+      <FlowFooter musica={musica} />
     </motion.div>
   );
 }
