@@ -7,6 +7,7 @@ import Dashboard from "./pages/Dashboard.tsx";
 import Index from "./pages/Index.tsx";
 import MusicaDetail from "./pages/MusicaDetail.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import Afinador from "./pages/Afinador.tsx";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -18,6 +19,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/cifras" element={<Index />} />
+          <Route path="/afinador" element={<Afinador />} />
           <Route path="/musica/:id" element={<MusicaDetail />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
