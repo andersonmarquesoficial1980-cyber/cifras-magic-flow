@@ -42,6 +42,7 @@ export function ImportadorLote() {
 
   const reset = () => {
     setUrl('');
+    setGenero('');
     setSongs([]);
     setStatus('idle');
     setScanError('');
