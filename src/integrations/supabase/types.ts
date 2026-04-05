@@ -50,6 +50,7 @@ export type Database = {
           letra_cifrada: string
           titulo: string
           tom_original: string
+          vibe: string | null
         }
         Insert: {
           artista?: string | null
@@ -60,6 +61,7 @@ export type Database = {
           letra_cifrada: string
           titulo: string
           tom_original: string
+          vibe?: string | null
         }
         Update: {
           artista?: string | null
@@ -70,6 +72,7 @@ export type Database = {
           letra_cifrada?: string
           titulo?: string
           tom_original?: string
+          vibe?: string | null
         }
         Relationships: []
       }
