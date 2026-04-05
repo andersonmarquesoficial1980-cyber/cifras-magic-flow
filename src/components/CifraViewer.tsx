@@ -40,7 +40,19 @@ export function CifraViewer({ musica }: CifraViewerProps) {
             <span className="text-sm font-body">Voltar</span>
           </Link>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            {/* Metronome toggle */}
+            <button
+              onClick={() => setMetronomeActive(!metronomeActive)}
+              className={`p-1.5 rounded-lg transition-all border ${
+                metronomeActive
+                  ? 'bg-chord/20 border-chord text-chord'
+                  : 'border-border text-muted-foreground hover:text-foreground'
+              }`}
+              title="Metrônomo visual"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v4"/><path d="m15.2 7.6 2.4-2.4"/><path d="M16 12h4"/><path d="M7.8 16.4 5.4 18.8"/><path d="M12 18v4"/><path d="M4 12H2"/><circle cx="12" cy="12" r="4"/></svg>
+            </button>
             {/* Mode toggle */}
             <button
               onClick={() => setModoGrau(!modoGrau)}
