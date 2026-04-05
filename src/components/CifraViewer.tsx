@@ -26,7 +26,7 @@ export function CifraViewer({ musica }: CifraViewerProps) {
   const [fontSize, setFontSize] = useState(16);
   const [metronomeActive, setMetronomeActive] = useState(false);
   const [performanceMode, setPerformanceMode] = useState(false);
-  const [autoScrollSpeed, setAutoScrollSpeed] = useState(0);
+  
   const [transposeSemitones, setTransposeSemitones] = useState(0);
   const [showHarmonicField, setShowHarmonicField] = useState(false);
   const [simplified, setSimplified] = useState(false);
