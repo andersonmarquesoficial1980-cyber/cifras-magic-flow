@@ -69,7 +69,13 @@ export function ImportadorLote() {
       if (data?.error) throw new Error(data.error);
       if (!data?.songs?.length) throw new Error('Nenhuma música encontrada nesta página.');
 
-      setSongs(data.songs.map((s: any) => ({ ...s, selected: true })));
+      const songList = data.songs.map((s: any) => ({ ...s, selected: true }));
+      setSongs(songList);
+
+      // Check for duplicates
+      const dupes = await checkDuplicatesBatch(songList);
+      setDuplicateUrls(dupes);
+
       setStatus('idle');
     } catch (e: any) {
       setScanError(e.message || 'Erro ao escanear');
