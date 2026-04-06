@@ -32,6 +32,7 @@ export function ImportadorLote() {
   const [url, setUrl] = useState('');
   const [genero, setGenero] = useState('');
   const [songs, setSongs] = useState<SongLink[]>([]);
+  const [duplicateUrls, setDuplicateUrls] = useState<Set<string>>(new Set());
   const [status, setStatus] = useState<ImportStatus>('idle');
   const [scanError, setScanError] = useState('');
   const [current, setCurrent] = useState(0);
