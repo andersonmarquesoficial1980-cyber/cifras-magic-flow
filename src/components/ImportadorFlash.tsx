@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
+import { checkDuplicate } from '@/hooks/useDuplicateCheck';
+import { DuplicateConfirmDialog } from '@/components/DuplicateConfirmDialog';
 
 const VIBES_AVAILABLE = ['Animada', 'Romântica', 'Adoração', 'Pra Pular', 'Modão', 'Introspectiva'] as const;
 type Vibe = typeof VIBES_AVAILABLE[number];
@@ -38,6 +40,7 @@ export function ImportadorFlash() {
   const [preview, setPreview] = useState<SongPreview | null>(null);
   const [selectedVibes, setSelectedVibes] = useState<Vibe[]>([]);
   const [error, setError] = useState('');
+  const [showDupeDialog, setShowDupeDialog] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -82,7 +85,21 @@ export function ImportadorFlash() {
 
   const handleSave = async () => {
     if (!preview) return;
+
+    // Check for duplicates first
+    const isDupe = await checkDuplicate(preview.titulo, preview.artista);
+    if (isDupe) {
+      setShowDupeDialog(true);
+      return;
+    }
+
+    await doSave();
+  };
+
+  const doSave = async () => {
+    if (!preview) return;
     setSaving(true);
+    setShowDupeDialog(false);
 
     try {
       const { error: insertError } = await supabase.from('musicas').insert({
@@ -251,6 +268,13 @@ export function ImportadorFlash() {
             </div>
           </div>
         )}
+
+        <DuplicateConfirmDialog
+          open={showDupeDialog}
+          songTitle={preview?.titulo || ''}
+          onConfirm={doSave}
+          onCancel={() => setShowDupeDialog(false)}
+        />
       </DialogContent>
     </Dialog>
   );

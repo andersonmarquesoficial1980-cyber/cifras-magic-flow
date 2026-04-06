@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import { Package, Loader2, Search, CheckSquare, Square, Play, X, CheckCircle2, XCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { Package, Loader2, Search, CheckSquare, Square, Play, X, CheckCircle2, XCircle, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
+import { checkDuplicatesBatch } from '@/hooks/useDuplicateCheck';
 
 const GENEROS = ['Gospel', 'Rock', 'MPB', 'Sertanejo', 'Pop', 'Forró', 'Pagode', 'Axé', 'Reggae', 'Blues', 'Jazz', 'Country', 'Funk', 'Worship', 'Outro'] as const;
 
@@ -31,6 +32,7 @@ export function ImportadorLote() {
   const [url, setUrl] = useState('');
   const [genero, setGenero] = useState('');
   const [songs, setSongs] = useState<SongLink[]>([]);
+  const [duplicateUrls, setDuplicateUrls] = useState<Set<string>>(new Set());
   const [status, setStatus] = useState<ImportStatus>('idle');
   const [scanError, setScanError] = useState('');
   const [current, setCurrent] = useState(0);
@@ -43,6 +45,7 @@ export function ImportadorLote() {
   const reset = () => {
     setUrl('');
     setGenero('');
+    setDuplicateUrls(new Set());
     setSongs([]);
     setStatus('idle');
     setScanError('');
@@ -66,7 +69,13 @@ export function ImportadorLote() {
       if (data?.error) throw new Error(data.error);
       if (!data?.songs?.length) throw new Error('Nenhuma música encontrada nesta página.');
 
-      setSongs(data.songs.map((s: any) => ({ ...s, selected: true })));
+      const songList = data.songs.map((s: any) => ({ ...s, selected: true }));
+      setSongs(songList);
+
+      // Check for duplicates
+      const dupes = await checkDuplicatesBatch(songList);
+      setDuplicateUrls(dupes);
+
       setStatus('idle');
     } catch (e: any) {
       setScanError(e.message || 'Erro ao escanear');
@@ -244,6 +253,9 @@ export function ImportadorLote() {
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground font-body">
                   {songs.length} músicas encontradas · {selectedCount} selecionadas
+                  {duplicateUrls.size > 0 && (
+                    <span className="text-yellow-400 ml-1">· {duplicateUrls.size} já existem</span>
+                  )}
                 </span>
                 <Button variant="ghost" size="sm" onClick={toggleAll} className="text-xs text-orange-400 hover:text-orange-300">
                   {songs.every(s => s.selected) ? (
@@ -256,23 +268,32 @@ export function ImportadorLote() {
 
               <ScrollArea className="flex-1 max-h-[60vh] sm:max-h-[400px] rounded-lg border border-border bg-background overflow-y-auto">
                 <div className="divide-y divide-border pb-3">
-                  {songs.map((song, i) => (
-                    <button
-                      key={i}
-                      onClick={() => status === 'idle' && toggleSong(i)}
-                      className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-muted/30 ${
-                        status !== 'idle' ? 'opacity-60 cursor-default' : 'cursor-pointer'
-                      }`}
-                      disabled={status !== 'idle'}
-                    >
-                      {song.selected ? (
-                        <CheckSquare className="h-4 w-4 text-orange-400 shrink-0" />
-                      ) : (
-                        <Square className="h-4 w-4 text-muted-foreground shrink-0" />
-                      )}
-                      <span className="text-sm text-foreground font-body truncate">{song.titulo}</span>
-                    </button>
-                  ))}
+                  {songs.map((song, i) => {
+                    const isDupe = duplicateUrls.has(song.url);
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => status === 'idle' && toggleSong(i)}
+                        className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-muted/30 ${
+                          status !== 'idle' ? 'opacity-60 cursor-default' : 'cursor-pointer'
+                        }`}
+                        disabled={status !== 'idle'}
+                      >
+                        {song.selected ? (
+                          <CheckSquare className="h-4 w-4 text-orange-400 shrink-0" />
+                        ) : (
+                          <Square className="h-4 w-4 text-muted-foreground shrink-0" />
+                        )}
+                        <span className="text-sm text-foreground font-body truncate flex-1">{song.titulo}</span>
+                        {isDupe && (
+                          <span className="flex items-center gap-1 text-xs text-yellow-400 shrink-0">
+                            <AlertTriangle className="h-3.5 w-3.5" />
+                            Já existe
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               </ScrollArea>
 
