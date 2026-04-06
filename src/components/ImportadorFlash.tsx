@@ -268,6 +268,13 @@ export function ImportadorFlash() {
             </div>
           </div>
         )}
+
+        <DuplicateConfirmDialog
+          open={showDupeDialog}
+          songTitle={preview?.titulo || ''}
+          onConfirm={doSave}
+          onCancel={() => setShowDupeDialog(false)}
+        />
       </DialogContent>
     </Dialog>
   );

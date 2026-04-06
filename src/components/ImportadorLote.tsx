@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import { Package, Loader2, Search, CheckSquare, Square, Play, X, CheckCircle2, XCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { Package, Loader2, Search, CheckSquare, Square, Play, X, CheckCircle2, XCircle, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
+import { checkDuplicatesBatch } from '@/hooks/useDuplicateCheck';
 
 const GENEROS = ['Gospel', 'Rock', 'MPB', 'Sertanejo', 'Pop', 'Forró', 'Pagode', 'Axé', 'Reggae', 'Blues', 'Jazz', 'Country', 'Funk', 'Worship', 'Outro'] as const;
 
