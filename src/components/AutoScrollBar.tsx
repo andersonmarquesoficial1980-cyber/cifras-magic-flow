@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Play, Pause, Minus, Plus } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 
@@ -6,10 +6,10 @@ interface AutoScrollBarProps {
   bpm?: number | null;
 }
 
-// Ultra-fine curve: 1-40 nearly flat (0.01–0.4px/frame), 40-100 ramps up
-function speedToPx(level: number): number {
-  if (level <= 40) return level * 0.01;           // 0.01 → 0.40
-  return 0.4 + Math.pow((level - 40) / 60, 1.8) * 6; // 0.4 → ~6.4
+// px per second curve: 1-30 ultra-fine, 30-100 ramps
+function speedToPxPerSec(level: number): number {
+  if (level <= 30) return level * 0.8;                    // 0.8 – 24 px/s
+  return 24 + Math.pow((level - 30) / 70, 1.6) * 300;    // 24 – ~324 px/s
 }
 
 function bpmToDefault(bpm: number): number {
@@ -27,8 +27,16 @@ export function AutoScrollBar({ bpm }: AutoScrollBarProps) {
   const [speed, setSpeed] = useState(def);
   const rafRef = useRef<number | null>(null);
   const playingRef = useRef(false);
-  const accum = useRef(0);
+  const offsetRef = useRef(0);
+  const lastTimeRef = useRef(0);
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
+  // Find and cache the scroll container on mount
+  useEffect(() => {
+    containerRef.current = document.getElementById('cifra-scroll-content') as HTMLDivElement | null;
+  }, []);
+
+  // Pause on manual interaction
   useEffect(() => {
     const pause = () => { if (playingRef.current) setPlaying(false); };
     window.addEventListener('wheel', pause, { passive: true });
@@ -41,25 +49,36 @@ export function AutoScrollBar({ bpm }: AutoScrollBarProps) {
 
   useEffect(() => { playingRef.current = playing; }, [playing]);
 
+  // Sync offset with current scroll position when starting
   useEffect(() => {
-    if (!playing) {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-      return;
-    }
-    const pxPerFrame = speedToPx(speed);
-    accum.current = 0;
+    if (playing) {
+      offsetRef.current = window.scrollY;
+      lastTimeRef.current = 0;
+      const pxPerSec = speedToPxPerSec(speed);
 
-    const tick = () => {
-      accum.current += pxPerFrame;
-      if (accum.current >= 1) {
-        const px = Math.floor(accum.current);
-        window.scrollBy(0, px);
-        accum.current -= px;
-      }
+      const tick = (time: number) => {
+        if (lastTimeRef.current === 0) {
+          lastTimeRef.current = time;
+          rafRef.current = requestAnimationFrame(tick);
+          return;
+        }
+        const dt = (time - lastTimeRef.current) / 1000; // seconds
+        lastTimeRef.current = time;
+        offsetRef.current += pxPerSec * dt;
+
+        // Clamp to max scroll
+        const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+        if (offsetRef.current > maxScroll) offsetRef.current = maxScroll;
+
+        window.scrollTo(0, offsetRef.current);
+        rafRef.current = requestAnimationFrame(tick);
+      };
+
       rafRef.current = requestAnimationFrame(tick);
-    };
-    rafRef.current = requestAnimationFrame(tick);
-    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
+      return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
+    } else {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    }
   }, [playing, speed]);
 
   return (
