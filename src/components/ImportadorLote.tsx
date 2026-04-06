@@ -168,7 +168,7 @@ export function ImportadorLote() {
           Importador em Lote
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col bg-[hsl(var(--card))] border-border">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col bg-[hsl(var(--card))] border-border pb-4">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-foreground font-display">
             <Package className="h-5 w-5 text-orange-400" />
@@ -254,8 +254,8 @@ export function ImportadorLote() {
                 </Button>
               </div>
 
-              <ScrollArea className="flex-1 max-h-[300px] rounded-lg border border-border bg-background">
-                <div className="divide-y divide-border">
+              <ScrollArea className="flex-1 max-h-[60vh] sm:max-h-[400px] rounded-lg border border-border bg-background overflow-y-auto">
+                <div className="divide-y divide-border pb-3">
                   {songs.map((song, i) => (
                     <button
                       key={i}
@@ -278,14 +278,16 @@ export function ImportadorLote() {
 
               {/* Import Button */}
               {status === 'idle' && (
-                <Button
-                  onClick={handleImport}
-                  disabled={selectedCount === 0}
-                  className="w-full bg-orange-500 hover:bg-orange-600 text-white gap-2 font-semibold"
-                >
-                  <Play className="h-4 w-4" />
-                  Iniciar Importação Pesada ({selectedCount} músicas)
-                </Button>
+                <div className="sticky bottom-0 pt-3 bg-[hsl(var(--card))]">
+                  <Button
+                    onClick={handleImport}
+                    disabled={selectedCount === 0}
+                    className="w-full bg-orange-500 hover:bg-orange-600 text-white gap-2 font-semibold"
+                  >
+                    <Play className="h-4 w-4" />
+                    Iniciar Importação Pesada ({selectedCount} músicas)
+                  </Button>
+                </div>
               )}
             </>
           )}
