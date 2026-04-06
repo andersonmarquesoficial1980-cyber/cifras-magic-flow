@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
+import { checkDuplicate } from '@/hooks/useDuplicateCheck';
+import { DuplicateConfirmDialog } from '@/components/DuplicateConfirmDialog';
 
 const VIBES_AVAILABLE = ['Animada', 'Romântica', 'Adoração', 'Pra Pular', 'Modão', 'Introspectiva'] as const;
 type Vibe = typeof VIBES_AVAILABLE[number];
