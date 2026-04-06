@@ -168,7 +168,7 @@ export function ImportadorLote() {
           Importador em Lote
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col bg-[hsl(var(--card))] border-border">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col bg-[hsl(var(--card))] border-border pb-4">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-foreground font-display">
             <Package className="h-5 w-5 text-orange-400" />
