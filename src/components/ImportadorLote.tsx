@@ -254,8 +254,8 @@ export function ImportadorLote() {
                 </Button>
               </div>
 
-              <ScrollArea className="flex-1 max-h-[300px] rounded-lg border border-border bg-background">
-                <div className="divide-y divide-border">
+              <ScrollArea className="flex-1 max-h-[60vh] sm:max-h-[400px] rounded-lg border border-border bg-background overflow-y-auto">
+                <div className="divide-y divide-border pb-3">
                   {songs.map((song, i) => (
                     <button
                       key={i}
