@@ -28,7 +28,7 @@ export function HarmonicFieldBar({ keyName, transposeSemitones }: Props) {
   });
 
   return (
-    <div className="border-b border-border bg-secondary/30 backdrop-blur-sm">
+    <div className="sticky top-[57px] z-10 border-b border-border bg-background" style={{ backgroundColor: '#050505' }}>
       <div className="container mx-auto max-w-3xl px-4 py-2">
         <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide">
           {field.map((item, i) => (
