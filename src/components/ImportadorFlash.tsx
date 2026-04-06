@@ -40,6 +40,7 @@ export function ImportadorFlash() {
   const [preview, setPreview] = useState<SongPreview | null>(null);
   const [selectedVibes, setSelectedVibes] = useState<Vibe[]>([]);
   const [error, setError] = useState('');
+  const [showDupeDialog, setShowDupeDialog] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
