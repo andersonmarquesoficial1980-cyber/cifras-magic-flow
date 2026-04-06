@@ -253,6 +253,9 @@ export function ImportadorLote() {
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground font-body">
                   {songs.length} músicas encontradas · {selectedCount} selecionadas
+                  {duplicateUrls.size > 0 && (
+                    <span className="text-yellow-400 ml-1">· {duplicateUrls.size} já existem</span>
+                  )}
                 </span>
                 <Button variant="ghost" size="sm" onClick={toggleAll} className="text-xs text-orange-400 hover:text-orange-300">
                   {songs.every(s => s.selected) ? (
