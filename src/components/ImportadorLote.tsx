@@ -278,14 +278,16 @@ export function ImportadorLote() {
 
               {/* Import Button */}
               {status === 'idle' && (
-                <Button
-                  onClick={handleImport}
-                  disabled={selectedCount === 0}
-                  className="w-full bg-orange-500 hover:bg-orange-600 text-white gap-2 font-semibold"
-                >
-                  <Play className="h-4 w-4" />
-                  Iniciar Importação Pesada ({selectedCount} músicas)
-                </Button>
+                <div className="sticky bottom-0 pt-3 bg-[hsl(var(--card))]">
+                  <Button
+                    onClick={handleImport}
+                    disabled={selectedCount === 0}
+                    className="w-full bg-orange-500 hover:bg-orange-600 text-white gap-2 font-semibold"
+                  >
+                    <Play className="h-4 w-4" />
+                    Iniciar Importação Pesada ({selectedCount} músicas)
+                  </Button>
+                </div>
               )}
             </>
           )}
