@@ -85,7 +85,21 @@ export function ImportadorFlash() {
 
   const handleSave = async () => {
     if (!preview) return;
+
+    // Check for duplicates first
+    const isDupe = await checkDuplicate(preview.titulo, preview.artista);
+    if (isDupe) {
+      setShowDupeDialog(true);
+      return;
+    }
+
+    await doSave();
+  };
+
+  const doSave = async () => {
+    if (!preview) return;
     setSaving(true);
+    setShowDupeDialog(false);
 
     try {
       const { error: insertError } = await supabase.from('musicas').insert({
