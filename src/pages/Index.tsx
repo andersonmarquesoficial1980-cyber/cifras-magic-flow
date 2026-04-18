@@ -253,10 +253,11 @@ const Index = () => {
         </div>
       </div>
 
-      {/* Content with tabs */}
-      <div className="container mx-auto px-4 py-5 max-w-3xl">
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="w-full bg-card border border-border mb-5">
+      {/* Tabs congeladas no sticky header */}
+      <div className="sticky top-[var(--header-h,140px)] z-10 bg-background/95 backdrop-blur border-b border-border">
+        <div className="container mx-auto px-4 max-w-3xl py-2">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="w-full bg-card border border-border">
             <TabsTrigger value="todas" className="flex-1 text-xs font-body data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
               Todas
             </TabsTrigger>
@@ -267,6 +268,13 @@ const Index = () => {
               Gêneros
             </TabsTrigger>
           </TabsList>
+          </Tabs>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="container mx-auto px-4 py-5 max-w-3xl">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
 
           <TabsContent value="todas">
             {isLoading ? renderSkeletons() : filtered.length > 0 ? (

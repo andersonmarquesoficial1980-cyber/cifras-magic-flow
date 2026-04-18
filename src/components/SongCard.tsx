@@ -1,8 +1,13 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Music, Star } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Music, Star, Pencil, Trash2, Loader2 } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import type { Musica } from '@/hooks/useMusicas';
 import { useToggleFavorite } from '@/hooks/useToggleFavorite';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
+import { useToast } from '@/hooks/use-toast';
 
 interface SongCardProps {
   musica: Musica;
@@ -25,9 +30,36 @@ function getVibeStyle(vibe: string): string {
 
 export function SongCard({ musica, index }: SongCardProps) {
   const toggleFav = useToggleFavorite();
+  const { isAdmin } = useAuth();
+  const [deleting, setDeleting] = useState(false);
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const navigate = useNavigate();
+
   const vibes = musica.vibe
     ? musica.vibe.split(',').map(v => v.trim()).filter(Boolean)
     : [];
+
+  async function handleDelete(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!confirm(`Excluir "${musica.titulo}"?`)) return;
+    setDeleting(true);
+    const { error } = await supabase.from('musicas').delete().eq('id', musica.id);
+    setDeleting(false);
+    if (error) {
+      toast({ title: 'Erro ao excluir', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Música excluída' });
+      queryClient.invalidateQueries({ queryKey: ['musicas'] });
+    }
+  }
+
+  function handleEdit(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    navigate(`/musica/${musica.id}?editar=1`);
+  }
 
   return (
     <motion.div
@@ -72,6 +104,27 @@ export function SongCard({ musica, index }: SongCardProps) {
             <span className="text-[10px] text-muted-foreground font-mono">{musica.bpm} bpm</span>
           )}
         </div>
+
+        {/* Admin: editar e excluir */}
+        {isAdmin && (
+          <div className="flex gap-1 shrink-0">
+            <button
+              onClick={handleEdit}
+              className="p-1.5 rounded-full hover:bg-blue-500/20 text-blue-400 transition-colors"
+              title="Editar"
+            >
+              <Pencil size={14} />
+            </button>
+            <button
+              onClick={handleDelete}
+              disabled={deleting}
+              className="p-1.5 rounded-full hover:bg-red-500/20 text-red-400 transition-colors"
+              title="Excluir"
+            >
+              {deleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+            </button>
+          </div>
+        )}
 
         <button
           onClick={(e) => {
