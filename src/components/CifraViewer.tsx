@@ -45,13 +45,17 @@ export function CifraViewer({ musica }: CifraViewerProps) {
 
   const lines = musica.letra_cifrada.split('\n');
 
-  // Real key = original key transposed by user's manual transpose
+  // Tom original da música (como gravado — com capo original do banco)
+  const initialCapo = musica.capo_fret ?? 0;
+  const capoCompensation = initialCapo - capoFret;
+
+  // Real key = tom original + transpose manual + compensação do capo
   const realKey = transposeChord(musica.tom_original, transposeSemitones);
 
-  // Shape key = real key transposed DOWN by capo (i.e., the chord shapes the musician plays)
-  const shapeKey = transposeChord(realKey, -capoFret);
+  // Shape key = tom dos shapes exibidos (acordes da cifra + compensação)
+  const shapeKey = transposeChord(musica.tom_original, transposeSemitones + capoCompensation - initialCapo);
 
-  // The key used for display (shapes are what's shown)
+  // The key used for display
   const displayedKey = shapeKey;
 
   const MODES: DisplayMode[] = ['cifra', 'grau', 'ordinal'];
@@ -70,8 +74,12 @@ export function CifraViewer({ musica }: CifraViewerProps) {
   }
 
   function renderChordValue(chord: string): string {
-    // First transpose by user's manual semitones, then DOWN by capo to get shapes
-    const transposed = transposeChord(chord, transposeSemitones - capoFret);
+    // Cifra armazena shapes (acordes com capo)
+    // Com capo: mostra shapes direto (+ transpose manual)
+    // Sem capo: transpõe +capoOriginal para mostrar acordes reais
+    const initialCapo = musica.capo_fret ?? 0;
+    const capoCompensation = initialCapo - capoFret; // 0 quando capo normal, +N quando remove capo
+    const transposed = transposeChord(chord, transposeSemitones + capoCompensation);
     let result: string;
     if (displayMode === 'grau') result = chordToGrau(transposed, shapeKey);
     else if (displayMode === 'ordinal') result = chordToOrdinalDegree(transposed, shapeKey);
@@ -80,7 +88,9 @@ export function CifraViewer({ musica }: CifraViewerProps) {
   }
 
   function getChordForPopover(chord: string): string {
-    const transposed = transposeChord(chord, transposeSemitones - capoFret);
+    const initialCapo = musica.capo_fret ?? 0;
+    const capoCompensation = initialCapo - capoFret;
+    const transposed = transposeChord(chord, transposeSemitones + capoCompensation);
     return simplified ? simplifyChord(transposed, 'cifra') : transposed;
   }
 
