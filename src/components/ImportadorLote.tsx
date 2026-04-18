@@ -65,12 +65,19 @@ export function ImportadorLote() {
       let urlFinal = url.trim();
       if (!urlFinal.startsWith('http')) urlFinal = 'https://' + urlFinal;
 
-      const { data, error } = await supabase.functions.invoke('scan-artist', {
-        body: { url: urlFinal },
+      // Usar fetch direto (evita bug do Supabase SDK com edge functions)
+      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+      const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/scan-artist`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+        },
+        body: JSON.stringify({ url: urlFinal }),
       });
-      // Supabase SDK pode retornar erro mesmo com resposta JSON — checar data.error primeiro
+      const data = await res.json();
       if (data?.error) throw new Error(data.error);
-      if (error) throw new Error(error.message);
       if (!data?.songs?.length) throw new Error('Nenhuma música encontrada. Use a URL da página do artista no Cifra Club, ex: https://www.cifraclub.com.br/ministerio-morada/');
 
       const songList = data.songs.map((s: any) => ({ ...s, selected: true }));
