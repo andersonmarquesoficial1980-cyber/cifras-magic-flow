@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Music2, BookOpen, Timer, Guitar, Star, LogIn, LogOut, Crown } from 'lucide-react';
+import { Music2, BookOpen, Timer, Guitar, Star, LogIn, LogOut, Crown, Settings } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useMusicas } from '@/hooks/useMusicas';
 import { useToggleFavorite } from '@/hooks/useToggleFavorite';
@@ -87,9 +87,9 @@ const Dashboard = () => {
                     <Crown size={10} />{isAdmin ? 'Admin' : 'Premium'}
                   </span>
                 )}
-                <button onClick={signOut} className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-300 transition-colors">
-                  <LogOut size={14} />
-                </button>
+                <Link to="/configuracoes" className="flex items-center justify-center h-9 w-9 rounded-full border border-white/[0.06] text-gray-500 hover:text-gray-300 transition-colors">
+                  <Settings size={16} />
+                </Link>
               </div>
             ) : (
               <button onClick={() => setShowAuth(true)} className="flex items-center gap-1.5 text-xs text-[#FACC15] border border-[#FACC15]/30 rounded-full px-3 py-1.5 hover:bg-[#FACC15]/10 transition-colors">
