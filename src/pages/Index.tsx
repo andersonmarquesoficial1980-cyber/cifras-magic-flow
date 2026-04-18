@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react';
-import { motion } from 'framer-motion';
-import { Search, Music2, ArrowLeft, ChevronDown } from 'lucide-react';
+import { Search, Music2, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useMusicas } from '@/hooks/useMusicas';
 import { SongCard } from '@/components/SongCard';
@@ -56,7 +55,6 @@ const Index = () => {
     });
   }, [musicas, search, vibeFilter, keyFilter]);
 
-  // Group by artist
   const groupedByArtist = useMemo(() => {
     const map = new Map<string, typeof filtered>();
     filtered.forEach(m => {
@@ -67,11 +65,10 @@ const Index = () => {
     return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b));
   }, [filtered]);
 
-  // Group by genre
   const groupedByGenre = useMemo(() => {
     const map = new Map<string, typeof filtered>();
     filtered.forEach(m => {
-      const genre = m.genero || 'Sem gênero';
+      const genre = (m as any).genero || 'Sem gênero';
       if (!map.has(genre)) map.set(genre, []);
       map.get(genre)!.push(m);
     });
@@ -124,75 +121,46 @@ const Index = () => {
     </Accordion>
   );
 
+  // Calcula altura do cabeçalho fixo dinamicamente
+  // Linha topo ~48px + busca ~44px + vibes ~36px + tom ~32px + tabs ~44px + paddings ~32px = ~236px
+  const HEADER_H = availableKeys.length > 0 ? 260 : 220;
+
   return (
     <div className="min-h-screen bg-background">
-      {/* Header — não sticky, aparece uma vez */}
-      <div className="border-b border-border bg-background">
-        <div className="container mx-auto px-4 pt-6 pb-4 max-w-3xl">
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-3"
-          >
-            <Link to="/" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mr-2">
-              <ArrowLeft className="h-5 w-5" />
-              <span className="text-sm font-body">Voltar</span>
+
+      {/* CABEÇALHO FIXO — tudo até as tabs fica congelado */}
+      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50, background: 'hsl(var(--background))', borderBottom: '1px solid hsl(var(--border))' }}>
+        <div className="container mx-auto px-4 pt-3 pb-2 max-w-3xl">
+
+          {/* Linha 1: Voltar + Título + Importadores (admin) */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <Link to="/" className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors">
+              <ArrowLeft className="h-4 w-4" />
+              <span className="text-sm">Voltar</span>
             </Link>
-            <div className="h-5 w-px bg-border" />
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
-              <Music2 className="h-5 w-5 text-primary-foreground" />
-            </div>
-            <h1 className="font-display text-2xl font-bold text-foreground tracking-tight">
-              Cifras
-            </h1>
-
-          </motion.div>
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.1 }}
-            className="mt-2 text-sm text-muted-foreground font-body max-w-sm"
-          >
-            Cifras e letras com transposição e campo harmônico.
-          </motion.p>
-
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.15 }}
-            className="mt-4"
-          >
+            <div className="h-4 w-px bg-border mx-1" />
+            <h1 className="font-display text-lg font-bold text-foreground">Cifras</h1>
             {isAdmin && (
-              <div className="flex flex-wrap gap-2">
+              <div className="flex gap-2 ml-auto">
                 <ImportadorFlash />
                 <ImportadorLote />
               </div>
             )}
-          </motion.div>
+          </div>
 
-          {/* Search */}
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="relative mt-5"
-          >
+          {/* Linha 2: Busca */}
+          <div className="relative mt-2">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Buscar música ou artista..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 bg-card border-border font-body text-sm"
+              className="pl-10 bg-card border-border font-body text-sm h-9"
             />
-          </motion.div>
+          </div>
 
-          {/* Vibe pills */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.25 }}
-            className="mt-4 flex flex-wrap gap-2"
-          >
+          {/* Linha 3: Vibes */}
+          <div className="mt-2 flex flex-wrap gap-1.5">
             {VIBES.map((vibe) => {
               const active = vibeFilter === vibe;
               const isAll = vibe === 'Todas';
@@ -200,82 +168,55 @@ const Index = () => {
                 <button
                   key={vibe}
                   onClick={() => setVibeFilter(vibe)}
-                  className={`rounded-full px-3 py-1 text-xs font-medium border transition-all ${
+                  className={`rounded-full px-3 py-0.5 text-xs font-medium border transition-all ${
                     active
-                      ? isAll
-                        ? 'bg-foreground/10 text-foreground border-foreground/30'
+                      ? isAll ? 'bg-foreground/10 text-foreground border-foreground/30'
                         : VIBE_COLORS[vibe] || 'bg-foreground/10 text-foreground border-foreground/30'
-                      : 'bg-transparent text-muted-foreground border-border hover:border-muted-foreground/40 hover:text-foreground/70'
+                      : 'bg-transparent text-muted-foreground border-border hover:border-muted-foreground/40'
                   }`}
                 >
                   {vibe}
                 </button>
               );
             })}
-          </motion.div>
+          </div>
 
-          {/* Key filter */}
+          {/* Linha 4: Tom */}
           {availableKeys.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
-              className="mt-3 flex items-center gap-2"
-            >
+            <div className="mt-1.5 flex items-center gap-2">
               <span className="text-xs text-muted-foreground font-mono shrink-0">Tom:</span>
-              <div className="flex flex-wrap gap-1.5">
-                <button
-                  onClick={() => setKeyFilter('')}
-                  className={`rounded px-2 py-0.5 text-[10px] font-mono border transition-all ${
-                    !keyFilter
-                      ? 'bg-chord/15 text-chord border-chord/40'
-                      : 'text-muted-foreground border-border hover:border-muted-foreground/40'
-                  }`}
-                >
+              <div className="flex flex-wrap gap-1">
+                <button onClick={() => setKeyFilter('')}
+                  className={`rounded px-2 py-0.5 text-[10px] font-mono border transition-all ${!keyFilter ? 'bg-chord/15 text-chord border-chord/40' : 'text-muted-foreground border-border'}`}>
                   Todos
                 </button>
                 {availableKeys.map((k) => (
-                  <button
-                    key={k}
-                    onClick={() => setKeyFilter(keyFilter === k ? '' : k)}
-                    className={`rounded px-2 py-0.5 text-[10px] font-mono border transition-all ${
-                      keyFilter === k
-                        ? 'bg-chord/15 text-chord border-chord/40'
-                        : 'text-muted-foreground border-border hover:border-muted-foreground/40'
-                    }`}
-                  >
+                  <button key={k} onClick={() => setKeyFilter(keyFilter === k ? '' : k)}
+                    className={`rounded px-2 py-0.5 text-[10px] font-mono border transition-all ${keyFilter === k ? 'bg-chord/15 text-chord border-chord/40' : 'text-muted-foreground border-border'}`}>
                     {k}
                   </button>
                 ))}
               </div>
-            </motion.div>
+            </div>
           )}
+
+          {/* Linha 5: Tabs */}
+          <div className="mt-2">
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="w-full bg-card border border-border h-9">
+                <TabsTrigger value="todas" className="flex-1 text-xs data-[state=active]:bg-primary/20 data-[state=active]:text-primary">Todas</TabsTrigger>
+                <TabsTrigger value="artistas" className="flex-1 text-xs data-[state=active]:bg-primary/20 data-[state=active]:text-primary">Artistas</TabsTrigger>
+                <TabsTrigger value="generos" className="flex-1 text-xs data-[state=active]:bg-primary/20 data-[state=active]:text-primary">Gêneros</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+
         </div>
       </div>
 
-      {/* Tabs fixas no topo */}
-      <div style={{position:'fixed', top:0, left:0, right:0, zIndex:50}} className="bg-background border-b border-border">
-        <div className="container mx-auto px-4 max-w-3xl py-2">
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="w-full bg-card border border-border">
-            <TabsTrigger value="todas" className="flex-1 text-xs font-body data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
-              Todas
-            </TabsTrigger>
-            <TabsTrigger value="artistas" className="flex-1 text-xs font-body data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
-              Artistas
-            </TabsTrigger>
-            <TabsTrigger value="generos" className="flex-1 text-xs font-body data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
-              Gêneros
-            </TabsTrigger>
-          </TabsList>
-          </Tabs>
-        </div>
-      </div>
-
-      {/* Content — padding-top para compensar as tabs fixas */}
-      <div className="container mx-auto px-4 py-5 max-w-3xl" style={{paddingTop: '60px'}}>
+      {/* LISTA DE MÚSICAS — começa abaixo do cabeçalho fixo */}
+      <div className="container mx-auto px-4 max-w-3xl pb-8" style={{ paddingTop: `${HEADER_H}px` }}>
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-
           <TabsContent value="todas">
             {isLoading ? renderSkeletons() : filtered.length > 0 ? (
               <div className="space-y-2">
@@ -285,13 +226,11 @@ const Index = () => {
               </div>
             ) : renderEmpty()}
           </TabsContent>
-
           <TabsContent value="artistas">
             {isLoading ? renderSkeletons() : groupedByArtist.length > 0
               ? renderAccordionGroup(groupedByArtist)
               : renderEmpty()}
           </TabsContent>
-
           <TabsContent value="generos">
             {isLoading ? renderSkeletons() : groupedByGenre.length > 0
               ? renderAccordionGroup(groupedByGenre)
@@ -299,6 +238,7 @@ const Index = () => {
           </TabsContent>
         </Tabs>
       </div>
+
     </div>
   );
 };
