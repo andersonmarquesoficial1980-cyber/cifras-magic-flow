@@ -65,9 +65,10 @@ export function ImportadorLote() {
       const { data, error } = await supabase.functions.invoke('scan-artist', {
         body: { url: url.trim() },
       });
-      if (error) throw new Error(error.message);
+      // Supabase SDK pode retornar erro mesmo com resposta JSON — checar data.error primeiro
       if (data?.error) throw new Error(data.error);
-      if (!data?.songs?.length) throw new Error('Nenhuma música encontrada nesta página.');
+      if (error) throw new Error(error.message);
+      if (!data?.songs?.length) throw new Error('Nenhuma música encontrada. Use a URL da página do artista no Cifra Club, ex: https://www.cifraclub.com.br/ministerio-morada/');
 
       const songList = data.songs.map((s: any) => ({ ...s, selected: true }));
       setSongs(songList);
