@@ -254,7 +254,7 @@ const Index = () => {
       </div>
 
       {/* Tabs congeladas */}
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border">
+      <div style={{position:'sticky', top:0, zIndex:10}} className="bg-background border-b border-border">
         <div className="container mx-auto px-4 max-w-3xl py-2">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="w-full bg-card border border-border">
