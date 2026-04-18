@@ -126,8 +126,8 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur-xl">
+      {/* Header — não sticky, aparece uma vez */}
+      <div className="border-b border-border bg-background">
         <div className="container mx-auto px-4 pt-6 pb-4 max-w-3xl">
           <motion.div
             initial={{ opacity: 0, y: -10 }}
