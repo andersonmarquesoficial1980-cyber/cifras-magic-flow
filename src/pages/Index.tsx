@@ -253,8 +253,8 @@ const Index = () => {
         </div>
       </div>
 
-      {/* Tabs congeladas no sticky header */}
-      <div className="sticky top-[var(--header-h,140px)] z-10 bg-background/95 backdrop-blur border-b border-border">
+      {/* Tabs congeladas */}
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border">
         <div className="container mx-auto px-4 max-w-3xl py-2">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="w-full bg-card border border-border">

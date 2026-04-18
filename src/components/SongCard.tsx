@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Music, Star, Pencil, Trash2, Loader2 } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import type { Musica } from '@/hooks/useMusicas';
 import { useToggleFavorite } from '@/hooks/useToggleFavorite';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
+import { EditarMusicaModal } from '@/components/EditarMusicaModal';
 
 interface SongCardProps {
   musica: Musica;
@@ -32,9 +33,9 @@ export function SongCard({ musica, index }: SongCardProps) {
   const toggleFav = useToggleFavorite();
   const { isAdmin } = useAuth();
   const [deleting, setDeleting] = useState(false);
+  const [editando, setEditando] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const navigate = useNavigate();
 
   const vibes = musica.vibe
     ? musica.vibe.split(',').map(v => v.trim()).filter(Boolean)
@@ -58,7 +59,7 @@ export function SongCard({ musica, index }: SongCardProps) {
   function handleEdit(e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
-    navigate(`/musica/${musica.id}?editar=1`);
+    setEditando(true);
   }
 
   return (
@@ -141,6 +142,14 @@ export function SongCard({ musica, index }: SongCardProps) {
           />
         </button>
       </Link>
+
+      {editando && (
+        <EditarMusicaModal
+          musica={musica}
+          open={editando}
+          onClose={() => setEditando(false)}
+        />
+      )}
     </motion.div>
   );
 }
