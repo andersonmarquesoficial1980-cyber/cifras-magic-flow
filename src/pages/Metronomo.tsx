@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Play, Pause, Minus, Plus } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
 const TIME_SIGNATURES = ['2/4', '3/4', '4/4'] as const;
@@ -19,6 +19,7 @@ function createClick(ctx: AudioContext, time: number, isAccent: boolean) {
 }
 
 const Metronomo = () => {
+  const navigate = useNavigate();
   const [bpm, setBpm] = useState(120);
   const [playing, setPlaying] = useState(false);
   const [timeSig, setTimeSig] = useState<typeof TIME_SIGNATURES[number]>('4/4');
@@ -87,11 +88,11 @@ const Metronomo = () => {
     <div className="min-h-screen bg-[#050505] flex flex-col">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 pt-6 pb-4">
-        <Link to="/">
+        <button onClick={() => navigate(-1)}>
           <Button variant="ghost" size="icon" className="text-muted-foreground">
             <ArrowLeft className="h-5 w-5" />
           </Button>
-        </Link>
+        </button>
         <h1 className="font-display text-xl font-bold text-foreground">Metrônomo</h1>
       </div>
 

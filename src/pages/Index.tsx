@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Search, Music2, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { useMusicas } from '@/hooks/useMusicas';
 import { SongCard } from '@/components/SongCard';
@@ -32,6 +33,7 @@ const ALL_KEYS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B
 const Index = () => {
   const { data: musicas, isLoading } = useMusicas();
   const { isAdmin } = useAuth();
+  const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [vibeFilter, setVibeFilter] = useState<string>('Todas');
   const [keyFilter, setKeyFilter] = useState<string>('');
@@ -134,10 +136,10 @@ const Index = () => {
 
           {/* Linha 1: Voltar + Título + Importadores (admin) */}
           <div className="flex items-center gap-2 flex-wrap">
-            <Link to="/" className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors">
+            <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors">
               <ArrowLeft className="h-4 w-4" />
               <span className="text-sm">Voltar</span>
-            </Link>
+            </button>
             <div className="h-4 w-px bg-border mx-1" />
             <h1 className="font-display text-lg font-bold text-foreground">Cifras</h1>
             {isAdmin && (

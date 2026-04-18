@@ -167,7 +167,7 @@ const Estude = () => {
     return (
       <div className="min-h-screen bg-[#050505] flex flex-col">
         <div className="flex items-center gap-3 px-4 pt-6 pb-4">
-          <Link to="/"><Button variant="ghost" size="icon" className="text-muted-foreground"><ArrowLeft className="h-5 w-5" /></Button></Link>
+          <button onClick={() => navigate(-1)}><Button variant="ghost" size="icon" className="text-muted-foreground"><ArrowLeft className="h-5 w-5" /></Button></button>
           <h1 className="font-display text-xl font-bold text-foreground">Estude</h1>
           {medals > 0 && (
             <div className="ml-auto flex items-center gap-1.5 text-[#3B82F6]">

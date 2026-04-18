@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Crown, LogOut, KeyRound, User, Loader2, Check } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 
 export default function Configuracoes() {
   const { profile, role, isAdmin, isPremium, signOut } = useAuth();
+  const navigate = useNavigate();
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -57,10 +58,10 @@ export default function Configuracoes() {
     <div className="min-h-screen bg-[#050505] text-white">
       {/* Header */}
       <div className="sticky top-0 z-10 border-b border-white/[0.06] bg-[#050505]/95 backdrop-blur px-5 py-4 flex items-center gap-3">
-        <Link to="/" className="flex items-center gap-2 text-gray-500 hover:text-gray-300 transition-colors">
+        <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-gray-500 hover:text-gray-300 transition-colors">
           <ArrowLeft size={18} />
           <span className="text-sm">Voltar</span>
-        </Link>
+        </button>
         <span className="text-gray-700">|</span>
         <h1 className="text-base font-bold">Configurações</h1>
       </div>

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Mic, MicOff, ArrowLeft } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
 const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
@@ -77,6 +77,7 @@ function findClosestString(note: string, octave: number) {
 }
 
 const Afinador = () => {
+  const navigate = useNavigate();
   const [listening, setListening] = useState(false);
   const [currentNote, setCurrentNote] = useState('—');
   const [cents, setCents] = useState(0);
@@ -144,11 +145,11 @@ const Afinador = () => {
     <div className="min-h-screen bg-[#050505] flex flex-col">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 pt-6 pb-4">
-        <Link to="/">
+        <button onClick={() => navigate(-1)}>
           <Button variant="ghost" size="icon" className="text-muted-foreground">
             <ArrowLeft className="h-5 w-5" />
           </Button>
-        </Link>
+        </button>
         <h1 className="font-display text-xl font-bold text-foreground">Afinador</h1>
       </div>
 
