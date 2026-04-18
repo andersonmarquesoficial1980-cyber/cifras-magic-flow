@@ -12,7 +12,7 @@ serve(async (req) => {
     const { url } = await req.json();
     if (!url || typeof url !== "string") {
       return new Response(JSON.stringify({ error: "URL é obrigatória" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -23,7 +23,7 @@ serve(async (req) => {
 
     if (!artistSlug) {
       return new Response(JSON.stringify({ error: "Não foi possível identificar o artista na URL" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -50,7 +50,7 @@ serve(async (req) => {
       if (!pageRes.ok) {
         if (page === 1) {
           return new Response(JSON.stringify({ error: `Artista não encontrado (${pageRes.status}). Use a URL da página do artista no Cifra Club.` }), {
-            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
         break;
@@ -115,7 +115,7 @@ serve(async (req) => {
       return new Response(JSON.stringify({
         error: `Nenhuma música encontrada para "${artistSlug}". Use a URL da página principal do artista no Cifra Club, ex: https://www.cifraclub.com.br/oficina-g3/`
       }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -126,7 +126,7 @@ serve(async (req) => {
   } catch (e) {
     console.error("scan-artist error:", e);
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Erro desconhecido" }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });

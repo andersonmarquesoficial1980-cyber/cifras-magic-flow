@@ -62,8 +62,11 @@ export function ImportadorLote() {
     setSongs([]);
 
     try {
+      let urlFinal = url.trim();
+      if (!urlFinal.startsWith('http')) urlFinal = 'https://' + urlFinal;
+
       const { data, error } = await supabase.functions.invoke('scan-artist', {
-        body: { url: url.trim() },
+        body: { url: urlFinal },
       });
       // Supabase SDK pode retornar erro mesmo com resposta JSON — checar data.error primeiro
       if (data?.error) throw new Error(data.error);
