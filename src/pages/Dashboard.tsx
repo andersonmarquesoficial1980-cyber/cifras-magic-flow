@@ -1,10 +1,12 @@
 import { motion } from 'framer-motion';
-import { Music2, BookOpen, Timer, Guitar, Star, Settings } from 'lucide-react';
+import { Music2, BookOpen, Timer, Guitar, Star, LogIn, LogOut, Crown } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useMusicas } from '@/hooks/useMusicas';
 import { useToggleFavorite } from '@/hooks/useToggleFavorite';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks/useAuth';
+import { AuthModal } from '@/components/AuthModal';
 
 const GRID_ITEMS = [
   {
@@ -48,6 +50,8 @@ const GRID_ITEMS = [
 const Dashboard = () => {
   const { data: musicas } = useMusicas();
   const toggleFav = useToggleFavorite();
+  const { isLoggedIn, isPremium, isAdmin, profile, signOut } = useAuth();
+  const [showAuth, setShowAuth] = useState(false);
 
   const favorites = useMemo(() => {
     if (!musicas) return [];
@@ -56,6 +60,7 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-[#050505] flex flex-col">
+      <AuthModal open={showAuth} onClose={() => setShowAuth(false)} />
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
@@ -69,14 +74,30 @@ const Dashboard = () => {
             </div>
             <div>
               <h1 className="font-display text-2xl font-bold text-foreground tracking-tight">
-                Flow Cifras
+                Melodai
               </h1>
               <p className="text-[11px] text-muted-foreground mt-0.5">Seu companheiro musical</p>
             </div>
           </div>
-          <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground hover:text-foreground border border-white/[0.06]">
-            <Settings className="h-5 w-5" />
-          </Button>
+          <div className="flex items-center gap-2">
+            {isLoggedIn ? (
+              <div className="flex items-center gap-2">
+                {isPremium && (
+                  <span className="text-[10px] text-[#FACC15] border border-[#FACC15]/30 rounded-full px-2 py-0.5 flex items-center gap-1">
+                    <Crown size={10} />{isAdmin ? 'Admin' : 'Premium'}
+                  </span>
+                )}
+                <button onClick={signOut} className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-300 transition-colors">
+                  <LogOut size={14} />
+                </button>
+              </div>
+            ) : (
+              <button onClick={() => setShowAuth(true)} className="flex items-center gap-1.5 text-xs text-[#FACC15] border border-[#FACC15]/30 rounded-full px-3 py-1.5 hover:bg-[#FACC15]/10 transition-colors">
+                <LogIn size={13} />
+                Entrar
+              </button>
+            )}
+          </div>
         </div>
       </motion.div>
 

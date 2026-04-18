@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Music2, ArrowLeft, ChevronDown, LogIn, LogOut, User } from 'lucide-react';
+import { Search, Music2, ArrowLeft, ChevronDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useMusicas } from '@/hooks/useMusicas';
 import { SongCard } from '@/components/SongCard';
@@ -8,7 +8,6 @@ import { Input } from '@/components/ui/input';
 import { ImportadorFlash } from '@/components/ImportadorFlash';
 import { ImportadorLote } from '@/components/ImportadorLote';
 import { useAuth } from '@/hooks/useAuth';
-import { AuthModal } from '@/components/AuthModal';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Accordion,
@@ -33,8 +32,7 @@ const ALL_KEYS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B
 
 const Index = () => {
   const { data: musicas, isLoading } = useMusicas();
-  const { isAdmin, isLoggedIn, signOut } = useAuth();
-  const [showAuth, setShowAuth] = useState(false);
+  const { isAdmin } = useAuth();
   const [search, setSearch] = useState('');
   const [vibeFilter, setVibeFilter] = useState<string>('Todas');
   const [keyFilter, setKeyFilter] = useState<string>('');
@@ -147,21 +145,8 @@ const Index = () => {
             <h1 className="font-display text-2xl font-bold text-foreground tracking-tight">
               Cifras
             </h1>
-            <div className="ml-auto">
-              {isLoggedIn ? (
-                <button onClick={signOut} className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-300 transition-colors">
-                  <LogOut size={14} />
-                  Sair
-                </button>
-              ) : (
-                <button onClick={() => setShowAuth(true)} className="flex items-center gap-1 text-xs text-[#FACC15] hover:text-[#E6B800] transition-colors">
-                  <LogIn size={14} />
-                  Entrar
-                </button>
-              )}
-            </div>
+
           </motion.div>
-          <AuthModal open={showAuth} onClose={() => setShowAuth(false)} />
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
