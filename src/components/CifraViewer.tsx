@@ -35,6 +35,7 @@ export function CifraViewer({ musica }: CifraViewerProps) {
   const [simplified, setSimplified] = useState(false);
   const [isFav, setIsFav] = useState(!!musica.is_favorite);
   const [capoFret, setCapoFret] = useState(musica.capo_fret ?? 0);
+  const initialCapo = musica.capo_fret ?? 0;
   const [capoOpen, setCapoOpen] = useState(false);
   
   const toggleFav = useToggleFavorite();
@@ -145,7 +146,14 @@ export function CifraViewer({ musica }: CifraViewerProps) {
                   {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map(fret => (
                     <button
                       key={fret}
-                      onClick={() => { setCapoFret(fret); setCapoOpen(false); }}
+                      onClick={() => {
+                        // Quando muda o capo, ajusta o transpose para compensar
+                        // A cifra armazena shapes com o capo original
+                        // Novo transpose = antigo + (capoAtual - novoCapo)
+                        setTransposeSemitones(prev => prev + (capoFret - fret));
+                        setCapoFret(fret);
+                        setCapoOpen(false);
+                      }}
                       className={`h-8 rounded text-xs font-mono font-bold transition-all ${
                         capoFret === fret
                           ? 'bg-orange-500 text-white'
