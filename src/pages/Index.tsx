@@ -253,8 +253,8 @@ const Index = () => {
         </div>
       </div>
 
-      {/* Tabs congeladas */}
-      <div style={{position:'sticky', top:0, zIndex:10}} className="bg-background border-b border-border">
+      {/* Tabs fixas no topo */}
+      <div style={{position:'fixed', top:0, left:0, right:0, zIndex:50}} className="bg-background border-b border-border">
         <div className="container mx-auto px-4 max-w-3xl py-2">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="w-full bg-card border border-border">
@@ -272,8 +272,8 @@ const Index = () => {
         </div>
       </div>
 
-      {/* Content */}
-      <div className="container mx-auto px-4 py-5 max-w-3xl">
+      {/* Content — padding-top para compensar as tabs fixas */}
+      <div className="container mx-auto px-4 py-5 max-w-3xl" style={{paddingTop: '60px'}}>
         <Tabs value={activeTab} onValueChange={setActiveTab}>
 
           <TabsContent value="todas">
