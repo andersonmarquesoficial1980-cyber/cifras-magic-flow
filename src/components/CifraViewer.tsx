@@ -16,12 +16,15 @@ import { HarmonicFieldBar } from '@/components/HarmonicFieldBar';
 import { ChordPopover } from '@/components/ChordPopover';
 import { useToggleFavorite } from '@/hooks/useToggleFavorite';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { useAuth } from '@/hooks/useAuth';
+import { Crown } from 'lucide-react';
 
 interface CifraViewerProps {
   musica: Musica;
 }
 
 export function CifraViewer({ musica }: CifraViewerProps) {
+  const { isPremium } = useAuth();
   const [displayMode, setDisplayMode] = useState<DisplayMode>('cifra');
   const [fontSize, setFontSize] = useState(16);
   const [metronomeActive, setMetronomeActive] = useState(false);
@@ -57,7 +60,13 @@ export function CifraViewer({ musica }: CifraViewerProps) {
 
   function cycleMode() {
     const idx = MODES.indexOf(displayMode);
-    setDisplayMode(MODES[(idx + 1) % MODES.length]);
+    const next = MODES[(idx + 1) % MODES.length];
+    // Bloqueia grau/ordinal para free
+    if (!isPremium && (next === 'grau' || next === 'ordinal')) {
+      // Mostra tooltip de premium — por ora ignora o ciclo
+      return;
+    }
+    setDisplayMode(next);
   }
 
   function renderChordValue(chord: string): string {
@@ -196,8 +205,12 @@ export function CifraViewer({ musica }: CifraViewerProps) {
                     : 'bg-[#10B981]/20 text-[#10B981] border-[#10B981]'
                   : 'border-border text-muted-foreground hover:text-foreground hover:border-chord'
               }`}
+              title={!isPremium ? 'Recurso Premium — faça upgrade' : undefined}
             >
               {MODE_LABELS[displayMode]}
+              {!isPremium && (
+                <Crown size={10} className="text-[#FACC15]" />
+              )}
               <Badge className={`text-[10px] px-1.5 py-0 ${
                 displayMode === 'cifra' ? 'bg-chord/20 text-chord border-chord' :
                 displayMode === 'grau' ? 'bg-[#A855F7]/20 text-[#A855F7] border-[#A855F7]' :
@@ -210,9 +223,17 @@ export function CifraViewer({ musica }: CifraViewerProps) {
         </div>
       </div>
 
-      {/* Harmonic field bar */}
-      {showHarmonicField && (
+      {/* Harmonic field bar — premium only */}
+      {showHarmonicField && isPremium && (
         <HarmonicFieldBar keyName={shapeKey} transposeSemitones={0} />
+      )}
+      {showHarmonicField && !isPremium && (
+        <div className="sticky top-[57px] z-10 border-b border-border bg-[#050505] px-4 py-2">
+          <div className="flex items-center gap-2 text-[#FACC15] text-sm">
+            <Crown size={14} />
+            <span>Campo Harmônico — recurso Premium</span>
+          </div>
+        </div>
       )}
 
       {/* Song info */}

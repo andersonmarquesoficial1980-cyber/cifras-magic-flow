@@ -12,7 +12,14 @@ import Metronomo from "./pages/Metronomo.tsx";
 import Estude from "./pages/Estude.tsx";
 import MestreDoRitmo from "./pages/MestreDoRitmo.tsx";
 import OuvidoBionico from "./pages/OuvidoBionico.tsx";
+import { AuthContext, useAuthState } from "@/hooks/useAuth";
+
 const queryClient = new QueryClient();
+
+function AuthProvider({ children }: { children: React.ReactNode }) {
+  const auth = useAuthState();
+  return <AuthContext.Provider value={auth}>{children}</AuthContext.Provider>;
+}
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -20,17 +27,19 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/cifras" element={<Index />} />
-          <Route path="/afinador" element={<Afinador />} />
-          <Route path="/metronomo" element={<Metronomo />} />
-          <Route path="/estude" element={<Estude />} />
-          <Route path="/estude/ritmo" element={<MestreDoRitmo />} />
-          <Route path="/estude/ouvido" element={<OuvidoBionico />} />
-          <Route path="/musica/:id" element={<MusicaDetail />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <AuthProvider>
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/cifras" element={<Index />} />
+            <Route path="/afinador" element={<Afinador />} />
+            <Route path="/metronomo" element={<Metronomo />} />
+            <Route path="/estude" element={<Estude />} />
+            <Route path="/estude/ritmo" element={<MestreDoRitmo />} />
+            <Route path="/estude/ouvido" element={<OuvidoBionico />} />
+            <Route path="/musica/:id" element={<MusicaDetail />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
