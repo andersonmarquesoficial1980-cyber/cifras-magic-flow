@@ -465,44 +465,53 @@ export function CifraViewer({ musica }: CifraViewerProps) {
         {/* ── MODO SÓ CIFRAS ── */}
         {viewMode === 'so-cifras' && (
           <div className="mt-6">
-            <pre
-              className="leading-relaxed whitespace-pre overflow-x-auto"
-              style={{ fontSize: `${fontSize}px`, fontFamily: "'Roboto Mono', 'Courier New', Courier, monospace" }}
-            >
-              {(() => {
-                const result: JSX.Element[] = [];
-                let prevWasChord = false;
-                let sectionLabel = '';
-                lines.forEach((line, idx) => {
-                  const sectionMatch = line.trim().match(/^\[(.+)\]$/);
-                  if (sectionMatch) {
-                    sectionLabel = sectionMatch[1];
-                    result.push(
-                      <div key={`s${idx}`} className="mt-3 text-[10px] uppercase tracking-widest text-muted-foreground">
-                        {sectionLabel}
-                      </div>
-                    );
-                    prevWasChord = false;
-                    return;
-                  }
-                  if (isChordLine(line)) {
-                    result.push(
-                      <span key={idx} className="block min-h-[1.2em]">
-                        {renderChordLineTokens(line)}
-                      </span>
-                    );
-                    prevWasChord = true;
-                  } else {
-                    // Pula letra — mas se tinha acordes antes, adiciona espaço entre blocos
-                    if (prevWasChord && line.trim() === '') {
-                      result.push(<div key={idx} className="h-2" />);
-                    }
-                    prevWasChord = false;
-                  }
-                });
-                return result;
-              })()}
-            </pre>
+            {(() => {
+              const result: JSX.Element[] = [];
+              // Agrupa linhas consecutivas de acordes em blocos
+              let i = 0;
+              while (i < lines.length) {
+                const line = lines[i];
+                const sectionMatch = line.trim().match(/^\[(.+)\]$/);
+
+                if (sectionMatch) {
+                  result.push(
+                    <div key={`s${i}`} className="mt-5 mb-2 text-[10px] uppercase tracking-widest text-muted-foreground">
+                      {sectionMatch[1]}
+                    </div>
+                  );
+                  i++; continue;
+                }
+
+                if (isChordLine(line)) {
+                  // Extrai acordes da linha (sem espaçamento posicional)
+                  const tokens = tokenizeChordLine(line);
+                  const chords = tokens
+                    .filter(t => t.type === 'chord')
+                    .map(t => renderChordValue(t.value));
+
+                  result.push(
+                    <div key={i} className="flex flex-wrap items-center gap-1 mb-1" style={{ fontSize: `${fontSize}px` }}>
+                      {chords.map((chord, ci) => (
+                        <span key={ci} className="flex items-center gap-1">
+                          <span className={`font-bold font-mono ${MODE_COLORS[displayMode]}`}>{chord}</span>
+                          {ci < chords.length - 1 && (
+                            <span className="text-white/20 font-mono select-none mx-1">|</span>
+                          )}
+                        </span>
+                      ))}
+                    </div>
+                  );
+                  i++; continue;
+                }
+
+                // Linha vazia entre blocos — espaço visual
+                if (line.trim() === '') {
+                  result.push(<div key={i} className="h-3" />);
+                }
+                i++;
+              }
+              return result;
+            })()}
           </div>
         )}
 
