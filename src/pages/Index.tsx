@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
-import { Search, Music2, ArrowLeft } from 'lucide-react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Search, Music2, ArrowLeft, ChevronRight } from 'lucide-react';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { useMusicas } from '@/hooks/useMusicas';
 import { SongCard } from '@/components/SongCard';
@@ -101,35 +101,27 @@ const Index = () => {
   );
 
   const renderAccordionGroup = (groups: [string, typeof filtered][]) => (
-    <Accordion type="multiple" value={openAccordions} onValueChange={(vals) => {
-      setOpenAccordions(vals);
-      const params: Record<string,string> = { tab: activeTab };
-      if (vals.length > 0) params.artista = encodeURIComponent(vals[vals.length - 1]);
-      setSearchParams(params);
-    }} className="space-y-2">
+    <div className="space-y-2">
       {groups.map(([groupName, songs]) => (
-        <AccordionItem key={groupName} value={groupName} className="border border-border rounded-lg bg-card/50 overflow-hidden">
-          <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-card/80">
-            <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/10">
-                <Music2 className="h-4 w-4 text-primary" />
-              </div>
-              <span className="font-display text-sm font-semibold text-foreground">{groupName}</span>
-              <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-mono text-muted-foreground">
-                {songs.length}
-              </span>
-            </div>
-          </AccordionTrigger>
-          <AccordionContent className="px-2 pb-2">
-            <div className="space-y-1.5">
-              {songs.map((musica, i) => (
-                <SongCard key={musica.id} musica={musica} index={i} />
-              ))}
-            </div>
-          </AccordionContent>
-        </AccordionItem>
+        <Link
+          key={groupName}
+          to={`/artista/${encodeURIComponent(groupName)}`}
+          className="group flex items-center gap-3 rounded-lg border border-border bg-card p-4 transition-all hover:border-primary/30 hover:bg-card/80 active:scale-[0.99]"
+        >
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary/10">
+            <Music2 className="h-4 w-4 text-primary" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <span className="font-display text-sm font-semibold text-foreground group-hover:text-primary transition-colors">{groupName}</span>
+            <p className="text-xs text-muted-foreground mt-0.5">{songs.length} música{songs.length !== 1 ? 's' : ''}</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-mono text-muted-foreground">{songs.length}</span>
+            <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+          </div>
+        </Link>
       ))}
-    </Accordion>
+    </div>
   );
 
   // Calcula altura do cabeçalho fixo dinamicamente
