@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Zap, Eye, EyeOff, Plus, Minus, Feather, Star } from 'lucide-react';
+import { ArrowLeft, Zap, Eye, EyeOff, Plus, Minus, Feather, Star, Music2, AlignLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { Musica } from '@/hooks/useMusicas';
 import { isChordLine, tokenizeChordLine, chordToGrau, chordToOrdinalDegree } from '@/lib/chordDetector';
@@ -36,6 +36,7 @@ export function CifraViewer({ musica }: CifraViewerProps) {
   const [isFav, setIsFav] = useState(!!musica.is_favorite);
   const [capoFret, setCapoFret] = useState(musica.capo_fret ?? 0);
   const [capoOpen, setCapoOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<'normal' | 'progressao' | 'so-cifras'>('normal');
   
   const toggleFav = useToggleFavorite();
   const navigate = useNavigate();
@@ -44,6 +45,46 @@ export function CifraViewer({ musica }: CifraViewerProps) {
 
 
   const lines = musica.letra_cifrada.split('\n');
+
+  // ── Detecção de progressão repetida ──
+  const progressaoInfo = useMemo(() => {
+    // Extrai todas as linhas de acordes da cifra
+    const chordLines = lines.filter(l => isChordLine(l)).map(l => l.trim());
+    if (chordLines.length < 4) return null;
+
+    // Tenta detectar um padrão que se repete (2 a 8 linhas)
+    for (let patLen = 1; patLen <= Math.min(8, Math.floor(chordLines.length / 2)); patLen++) {
+      const pattern = chordLines.slice(0, patLen);
+      let allMatch = true;
+      let count = 0;
+      for (let i = 0; i + patLen <= chordLines.length; i += patLen) {
+        const slice = chordLines.slice(i, i + patLen);
+        if (slice.join('|') !== pattern.join('|')) { allMatch = false; break; }
+        count++;
+      }
+      // Só considera progressão se repete pelo menos 3x e cobre 80%+ da música
+      if (allMatch && count >= 3 && count * patLen >= chordLines.length * 0.75) {
+        return { pattern, repeticoes: count };
+      }
+    }
+    return null;
+  }, [lines]);
+
+  // ── Render helpers para novos modos ──
+  function renderChordLineTokens(line: string) {
+    const tokens = tokenizeChordLine(line);
+    return tokens.map((tok, ti) =>
+      tok.type === 'chord' ? (
+        <ChordPopover key={ti} chordName={getChordForPopover(tok.value)}>
+          <span className={`font-bold cursor-pointer hover:underline ${MODE_COLORS[displayMode]}`}>
+            {renderChordValue(tok.value)}
+          </span>
+        </ChordPopover>
+      ) : (
+        <span key={ti} style={{ whiteSpace: 'pre' }}>{tok.value}</span>
+      )
+    );
+  }
 
   // Tom original da música (como gravado — com capo original do banco)
   const initialCapo = musica.capo_fret ?? 0;
@@ -122,6 +163,32 @@ export function CifraViewer({ musica }: CifraViewerProps) {
           </div>
 
           <div className={`flex items-center ${performanceMode ? 'gap-4' : 'gap-3'}`}>
+            {/* Modo Progressão */}
+            <button
+              onClick={() => setViewMode(v => v === 'progressao' ? 'normal' : 'progressao')}
+              className={`${btnSize} rounded-lg transition-all border text-xs font-mono font-bold ${
+                viewMode === 'progressao'
+                  ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400'
+                  : 'border-border text-muted-foreground hover:text-foreground'
+              }`}
+              title="Modo Progressão"
+            >
+              <Music2 size={iconSize} />
+            </button>
+
+            {/* Modo Só Cifras */}
+            <button
+              onClick={() => setViewMode(v => v === 'so-cifras' ? 'normal' : 'so-cifras')}
+              className={`${btnSize} rounded-lg transition-all border ${
+                viewMode === 'so-cifras'
+                  ? 'bg-sky-500/20 border-sky-500 text-sky-400'
+                  : 'border-border text-muted-foreground hover:text-foreground'
+              }`}
+              title="Só Cifras"
+            >
+              <AlignLeft size={iconSize} />
+            </button>
+
             {/* Simplified toggle */}
             <button
               onClick={() => setSimplified(!simplified)}
@@ -317,36 +384,161 @@ export function CifraViewer({ musica }: CifraViewerProps) {
 
       {/* Cifra content */}
       <div className="container mx-auto px-4 pb-24 max-w-3xl" style={{ willChange: 'transform', backfaceVisibility: 'hidden' }}>
-        <pre
-          className="mt-6 leading-relaxed whitespace-pre overflow-x-auto text-foreground/85"
-          style={{ fontSize: `${fontSize}px`, fontFamily: "'Roboto Mono', 'Courier New', Courier, monospace", willChange: 'transform', backfaceVisibility: 'hidden' }}
-        >
-          {lines.map((line, idx) => {
-            if (isChordLine(line)) {
-              const tokens = tokenizeChordLine(line);
+
+        {/* ── MODO PROGRESSÃO ── */}
+        {viewMode === 'progressao' && (
+          <div className="mt-6">
+            {progressaoInfo ? (
+              <>
+                {/* Sequência que se repete */}
+                <div className="mb-6 rounded-xl border border-emerald-500/30 bg-emerald-500/[0.06] p-4">
+                  <p className="text-[10px] uppercase tracking-widest text-emerald-400/70 mb-2">Sequência que se repete</p>
+                  <pre
+                    className="leading-relaxed whitespace-pre overflow-x-auto"
+                    style={{ fontSize: `${fontSize}px`, fontFamily: "'Roboto Mono', 'Courier New', Courier, monospace" }}
+                  >
+                    {progressaoInfo.pattern.map((line, idx) => (
+                      <span key={idx} className="block">
+                        {renderChordLineTokens(line)}
+                      </span>
+                    ))}
+                  </pre>
+                </div>
+                {/* Letra limpa sem cifras e sem repetições de seção */}
+                <div
+                  className="leading-relaxed text-foreground/85"
+                  style={{ fontSize: `${fontSize}px`, fontFamily: "'Roboto Mono', 'Courier New', Courier, monospace" }}
+                >
+                  {(() => {
+                    const seenSections = new Set<string>();
+                    const result: JSX.Element[] = [];
+                    let i = 0;
+                    while (i < lines.length) {
+                      const line = lines[i];
+                      // Pula linhas de acordes
+                      if (isChordLine(line)) { i++; continue; }
+                      // Marcadores de seção — deduplicar
+                      const sectionMatch = line.trim().match(/^\[(.+)\]$/);
+                      if (sectionMatch) {
+                        const secKey = sectionMatch[1].trim().toLowerCase();
+                        if (!seenSections.has(secKey)) {
+                          seenSections.add(secKey);
+                          result.push(
+                            <div key={i} className="mt-4 mb-1 text-[10px] uppercase tracking-widest text-muted-foreground">
+                              {sectionMatch[1]}
+                            </div>
+                          );
+                        }
+                        i++; continue;
+                      }
+                      result.push(
+                        <div key={i} className="min-h-[1.4em]">{line || '\u00A0'}</div>
+                      );
+                      i++;
+                    }
+                    return result;
+                  })()}
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Sem progressão fixa — mostra aviso + cifra normal */}
+                <div className="mb-4 rounded-xl border border-white/10 bg-white/[0.03] p-3 text-xs text-muted-foreground">
+                  Esta música não tem uma progressão fixa que se repete — mostrando cifra completa.
+                </div>
+                <pre
+                  className="mt-2 leading-relaxed whitespace-pre overflow-x-auto text-foreground/85"
+                  style={{ fontSize: `${fontSize}px`, fontFamily: "'Roboto Mono', 'Courier New', Courier, monospace" }}
+                >
+                  {lines.map((line, idx) => {
+                    if (isChordLine(line)) {
+                      return <span key={idx} className="block">{renderChordLineTokens(line)}</span>;
+                    }
+                    return <div key={idx} className="min-h-[1.2em]">{line || '\u00A0'}</div>;
+                  })}
+                </pre>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* ── MODO SÓ CIFRAS ── */}
+        {viewMode === 'so-cifras' && (
+          <div className="mt-6">
+            <pre
+              className="leading-relaxed whitespace-pre overflow-x-auto"
+              style={{ fontSize: `${fontSize}px`, fontFamily: "'Roboto Mono', 'Courier New', Courier, monospace" }}
+            >
+              {(() => {
+                const result: JSX.Element[] = [];
+                let prevWasChord = false;
+                let sectionLabel = '';
+                lines.forEach((line, idx) => {
+                  const sectionMatch = line.trim().match(/^\[(.+)\]$/);
+                  if (sectionMatch) {
+                    sectionLabel = sectionMatch[1];
+                    result.push(
+                      <div key={`s${idx}`} className="mt-3 text-[10px] uppercase tracking-widest text-muted-foreground">
+                        {sectionLabel}
+                      </div>
+                    );
+                    prevWasChord = false;
+                    return;
+                  }
+                  if (isChordLine(line)) {
+                    result.push(
+                      <span key={idx} className="block min-h-[1.2em]">
+                        {renderChordLineTokens(line)}
+                      </span>
+                    );
+                    prevWasChord = true;
+                  } else {
+                    // Pula letra — mas se tinha acordes antes, adiciona espaço entre blocos
+                    if (prevWasChord && line.trim() === '') {
+                      result.push(<div key={idx} className="h-2" />);
+                    }
+                    prevWasChord = false;
+                  }
+                });
+                return result;
+              })()}
+            </pre>
+          </div>
+        )}
+
+        {/* ── MODO NORMAL (padrão) ── */}
+        {viewMode === 'normal' && (
+          <pre
+            className="mt-6 leading-relaxed whitespace-pre overflow-x-auto text-foreground/85"
+            style={{ fontSize: `${fontSize}px`, fontFamily: "'Roboto Mono', 'Courier New', Courier, monospace", willChange: 'transform', backfaceVisibility: 'hidden' }}
+          >
+            {lines.map((line, idx) => {
+              if (isChordLine(line)) {
+                const tokens = tokenizeChordLine(line);
+                return (
+                  <span key={idx} className="min-h-[1.2em] block">
+                    {tokens.map((tok, ti) =>
+                      tok.type === 'chord' ? (
+                        <ChordPopover key={ti} chordName={getChordForPopover(tok.value)}>
+                          <span className={`font-bold cursor-pointer hover:underline ${MODE_COLORS[displayMode]}`}>
+                            {renderChordValue(tok.value)}
+                          </span>
+                        </ChordPopover>
+                      ) : (
+                        <span key={ti} style={{ whiteSpace: 'pre' }}>{tok.value}</span>
+                      )
+                    )}
+                  </span>
+                );
+              }
               return (
-                <span key={idx} className="min-h-[1.2em] block">
-                  {tokens.map((tok, ti) =>
-                    tok.type === 'chord' ? (
-                      <ChordPopover key={ti} chordName={getChordForPopover(tok.value)}>
-                        <span className={`font-bold cursor-pointer hover:underline ${MODE_COLORS[displayMode]}`}>
-                          {renderChordValue(tok.value)}
-                        </span>
-                      </ChordPopover>
-                    ) : (
-                      <span key={ti} style={{ whiteSpace: 'pre' }}>{tok.value}</span>
-                    )
-                  )}
-                </span>
+                <div key={idx} className="min-h-[1.2em]">
+                  {line || '\u00A0'}
+                </div>
               );
-            }
-            return (
-              <div key={idx} className="min-h-[1.2em]">
-                {line || '\u00A0'}
-              </div>
-            );
-          })}
-        </pre>
+            })}
+          </pre>
+        )}
       </div>
 
       {/* Compositor no rodapé */}
