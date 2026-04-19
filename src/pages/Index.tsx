@@ -143,6 +143,29 @@ const Index = () => {
               </Link>
             </div>
 
+            {/* Pedir música */}
+            <div className="mt-4 rounded-2xl border border-[#FACC15]/20 bg-[#FACC15]/5 p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Music2 className="h-4 w-4 text-[#FACC15]" />
+                <h2 className="text-sm font-display font-bold text-foreground">Pedir Música</h2>
+              </div>
+              <form onSubmit={handlePedido} className="space-y-2">
+                <div className="grid grid-cols-2 gap-2">
+                  <Input value={musicaPedido} onChange={e => setMusicaPedido(e.target.value)}
+                    placeholder="Nome da música" required
+                    className="bg-card border-border text-sm h-9" />
+                  <Input value={artistaPedido} onChange={e => setArtistaPedido(e.target.value)}
+                    placeholder="Artista (opcional)"
+                    className="bg-card border-border text-sm h-9" />
+                </div>
+                <button type="submit" disabled={enviando || !musicaPedido.trim()}
+                  className="w-full flex items-center justify-center gap-2 rounded-lg bg-[#FACC15] hover:bg-[#E6B800] text-black font-bold text-sm py-2 transition-colors disabled:opacity-50">
+                  <Send size={14} />
+                  {enviando ? 'Enviando...' : 'Pedir Música'}
+                </button>
+              </form>
+            </div>
+
             {/* Artistas em destaque */}
             {topArtistas.length > 0 && (
               <div className="mt-6">
@@ -175,34 +198,23 @@ const Index = () => {
                   {[...Array(5)].map((_, i) => <div key={i} className="h-[72px] animate-pulse rounded-lg bg-card" />)}
                 </div>
               ) : (
-                <div className="space-y-2">
-                  {top20.map((m, i) => <SongCard key={m.id} musica={m} index={i} />)}
+                <div className="space-y-1">
+                  {top20.map((m, i) => (
+                    <Link key={m.id} to={`/musica/${m.id}`}
+                      className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-card transition-colors">
+                      <span className="text-xs font-mono text-muted-foreground w-5 shrink-0">{i + 1}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{m.titulo}</p>
+                        <p className="text-xs text-muted-foreground truncate">{m.artista}</p>
+                      </div>
+                      <span className="text-xs font-mono text-chord shrink-0">{m.tom_original}</span>
+                    </Link>
+                  ))}
                 </div>
               )}
             </div>
 
-            {/* Pedir música */}
-            <div className="mt-6 rounded-2xl border border-[#FACC15]/20 bg-[#FACC15]/5 p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <Music2 className="h-4 w-4 text-[#FACC15]" />
-                <h2 className="text-sm font-display font-bold text-foreground">Pedir Música</h2>
-              </div>
-              <form onSubmit={handlePedido} className="space-y-2">
-                <div className="grid grid-cols-2 gap-2">
-                  <Input value={musicaPedido} onChange={e => setMusicaPedido(e.target.value)}
-                    placeholder="Nome da música" required
-                    className="bg-card border-border text-sm h-9" />
-                  <Input value={artistaPedido} onChange={e => setArtistaPedido(e.target.value)}
-                    placeholder="Artista (opcional)"
-                    className="bg-card border-border text-sm h-9" />
-                </div>
-                <button type="submit" disabled={enviando || !musicaPedido.trim()}
-                  className="w-full flex items-center justify-center gap-2 rounded-lg bg-[#FACC15] hover:bg-[#E6B800] text-black font-bold text-sm py-2 transition-colors disabled:opacity-50">
-                  <Send size={14} />
-                  {enviando ? 'Enviando...' : 'Pedir Música'}
-                </button>
-              </form>
-            </div>
+
           </>
         )}
       </div>
