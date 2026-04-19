@@ -143,6 +143,7 @@ function createClickSound(ctx: AudioContext, time: number, type: StrokeType) {
 // ── Component ──
 
 const MestreDoRitmo = () => {
+  const navigate = useNavigate();
   const [pattern, setPattern] = useState<RhythmPattern>(PATTERNS[0]);
   const [bpm, setBpm] = useState(PATTERNS[0].defaultBpm);
   const [playing, setPlaying] = useState(false);
@@ -244,11 +245,11 @@ const MestreDoRitmo = () => {
     <div className="min-h-screen bg-[#050505] flex flex-col">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 pt-6 pb-4">
-        <Link to="/estude">
+        <button onClick={() => navigate(-1)}>
           <Button variant="ghost" size="icon" className="text-muted-foreground">
             <ArrowLeft className="h-5 w-5" />
           </Button>
-        </Link>
+        </button>
         <div>
           <h1 className="font-display text-lg font-bold text-foreground">Mestre do Ritmo</h1>
           <p className="text-[11px] text-muted-foreground">Treine batidas no tempo certo</p>

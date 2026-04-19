@@ -188,7 +188,7 @@ const OuvidoBionico = () => {
     return (
       <div className="min-h-screen bg-[#050505] flex flex-col">
         <div className="flex items-center gap-3 px-4 pt-6 pb-4">
-          <Link to="/estude"><Button variant="ghost" size="icon" className="text-muted-foreground"><ArrowLeft className="h-5 w-5" /></Button></Link>
+          <button onClick={() => navigate(-1)}><Button variant="ghost" size="icon" className="text-muted-foreground"><ArrowLeft className="h-5 w-5" /></Button></button>
           <div>
             <h1 className="font-display text-xl font-bold text-foreground">Ouvido Biônico</h1>
             <p className="text-[11px] text-muted-foreground">Treine sua percepção de intervalos</p>

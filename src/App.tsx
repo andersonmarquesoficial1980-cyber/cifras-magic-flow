@@ -19,12 +19,22 @@ import Artistas from "./pages/Artistas.tsx";
 import Generos from "./pages/Generos.tsx";
 import GeneroDetail from "./pages/GeneroDetail.tsx";
 import { AuthContext, useAuthState } from "@/hooks/useAuth";
+import { BottomNav } from "@/components/BottomNav";
 
 const queryClient = new QueryClient();
 
 function AuthProvider({ children }: { children: React.ReactNode }) {
   const auth = useAuthState();
   return <AuthContext.Provider value={auth}>{children}</AuthContext.Provider>;
+}
+
+function Layout({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{ paddingBottom: '70px' }}>
+      {children}
+      <BottomNav />
+    </div>
+  );
 }
 
 const App = () => (
@@ -34,6 +44,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
+          <Layout>
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/cifras" element={<Index />} />
@@ -51,6 +62,7 @@ const App = () => (
             <Route path="/genero/:nome" element={<GeneroDetail />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </Layout>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
