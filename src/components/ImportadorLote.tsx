@@ -139,6 +139,7 @@ export function ImportadorLote() {
           genero: genero || null,
           vibe: (data.vibe || []).join(', '),
           letra_cifrada: data.letra_cifrada,
+          compositor: data.compositor || null,
         });
         if (insertError) throw insertError;
 

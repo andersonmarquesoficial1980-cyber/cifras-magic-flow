@@ -349,6 +349,15 @@ export function CifraViewer({ musica }: CifraViewerProps) {
         </pre>
       </div>
 
+      {/* Compositor no rodapé */}
+      {(musica as any).compositor && (
+        <div className="container mx-auto px-4 pb-4 max-w-3xl">
+          <p className="text-xs text-muted-foreground border-t border-border pt-3 mt-2">
+            <span className="font-medium">Composição:</span> {(musica as any).compositor}
+          </p>
+        </div>
+      )}
+
       <AutoScrollBar bpm={musica.bpm} />
       <FlowFooter musica={musica} />
     </motion.div>

@@ -14,6 +14,7 @@ import MestreDoRitmo from "./pages/MestreDoRitmo.tsx";
 import OuvidoBionico from "./pages/OuvidoBionico.tsx";
 import Configuracoes from "./pages/Configuracoes.tsx";
 import ArtistaDetail from "./pages/ArtistaDetail.tsx";
+import Feedback from "./pages/Feedback.tsx";
 import { AuthContext, useAuthState } from "@/hooks/useAuth";
 
 const queryClient = new QueryClient();
@@ -41,6 +42,7 @@ const App = () => (
             <Route path="/musica/:id" element={<MusicaDetail />} />
             <Route path="/configuracoes" element={<Configuracoes />} />
             <Route path="/artista/:nome" element={<ArtistaDetail />} />
+            <Route path="/feedback" element={<Feedback />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

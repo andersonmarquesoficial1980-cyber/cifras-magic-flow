@@ -76,8 +76,12 @@ serve(async (req) => {
                   type: "string",
                   description: "Letra completa com cifras posicionadas acima das sílabas correspondentes, no formato texto puro (uma linha de acordes, uma linha de letra, alternando). Mantenha exatamente o formato original de cifras em cima das letras."
                 },
+                compositor: {
+                  type: "string",
+                  description: "Nome do compositor ou compositores da música. Geralmente aparece no rodapé da página como 'Composição:' ou 'Compositor:'. Se não encontrar, retorne string vazia."
+                },
               },
-              required: ["titulo", "artista", "tom_original", "bpm", "capo_fret", "vibe", "letra_cifrada"],
+              required: ["titulo", "artista", "tom_original", "bpm", "capo_fret", "vibe", "letra_cifrada", "compositor"],
               additionalProperties: false,
             },
           },

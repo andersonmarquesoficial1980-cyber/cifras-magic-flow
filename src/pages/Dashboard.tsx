@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Music2, BookOpen, Timer, Guitar, Star, LogIn, LogOut, Crown, Settings } from 'lucide-react';
+import { Music2, BookOpen, Timer, Guitar, Star, LogIn, LogOut, Crown, Settings, MessageSquare } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useMusicas } from '@/hooks/useMusicas';
 import { useToggleFavorite } from '@/hooks/useToggleFavorite';
@@ -44,6 +44,15 @@ const GRID_ITEMS = [
     glow: 'shadow-[0_0_40px_-8px_rgba(168,85,247,0.35)]',
     iconColor: 'text-white',
     desc: 'Afinar violão',
+  },
+  {
+    label: 'Fale Conosco',
+    icon: MessageSquare,
+    to: '/feedback',
+    color: 'from-[#10B981] to-[#059669]',
+    glow: 'shadow-[0_0_40px_-8px_rgba(16,185,129,0.35)]',
+    iconColor: 'text-white',
+    desc: 'Pedidos e sugestões',
   },
 ];
 
