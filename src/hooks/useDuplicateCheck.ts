@@ -28,20 +28,29 @@ function normalize(str: string): string {
 export async function checkDuplicatesBatch(
   songs: { titulo: string; url: string }[]
 ): Promise<Set<string>> {
-  // Busca todas as músicas existentes
-  const { data } = await supabase
+  // Busca source_urls existentes para comparação exata por URL
+  const { data: byUrl } = await supabase
     .from('musicas')
-    .select('titulo, artista');
+    .select('source_url')
+    .not('source_url', 'is', null);
 
-  if (!data?.length) return new Set();
+  const existingUrls = new Set(
+    (byUrl ?? []).map((m) => m.source_url as string)
+  );
 
-  const existingSet = new Set(
-    data.map((m) => normalize(m.titulo ?? ''))
+  // Fallback: também busca por título normalizado (músicas sem source_url)
+  const { data: byTitle } = await supabase
+    .from('musicas')
+    .select('titulo')
+    .is('source_url', null);
+
+  const existingTitles = new Set(
+    (byTitle ?? []).map((m) => normalize(m.titulo ?? ''))
   );
 
   const duplicateUrls = new Set<string>();
   for (const song of songs) {
-    if (existingSet.has(normalize(song.titulo))) {
+    if (existingUrls.has(song.url) || existingTitles.has(normalize(song.titulo))) {
       duplicateUrls.add(song.url);
     }
   }

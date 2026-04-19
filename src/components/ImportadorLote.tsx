@@ -142,6 +142,7 @@ export function ImportadorLote() {
           vibe: (data.vibe || []).join(', '),
           letra_cifrada: data.letra_cifrada,
           compositor: data.compositor || null,
+          source_url: song.url,
         });
         if (insertError) throw insertError;
 
