@@ -40,17 +40,17 @@ serve(async (req) => {
       .trim()
       .slice(0, 15000);
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY") || Deno.env.get("LOVABLE_API_KEY");
+    if (!OPENAI_API_KEY) throw new Error("OPENAI_API_KEY not configured");
 
-    const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const aiRes = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "gpt-4o-mini",
         tools: [{
           type: "function",
           function: {
@@ -92,7 +92,12 @@ serve(async (req) => {
             role: "system",
             content: `Você é um curador musical especialista. Extraia o título, artista, tom original, BPM estimado, casa do capotraste, vibes e a letra cifrada do conteúdo fornecido.
 
-IMPORTANTE para letra_cifrada: Mantenha o formato original com acordes posicionados acima das sílabas correspondentes usando espaços.
+IMPORTANTE para letra_cifrada:
+- Mantenha o formato original com acordes posicionados acima das sílabas correspondentes usando espaços.
+- ELIMINE REPETIÇÕES DE SEÇÕES: Se um refrão, verso ou ponte aparece mais de uma vez com exatamente os mesmos acordes e letra, escreva apenas UMA VEZ. Onde a seção se repetiria, coloque apenas o marcador da seção entre colchetes (ex: [Refrão], [Repetir Refrão x2]).
+- Mantenha os marcadores de seção entre colchetes: [Intro], [Verso], [Primeira Parte], [Refrão], [Ponte], [Segunda Parte], [Final], etc.
+- Seções com letra/acordes DIFERENTES devem ser escritas por completo mesmo que tenham o mesmo nome.
+- O objetivo é ter a cifra mais compacta possível sem perder informação musical.
 
 Para Capotraste: Procure indicações como "Capotraste na Xª casa", "Capo na X casa", "Capo X", "Tom: X (capo Xª casa)". Se encontrar, retorne o número da casa. Se não houver indicação, retorne 0.
 
