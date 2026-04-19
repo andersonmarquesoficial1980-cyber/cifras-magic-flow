@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Search, Music2, ArrowLeft } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { useMusicas } from '@/hooks/useMusicas';
 import { SongCard } from '@/components/SongCard';
@@ -34,10 +34,11 @@ const Index = () => {
   const { data: musicas, isLoading } = useMusicas();
   const { isAdmin } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState('');
   const [vibeFilter, setVibeFilter] = useState<string>('Todas');
   const [keyFilter, setKeyFilter] = useState<string>('');
-  const [activeTab, setActiveTab] = useState('todas');
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'todas');
 
   const availableKeys = useMemo(() => {
     if (!musicas) return [];
@@ -206,9 +207,9 @@ const Index = () => {
           <div className="mt-2">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="w-full bg-card border border-border h-9">
-                <TabsTrigger value="todas" className="flex-1 text-xs data-[state=active]:bg-primary/20 data-[state=active]:text-primary">Todas</TabsTrigger>
-                <TabsTrigger value="artistas" className="flex-1 text-xs data-[state=active]:bg-primary/20 data-[state=active]:text-primary">Artistas</TabsTrigger>
-                <TabsTrigger value="generos" className="flex-1 text-xs data-[state=active]:bg-primary/20 data-[state=active]:text-primary">Gêneros</TabsTrigger>
+                <TabsTrigger value="todas" onClick={() => setSearchParams({tab:'todas'})} className="flex-1 text-xs data-[state=active]:bg-primary/20 data-[state=active]:text-primary">Todas</TabsTrigger>
+                <TabsTrigger value="artistas" onClick={() => setSearchParams({tab:'artistas'})} className="flex-1 text-xs data-[state=active]:bg-primary/20 data-[state=active]:text-primary">Artistas</TabsTrigger>
+                <TabsTrigger value="generos" onClick={() => setSearchParams({tab:'generos'})} className="flex-1 text-xs data-[state=active]:bg-primary/20 data-[state=active]:text-primary">Gêneros</TabsTrigger>
               </TabsList>
             </Tabs>
           </div>
@@ -218,7 +219,7 @@ const Index = () => {
 
       {/* LISTA DE MÚSICAS — começa abaixo do cabeçalho fixo */}
       <div className="container mx-auto px-4 max-w-3xl pb-8" style={{ paddingTop: `${HEADER_H}px` }}>
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); setSearchParams({tab: v}); }}>
           <TabsContent value="todas">
             {isLoading ? renderSkeletons() : filtered.length > 0 ? (
               <div className="space-y-2">
