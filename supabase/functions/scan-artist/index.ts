@@ -16,9 +16,11 @@ serve(async (req) => {
       });
     }
 
-    const urlObj = new URL(url);
+    let urlFinal = url.trim();
+    if (!urlFinal.startsWith("http")) urlFinal = "https://" + urlFinal;
+
+    const urlObj = new URL(urlFinal);
     const segments = urlObj.pathname.split('/').filter(Boolean);
-    // Pegar sempre o primeiro segmento como artista (ignora discografia, etc.)
     const artistSlug = segments[0];
 
     if (!artistSlug) {
@@ -30,96 +32,95 @@ serve(async (req) => {
     const songs: { titulo: string; url: string }[] = [];
     const seen = new Set<string>();
 
-    // Tentar múltiplas páginas (paginação)
-    for (let page = 1; page <= 5; page++) {
-      const pageUrl = page === 1
-        ? `https://www.cifraclub.com.br/${artistSlug}/`
-        : `https://www.cifraclub.com.br/${artistSlug}/pagina/${page}/`;
+    // Fetch the exact URL provided (supports /musicas.html and regular artist page)
+    console.log(`Buscando: ${urlFinal}`);
 
-      console.log(`Buscando página ${page}: ${pageUrl}`);
+    const pageRes = await fetch(urlFinal, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "pt-BR,pt;q=0.9",
+        "Referer": "https://www.cifraclub.com.br/",
+      },
+    });
 
-      const pageRes = await fetch(pageUrl, {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-          "Accept-Language": "pt-BR,pt;q=0.9",
-          "Referer": "https://www.cifraclub.com.br/",
-        },
+    if (!pageRes.ok) {
+      return new Response(JSON.stringify({ error: `Página não encontrada (${pageRes.status}). Verifique a URL.` }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
-
-      if (!pageRes.ok) {
-        if (page === 1) {
-          return new Response(JSON.stringify({ error: `Artista não encontrado (${pageRes.status}). Use a URL da página do artista no Cifra Club.` }), {
-            status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-        break;
-      }
-
-      const html = await pageRes.text();
-      let foundOnPage = 0;
-
-      // Padrão 1: links diretos artista/musica
-      const pattern1 = new RegExp(`href=["'](/${artistSlug}/[a-z0-9-]+/)["']`, 'gi');
-      let m;
-      while ((m = pattern1.exec(html)) !== null) {
-        const path = m[1];
-        // Ignorar páginas especiais
-        if (/\/(discografia|videos|fotos|bio|letras|pagina|cifras|tabs|partituras)\//i.test(path)) continue;
-        if (seen.has(path)) continue;
-        seen.add(path);
-
-        // Tentar pegar o nome do link
-        const linkMatch = html.slice(Math.max(0, m.index - 5), m.index + m[0].length + 200)
-          .match(/>([^<]{2,80})</);
-        const titulo = linkMatch ? linkMatch[1].trim() : path.split('/').filter(Boolean)[1].replace(/-/g, ' ');
-
-        songs.push({ titulo, url: `https://www.cifraclub.com.br${path}` });
-        foundOnPage++;
-      }
-
-      // Padrão 2: JSON embebido na página
-      const jsonPatterns = [
-        /"musicas":\s*(\[[\s\S]*?\])/,
-        /"songs":\s*(\[[\s\S]*?\])/,
-        /"cifras":\s*(\[[\s\S]*?\])/,
-      ];
-      for (const pattern of jsonPatterns) {
-        const jsonMatch = html.match(pattern);
-        if (jsonMatch) {
-          try {
-            const items = JSON.parse(jsonMatch[1]);
-            for (const item of items) {
-              const slug = item.slug || item.url_slug || item.cifra_url;
-              const name = item.name || item.title || item.nome || item.cifra_name;
-              if (!slug || !name) continue;
-              const path = `/${artistSlug}/${slug}/`;
-              if (seen.has(path)) continue;
-              seen.add(path);
-              songs.push({ titulo: name, url: `https://www.cifraclub.com.br${path}` });
-              foundOnPage++;
-            }
-          } catch {}
-        }
-      }
-
-      console.log(`Página ${page}: ${foundOnPage} músicas`);
-
-      // Se não achou nada na página 2+, para
-      if (page > 1 && foundOnPage === 0) break;
     }
 
-    console.log(`Total: ${songs.length} músicas`);
+    const html = await pageRes.text();
+
+    // Extract song links — pattern: href="/artist-slug/song-slug/" or href="/artist-slug/numeric-id/"
+    // Exclude navigation links (musicas.html, discografia, etc.)
+    const songPattern = new RegExp(`href="(/${artistSlug}/(?:[a-z0-9][a-z0-9-]*[a-z0-9]|[0-9]+)/)"`, 'gi');
+    const excludeTerms = /\/(discografia|videos|fotos|bio|letras|pagina|cifras|tabs|partituras|musicas)\//i;
+
+    let m;
+    const linkPositions: { path: string; index: number }[] = [];
+    while ((m = songPattern.exec(html)) !== null) {
+      const path = m[1];
+      if (excludeTerms.test(path)) continue;
+      if (seen.has(path)) continue;
+      seen.add(path);
+      linkPositions.push({ path, index: m.index });
+    }
+
+    console.log(`Links encontrados: ${linkPositions.length}`);
+
+    // For each link, try to extract title from nearby HTML
+    // Cifra Club uses class "primaryLabel" for song titles
+    for (const { path, index } of linkPositions) {
+      // Look at surrounding 600 chars for a primaryLabel
+      const surrounding = html.slice(Math.max(0, index - 50), index + 600);
+
+      // Try primaryLabel class
+      const primaryLabelMatch = surrounding.match(/primaryLabel[^>]*>([^<]{2,120})</);
+      let titulo = primaryLabelMatch ? primaryLabelMatch[1].trim() : '';
+
+      // Fallback: any text inside <p> near the link
+      if (!titulo) {
+        const pMatch = surrounding.match(/<p[^>]*>([^<]{2,80})<\/p>/);
+        titulo = pMatch ? pMatch[1].trim() : '';
+      }
+
+      // Fallback: derive from slug
+      if (!titulo) {
+        const slug = path.split('/').filter(Boolean)[1] || '';
+        // Skip purely numeric IDs without a title — they'll show the ID as fallback
+        titulo = slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+      }
+
+      // Skip obviously bad entries (empty or just numbers)
+      if (!titulo || /^\d+$/.test(titulo)) {
+        titulo = path.split('/').filter(Boolean)[1]?.replace(/-/g, ' ') || 'Sem título';
+      }
+
+      // Decode HTML entities
+      titulo = titulo
+        .replace(/&amp;/g, '&')
+        .replace(/&quot;/g, '"')
+        .replace(/&#x27;/g, "'")
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .trim();
+
+      songs.push({ titulo, url: `https://www.cifraclub.com.br${path}` });
+    }
+
+    console.log(`Total músicas extraídas: ${songs.length}`);
 
     if (songs.length === 0) {
       return new Response(JSON.stringify({
-        error: `Nenhuma música encontrada para "${artistSlug}". Use a URL da página principal do artista no Cifra Club, ex: https://www.cifraclub.com.br/oficina-g3/`
+        error: `Nenhuma música encontrada. Tente a URL completa da página do artista, ex: https://www.cifraclub.com.br/diante-do-trono/musicas.html`
       }), {
         status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    return new Response(JSON.stringify({ songs: songs.slice(0, 200) }), {
+    // Return up to 500 songs (UI can handle selection)
+    return new Response(JSON.stringify({ songs: songs.slice(0, 500) }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
 
