@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, Zap, Eye, EyeOff, Plus, Minus, Feather, Star, Music2, AlignLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { Musica } from '@/hooks/useMusicas';
-import { isChordLine, tokenizeChordLine, chordToGrau, chordToOrdinalDegree } from '@/lib/chordDetector';
+import { isChordLine, tokenizeChordLine, chordToGrau, chordToOrdinalDegree, isMixedSectionChordLine, splitSectionAndChords } from '@/lib/chordDetector';
 import { transposeChord, simplifyChord, ALL_KEYS } from '@/lib/transpose';
 import type { DisplayMode } from '@/lib/transpose';
 import { Slider } from '@/components/ui/slider';
@@ -72,7 +72,9 @@ export function CifraViewer({ musica }: CifraViewerProps) {
 
   // ── Render helpers para novos modos ──
   function renderChordLineTokens(line: string) {
-    const tokens = tokenizeChordLine(line);
+    // Se linha mista, pega só a parte de acordes
+    const chordPart = isMixedSectionChordLine(line) ? splitSectionAndChords(line).chords : line;
+    const tokens = tokenizeChordLine(chordPart);
     return tokens.map((tok, ti) =>
       tok.type === 'chord' ? (
         <ChordPopover key={ti} chordName={getChordForPopover(tok.value)}>
@@ -472,9 +474,20 @@ export function CifraViewer({ musica }: CifraViewerProps) {
               let currentSection: Section = { label: '', chords: [] };
 
               lines.forEach(line => {
+                // Linha mista [Intro] E E7/G# — trata como nova seção + acordes
+                if (isMixedSectionChordLine(line)) {
+                  const { section, chords } = splitSectionAndChords(line);
+                  if (currentSection.chords.length > 0 || currentSection.label) {
+                    sections.push(currentSection);
+                  }
+                  currentSection = { label: section, chords: [] };
+                  const tokens = tokenizeChordLine(chords);
+                  tokens.filter(t => t.type === 'chord')
+                    .forEach(t => currentSection.chords.push(renderChordValue(t.value)));
+                  return;
+                }
                 const sectionMatch = line.trim().match(/^\[(.+)\]$/);
                 if (sectionMatch) {
-                  // Salva a seção atual se tiver acordes
                   if (currentSection.chords.length > 0 || currentSection.label) {
                     sections.push(currentSection);
                   }
@@ -530,6 +543,27 @@ export function CifraViewer({ musica }: CifraViewerProps) {
             style={{ fontSize: `${fontSize}px`, fontFamily: "'Roboto Mono', 'Courier New', Courier, monospace", willChange: 'transform', backfaceVisibility: 'hidden' }}
           >
             {lines.map((line, idx) => {
+              // Linha mista: [Intro] E E7/G# A D7 — separar marcador + acordes
+              if (isMixedSectionChordLine(line)) {
+                const { section, chords } = splitSectionAndChords(line);
+                const tokens = tokenizeChordLine(chords);
+                return (
+                  <span key={idx} className="min-h-[1.2em] block">
+                    <span className="text-[10px] uppercase tracking-widest text-muted-foreground mr-2">[{section}]</span>
+                    {tokens.map((tok, ti) =>
+                      tok.type === 'chord' ? (
+                        <ChordPopover key={ti} chordName={getChordForPopover(tok.value)}>
+                          <span className={`font-bold cursor-pointer hover:underline ${MODE_COLORS[displayMode]}`}>
+                            {renderChordValue(tok.value)}
+                          </span>
+                        </ChordPopover>
+                      ) : (
+                        <span key={ti} style={{ whiteSpace: 'pre' }}>{tok.value}</span>
+                      )
+                    )}
+                  </span>
+                );
+              }
               if (isChordLine(line)) {
                 const tokens = tokenizeChordLine(line);
                 return (
