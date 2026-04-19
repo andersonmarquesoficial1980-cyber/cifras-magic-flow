@@ -39,6 +39,9 @@ const Index = () => {
   const [vibeFilter, setVibeFilter] = useState<string>('Todas');
   const [keyFilter, setKeyFilter] = useState<string>('');
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'todas');
+  const [openAccordions, setOpenAccordions] = useState<string[]>(
+    searchParams.get('artista') ? [decodeURIComponent(searchParams.get('artista')!)] : []
+  );
 
   const availableKeys = useMemo(() => {
     if (!musicas) return [];
@@ -98,7 +101,12 @@ const Index = () => {
   );
 
   const renderAccordionGroup = (groups: [string, typeof filtered][]) => (
-    <Accordion type="multiple" className="space-y-2">
+    <Accordion type="multiple" value={openAccordions} onValueChange={(vals) => {
+      setOpenAccordions(vals);
+      const params: Record<string,string> = { tab: activeTab };
+      if (vals.length > 0) params.artista = encodeURIComponent(vals[vals.length - 1]);
+      setSearchParams(params);
+    }} className="space-y-2">
       {groups.map(([groupName, songs]) => (
         <AccordionItem key={groupName} value={groupName} className="border border-border rounded-lg bg-card/50 overflow-hidden">
           <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-card/80">
