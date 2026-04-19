@@ -107,7 +107,7 @@ IMPORTANTE para letra_cifrada:
   A9
   Tu cantavas sobre mim
 - NUNCA inclua TABs, tablaturas, diagramas de solo (linhas com e|--, B|--, G|--, D|--, A|--, E|--). Remova completamente esses blocos.
-- NUNCA inclua blocos ``` (backticks markdown) — retorne apenas texto puro.
+- NUNCA inclua blocos de codigo markdown (tres backticks) — retorne apenas texto puro.
 - ELIMINE REPETIÇÕES DE SEÇÕES: Se um refrão, verso ou ponte aparece mais de uma vez com exatamente os mesmos acordes e letra, escreva apenas UMA VEZ. Onde a seção se repetiria, coloque apenas o marcador da seção entre colchetes (ex: [Refrão], [Repetir Refrão x2]).
 - Mantenha os marcadores de seção entre colchetes: [Intro], [Verso], [Primeira Parte], [Refrão], [Ponte], [Segunda Parte], [Final], etc.
 - Seções com letra/acordes DIFERENTES devem ser escritas por completo mesmo que tenham o mesmo nome.
