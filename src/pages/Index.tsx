@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Search, Music2, ArrowLeft, ChevronRight } from 'lucide-react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { Link } from 'react-router-dom';
 import { useMusicas } from '@/hooks/useMusicas';
 import { SongCard } from '@/components/SongCard';
 import { Input } from '@/components/ui/input';
