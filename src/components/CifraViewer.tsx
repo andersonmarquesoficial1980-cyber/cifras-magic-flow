@@ -48,22 +48,41 @@ export function CifraViewer({ musica }: CifraViewerProps) {
 
   // ── Detecção de progressão repetida ──
   const progressaoInfo = useMemo(() => {
-    // Extrai todas as linhas de acordes da cifra
-    const chordLines = lines.filter(l => isChordLine(l)).map(l => l.trim());
-    if (chordLines.length < 4) return null;
+    // Extrai TODOS os acordes da cifra em ordem (ignora letra e marcadores)
+    const allChords: string[] = [];
+    lines.forEach(line => {
+      const chordPart = isMixedSectionChordLine(line)
+        ? splitSectionAndChords(line).chords
+        : line;
+      if (isChordLine(chordPart)) {
+        const tokens = tokenizeChordLine(chordPart);
+        tokens.filter(t => t.type === 'chord').forEach(t => {
+          const val = t.value.trim();
+          // Deduplica consecutivos
+          if (val && allChords[allChords.length - 1] !== val) allChords.push(val);
+        });
+      }
+    });
 
-    // Tenta detectar um padrão que se repete (2 a 8 linhas)
-    for (let patLen = 1; patLen <= Math.min(8, Math.floor(chordLines.length / 2)); patLen++) {
-      const pattern = chordLines.slice(0, patLen);
-      let allMatch = true;
+    if (allChords.length < 4) return null;
+
+    // Tenta detectar padrão de N acordes que se repete na sequência total
+    for (let patLen = 2; patLen <= Math.min(8, Math.floor(allChords.length / 2)); patLen++) {
+      const pattern = allChords.slice(0, patLen);
       let count = 0;
-      for (let i = 0; i + patLen <= chordLines.length; i += patLen) {
-        const slice = chordLines.slice(i, i + patLen);
-        if (slice.join('|') !== pattern.join('|')) { allMatch = false; break; }
+      let allMatch = true;
+      for (let i = 0; i + patLen <= allChords.length; i += patLen) {
+        const slice = allChords.slice(i, i + patLen);
+        // Permite que o último bloco seja incompleto (truncado)
+        const isLast = i + patLen >= allChords.length;
+        const matches = isLast
+          ? pattern.slice(0, slice.length).join('|') === slice.join('|')
+          : slice.join('|') === pattern.join('|');
+        if (!matches) { allMatch = false; break; }
         count++;
       }
-      // Só considera progressão se repete pelo menos 3x e cobre 80%+ da música
-      if (allMatch && count >= 3 && count * patLen >= chordLines.length * 0.75) {
+      // Progressão válida: repete 3x+ e cobre 75%+ dos acordes
+      if (allMatch && count >= 3 && count * patLen >= allChords.length * 0.7) {
         return { pattern, repeticoes: count };
       }
     }
