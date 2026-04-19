@@ -74,7 +74,7 @@ serve(async (req) => {
                 },
                 letra_cifrada: {
                   type: "string",
-                  description: "Letra completa com cifras posicionadas acima das sílabas correspondentes, no formato texto puro (uma linha de acordes, uma linha de letra, alternando). Mantenha exatamente o formato original de cifras em cima das letras."
+                  description: "Letra completa com cifras posicionadas acima das sílabas correspondentes. REGRAS OBRIGATÓRIAS: (1) Acordes que pertencem ao mesmo verso/frase musical ficam na MESMA linha, separados por espaços, ex: 'C#m          B4' numa só linha acima de 'Antes de eu falar'. NUNCA coloque cada acorde em linha separada quando eles pertencem à mesma frase. (2) O padrão é: linha de acordes, linha de letra, alternando. (3) Acordes que ficam sozinhos acima de uma só sílaba podem ficar em linha própria somente se realmente só há um acorde naquele verso."
                 },
                 compositor: {
                   type: "string",
@@ -93,7 +93,19 @@ serve(async (req) => {
             content: `Você é um curador musical especialista. Extraia o título, artista, tom original, BPM estimado, casa do capotraste, vibes e a letra cifrada do conteúdo fornecido.
 
 IMPORTANTE para letra_cifrada:
-- Mantenha o formato original com acordes posicionados acima das sílabas correspondentes usando espaços.
+- Acordes do mesmo verso ficam na MESMA linha de acordes, separados por espaços. Ex: 'C#m          B4' é UMA linha, não duas. NUNCA coloque cada acorde em linha separada quando pertencem à mesma frase musical.
+- Formato correto: linha de acordes → linha de letra → linha de acordes → linha de letra...
+- Exemplo correto:
+  C#m          B4
+  Antes de eu falar
+       A9
+  Tu cantavas sobre mim
+- Exemplo ERRADO (não faça isso):
+  C#m
+  B4
+  Antes de eu falar
+  A9
+  Tu cantavas sobre mim
 - NUNCA inclua TABs, tablaturas, diagramas de solo (linhas com e|--, B|--, G|--, D|--, A|--, E|--). Remova completamente esses blocos.
 - NUNCA inclua blocos ``` (backticks markdown) — retorne apenas texto puro.
 - ELIMINE REPETIÇÕES DE SEÇÕES: Se um refrão, verso ou ponte aparece mais de uma vez com exatamente os mesmos acordes e letra, escreva apenas UMA VEZ. Onde a seção se repetiria, coloque apenas o marcador da seção entre colchetes (ex: [Refrão], [Repetir Refrão x2]).
