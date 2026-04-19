@@ -1,141 +1,77 @@
 import { useState, useMemo } from 'react';
-import { Search, Music2, ArrowLeft, ChevronRight } from 'lucide-react';
-import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { Search, Music2, ArrowLeft, Users, Tag, ChevronRight, Star, TrendingUp, Send } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
 import { useMusicas } from '@/hooks/useMusicas';
 import { SongCard } from '@/components/SongCard';
 import { Input } from '@/components/ui/input';
 import { ImportadorFlash } from '@/components/ImportadorFlash';
 import { ImportadorLote } from '@/components/ImportadorLote';
 import { useAuth } from '@/hooks/useAuth';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
-
-const VIBES = ['Todas', 'Animada', 'Romântica', 'Adoração', 'Pra Pular', 'Modão', 'Introspectiva'] as const;
-
-const VIBE_COLORS: Record<string, string> = {
-  'Animada': 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40',
-  'Romântica': 'bg-sky-500/20 text-sky-400 border-sky-500/40',
-  'Adoração': 'bg-purple-500/20 text-purple-400 border-purple-500/40',
-  'Pra Pular': 'bg-amber-500/20 text-amber-400 border-amber-500/40',
-  'Modão': 'bg-orange-500/20 text-orange-400 border-orange-500/40',
-  'Introspectiva': 'bg-slate-500/20 text-slate-400 border-slate-500/40',
-};
-
-const ALL_KEYS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B',
-  'Cm', 'C#m', 'Dm', 'D#m', 'Em', 'Fm', 'F#m', 'Gm', 'G#m', 'Am', 'A#m', 'Bm'];
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 const Index = () => {
   const { data: musicas, isLoading } = useMusicas();
   const { isAdmin } = useAuth();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const { toast } = useToast();
   const [search, setSearch] = useState('');
-  const [vibeFilter, setVibeFilter] = useState<string>('Todas');
-  const [keyFilter, setKeyFilter] = useState<string>('');
-  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'todas');
-  const [openAccordions, setOpenAccordions] = useState<string[]>(
-    searchParams.get('artista') ? [decodeURIComponent(searchParams.get('artista')!)] : []
-  );
-
-  const availableKeys = useMemo(() => {
-    if (!musicas) return [];
-    const keys = new Set(musicas.map(m => m.tom_original).filter(Boolean));
-    return ALL_KEYS.filter(k => keys.has(k));
-  }, [musicas]);
+  const [musicaPedido, setMusicaPedido] = useState('');
+  const [artistaPedido, setArtistaPedido] = useState('');
+  const [enviando, setEnviando] = useState(false);
 
   const filtered = useMemo(() => {
+    if (!search || !musicas) return [];
+    return musicas.filter((m) =>
+      m.titulo.toLowerCase().includes(search.toLowerCase()) ||
+      (m.artista && m.artista.toLowerCase().includes(search.toLowerCase()))
+    );
+  }, [musicas, search]);
+
+  // Top 20 mais recentes (futuro: por views)
+  const top20 = useMemo(() => {
     if (!musicas) return [];
-    return musicas.filter((m) => {
-      const matchSearch = !search ||
-        m.titulo.toLowerCase().includes(search.toLowerCase()) ||
-        (m.artista && m.artista.toLowerCase().includes(search.toLowerCase()));
-      const matchVibe = vibeFilter === 'Todas' || (m.vibe && m.vibe.toLowerCase().includes(vibeFilter.toLowerCase()));
-      const matchKey = !keyFilter || m.tom_original === keyFilter;
-      return matchSearch && matchVibe && matchKey;
+    return [...musicas].slice(0, 20);
+  }, [musicas]);
+
+  // Top artistas por qtd de músicas
+  const topArtistas = useMemo(() => {
+    if (!musicas) return [];
+    const map = new Map<string, number>();
+    musicas.forEach(m => {
+      const a = m.artista || 'Sem artista';
+      map.set(a, (map.get(a) || 0) + 1);
     });
-  }, [musicas, search, vibeFilter, keyFilter]);
+    return Array.from(map.entries())
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 8);
+  }, [musicas]);
 
-  const groupedByArtist = useMemo(() => {
-    const map = new Map<string, typeof filtered>();
-    filtered.forEach(m => {
-      const artist = m.artista || 'Sem artista';
-      if (!map.has(artist)) map.set(artist, []);
-      map.get(artist)!.push(m);
+  async function handlePedido(e: React.FormEvent) {
+    e.preventDefault();
+    if (!musicaPedido.trim()) return;
+    setEnviando(true);
+    await supabase.from('feedbacks').insert({
+      tipo: 'pedido',
+      mensagem: `Pedido: ${musicaPedido.trim()}${artistaPedido ? ` - ${artistaPedido.trim()}` : ''}`,
+      musica_sugerida: musicaPedido.trim(),
+      artista_sugerido: artistaPedido.trim() || null,
     });
-    return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b));
-  }, [filtered]);
+    setEnviando(false);
+    setMusicaPedido('');
+    setArtistaPedido('');
+    toast({ title: 'Pedido enviado! 🎵', description: 'Vamos tentar adicionar em breve.' });
+  }
 
-  const groupedByGenre = useMemo(() => {
-    const map = new Map<string, typeof filtered>();
-    filtered.forEach(m => {
-      const genre = (m as any).genero || 'Sem gênero';
-      if (!map.has(genre)) map.set(genre, []);
-      map.get(genre)!.push(m);
-    });
-    return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b));
-  }, [filtered]);
-
-  const renderSkeletons = () => (
-    <div className="space-y-3">
-      {[...Array(5)].map((_, i) => (
-        <div key={i} className="h-[72px] animate-pulse rounded-lg bg-card" />
-      ))}
-    </div>
-  );
-
-  const renderEmpty = () => (
-    <div className="py-16 text-center">
-      <Music2 className="mx-auto h-10 w-10 text-muted-foreground/20" />
-      <p className="mt-3 text-sm text-muted-foreground font-body">
-        {search || vibeFilter !== 'Todas' || keyFilter
-          ? 'Nenhuma música encontrada com esses filtros.'
-          : 'Nenhuma música cadastrada.'}
-      </p>
-    </div>
-  );
-
-  const renderAccordionGroup = (groups: [string, typeof filtered][]) => (
-    <div className="space-y-2">
-      {groups.map(([groupName, songs]) => (
-        <Link
-          key={groupName}
-          to={`/artista/${encodeURIComponent(groupName)}`}
-          className="group flex items-center gap-3 rounded-lg border border-border bg-card p-4 transition-all hover:border-primary/30 hover:bg-card/80 active:scale-[0.99]"
-        >
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary/10">
-            <Music2 className="h-4 w-4 text-primary" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <span className="font-display text-sm font-semibold text-foreground group-hover:text-primary transition-colors">{groupName}</span>
-            <p className="text-xs text-muted-foreground mt-0.5">{songs.length} música{songs.length !== 1 ? 's' : ''}</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-mono text-muted-foreground">{songs.length}</span>
-            <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-          </div>
-        </Link>
-      ))}
-    </div>
-  );
-
-  // Calcula altura do cabeçalho fixo dinamicamente
-  // Linha topo ~48px + busca ~44px + vibes ~36px + tom ~32px + tabs ~44px + paddings ~32px = ~236px
-  const HEADER_H = availableKeys.length > 0 ? 260 : 220;
+  const HEADER_H = search ? 120 : 120;
 
   return (
     <div className="min-h-screen bg-background">
 
-      {/* CABEÇALHO FIXO — tudo até as tabs fica congelado */}
+      {/* Header fixo com busca */}
       <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50, background: 'hsl(var(--background))', borderBottom: '1px solid hsl(var(--border))' }}>
-        <div className="container mx-auto px-4 pt-3 pb-2 max-w-3xl">
-
-          {/* Linha 1: Voltar + Título + Importadores (admin) */}
-          <div className="flex items-center gap-2 flex-wrap">
+        <div className="container mx-auto px-4 pt-3 pb-3 max-w-3xl">
+          <div className="flex items-center gap-2 mb-3">
             <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors">
               <ArrowLeft className="h-4 w-4" />
               <span className="text-sm">Voltar</span>
@@ -149,9 +85,7 @@ const Index = () => {
               </div>
             )}
           </div>
-
-          {/* Linha 2: Busca */}
-          <div className="relative mt-2">
+          <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Buscar música ou artista..."
@@ -160,87 +94,118 @@ const Index = () => {
               className="pl-10 bg-card border-border font-body text-sm h-9"
             />
           </div>
-
-          {/* Linha 3: Vibes */}
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {VIBES.map((vibe) => {
-              const active = vibeFilter === vibe;
-              const isAll = vibe === 'Todas';
-              return (
-                <button
-                  key={vibe}
-                  onClick={() => setVibeFilter(vibe)}
-                  className={`rounded-full px-3 py-0.5 text-xs font-medium border transition-all ${
-                    active
-                      ? isAll ? 'bg-foreground/10 text-foreground border-foreground/30'
-                        : VIBE_COLORS[vibe] || 'bg-foreground/10 text-foreground border-foreground/30'
-                      : 'bg-transparent text-muted-foreground border-border hover:border-muted-foreground/40'
-                  }`}
-                >
-                  {vibe}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Linha 4: Tom */}
-          {availableKeys.length > 0 && (
-            <div className="mt-1.5 flex items-center gap-2">
-              <span className="text-xs text-muted-foreground font-mono shrink-0">Tom:</span>
-              <div className="flex flex-wrap gap-1">
-                <button onClick={() => setKeyFilter('')}
-                  className={`rounded px-2 py-0.5 text-[10px] font-mono border transition-all ${!keyFilter ? 'bg-chord/15 text-chord border-chord/40' : 'text-muted-foreground border-border'}`}>
-                  Todos
-                </button>
-                {availableKeys.map((k) => (
-                  <button key={k} onClick={() => setKeyFilter(keyFilter === k ? '' : k)}
-                    className={`rounded px-2 py-0.5 text-[10px] font-mono border transition-all ${keyFilter === k ? 'bg-chord/15 text-chord border-chord/40' : 'text-muted-foreground border-border'}`}>
-                    {k}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Linha 5: Tabs */}
-          <div className="mt-2">
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="w-full bg-card border border-border h-9">
-                <TabsTrigger value="todas" onClick={() => setSearchParams({tab:'todas'})} className="flex-1 text-xs data-[state=active]:bg-primary/20 data-[state=active]:text-primary">Todas</TabsTrigger>
-                <TabsTrigger value="artistas" onClick={() => setSearchParams({tab:'artistas'})} className="flex-1 text-xs data-[state=active]:bg-primary/20 data-[state=active]:text-primary">Artistas</TabsTrigger>
-                <TabsTrigger value="generos" onClick={() => setSearchParams({tab:'generos'})} className="flex-1 text-xs data-[state=active]:bg-primary/20 data-[state=active]:text-primary">Gêneros</TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </div>
-
         </div>
       </div>
 
-      {/* LISTA DE MÚSICAS — começa abaixo do cabeçalho fixo */}
-      <div className="container mx-auto px-4 max-w-3xl pb-8" style={{ paddingTop: `${HEADER_H}px` }}>
-        <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); setSearchParams({tab: v}); }}>
-          <TabsContent value="todas">
-            {isLoading ? renderSkeletons() : filtered.length > 0 ? (
-              <div className="space-y-2">
-                {filtered.map((musica, i) => (
-                  <SongCard key={musica.id} musica={musica} index={i} />
-                ))}
-              </div>
-            ) : renderEmpty()}
-          </TabsContent>
-          <TabsContent value="artistas">
-            {isLoading ? renderSkeletons() : groupedByArtist.length > 0
-              ? renderAccordionGroup(groupedByArtist)
-              : renderEmpty()}
-          </TabsContent>
-          <TabsContent value="generos">
-            {isLoading ? renderSkeletons() : groupedByGenre.length > 0
-              ? renderAccordionGroup(groupedByGenre)
-              : renderEmpty()}
-          </TabsContent>
-        </Tabs>
-      </div>
+      {/* Conteúdo */}
+      <div className="container mx-auto px-4 max-w-3xl pb-10" style={{ paddingTop: `${HEADER_H}px` }}>
 
+        {/* Resultados de busca */}
+        {search ? (
+          <div className="space-y-2 mt-2">
+            {filtered.length > 0 ? filtered.map((m, i) => (
+              <SongCard key={m.id} musica={m} index={i} />
+            )) : (
+              <div className="py-12 text-center">
+                <Music2 className="mx-auto h-10 w-10 text-muted-foreground/20" />
+                <p className="mt-3 text-sm text-muted-foreground">Nenhuma música encontrada.</p>
+              </div>
+            )}
+          </div>
+        ) : (
+          <>
+            {/* Botões Artistas e Gêneros */}
+            <div className="grid grid-cols-2 gap-3 mt-4">
+              <Link to="/artistas" className="group relative overflow-hidden rounded-2xl p-5 flex flex-col gap-2 transition-all active:scale-[0.98]"
+                style={{ background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)', border: '1px solid rgba(168,85,247,0.3)' }}>
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/20">
+                  <Users className="h-5 w-5 text-purple-400" />
+                </div>
+                <div>
+                  <p className="font-display text-base font-bold text-white">Artistas</p>
+                  <p className="text-xs text-purple-300/70">{musicas ? new Set(musicas.map(m => m.artista)).size : '—'} artistas</p>
+                </div>
+                <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-purple-400/50 group-hover:text-purple-400 transition-colors" />
+                <div className="absolute inset-0 bg-purple-500/0 group-hover:bg-purple-500/5 transition-colors rounded-2xl" />
+              </Link>
+
+              <Link to="/generos" className="group relative overflow-hidden rounded-2xl p-5 flex flex-col gap-2 transition-all active:scale-[0.98]"
+                style={{ background: 'linear-gradient(135deg, #1a2e1a 0%, #162e16 100%)', border: '1px solid rgba(250,204,21,0.3)' }}>
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FACC15]/20">
+                  <Tag className="h-5 w-5 text-[#FACC15]" />
+                </div>
+                <div>
+                  <p className="font-display text-base font-bold text-white">Gêneros</p>
+                  <p className="text-xs text-yellow-300/70">{musicas ? new Set(musicas.map(m => (m as any).genero).filter(Boolean)).size : '—'} gêneros</p>
+                </div>
+                <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[#FACC15]/50 group-hover:text-[#FACC15] transition-colors" />
+                <div className="absolute inset-0 bg-[#FACC15]/0 group-hover:bg-[#FACC15]/5 transition-colors rounded-2xl" />
+              </Link>
+            </div>
+
+            {/* Artistas em destaque */}
+            {topArtistas.length > 0 && (
+              <div className="mt-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <TrendingUp className="h-4 w-4 text-[#FACC15]" />
+                  <h2 className="text-sm font-display font-bold text-foreground">Artistas em Destaque</h2>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {topArtistas.map(([artista, count]) => (
+                    <Link key={artista} to={`/artista/${encodeURIComponent(artista)}`}
+                      className="flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:border-primary/40 hover:text-primary transition-all">
+                      <Music2 className="h-3 w-3 text-muted-foreground" />
+                      {artista}
+                      <span className="text-muted-foreground">({count})</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Top 20 */}
+            <div className="mt-6">
+              <div className="flex items-center gap-2 mb-3">
+                <Star className="h-4 w-4 text-[#FACC15] fill-[#FACC15]" />
+                <h2 className="text-sm font-display font-bold text-foreground">Mais Tocadas</h2>
+                <span className="text-xs text-muted-foreground font-mono ml-1">(top 20)</span>
+              </div>
+              {isLoading ? (
+                <div className="space-y-2">
+                  {[...Array(5)].map((_, i) => <div key={i} className="h-[72px] animate-pulse rounded-lg bg-card" />)}
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {top20.map((m, i) => <SongCard key={m.id} musica={m} index={i} />)}
+                </div>
+              )}
+            </div>
+
+            {/* Pedir música */}
+            <div className="mt-6 rounded-2xl border border-[#FACC15]/20 bg-[#FACC15]/5 p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <Music2 className="h-4 w-4 text-[#FACC15]" />
+                <h2 className="text-sm font-display font-bold text-foreground">Pedir Música</h2>
+              </div>
+              <form onSubmit={handlePedido} className="space-y-2">
+                <div className="grid grid-cols-2 gap-2">
+                  <Input value={musicaPedido} onChange={e => setMusicaPedido(e.target.value)}
+                    placeholder="Nome da música" required
+                    className="bg-card border-border text-sm h-9" />
+                  <Input value={artistaPedido} onChange={e => setArtistaPedido(e.target.value)}
+                    placeholder="Artista (opcional)"
+                    className="bg-card border-border text-sm h-9" />
+                </div>
+                <button type="submit" disabled={enviando || !musicaPedido.trim()}
+                  className="w-full flex items-center justify-center gap-2 rounded-lg bg-[#FACC15] hover:bg-[#E6B800] text-black font-bold text-sm py-2 transition-colors disabled:opacity-50">
+                  <Send size={14} />
+                  {enviando ? 'Enviando...' : 'Pedir Música'}
+                </button>
+              </form>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 };
