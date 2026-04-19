@@ -38,6 +38,7 @@ export function ImportadorLote() {
   const [current, setCurrent] = useState(0);
   const [results, setResults] = useState<ImportResult[]>([]);
   const [showReport, setShowReport] = useState(false);
+  const [showDupesOnly, setShowDupesOnly] = useState(false);
   const abortRef = useRef(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -52,6 +53,7 @@ export function ImportadorLote() {
     setCurrent(0);
     setResults([]);
     setShowReport(false);
+    setShowDupesOnly(false);
     abortRef.current = false;
   };
 
@@ -262,50 +264,80 @@ export function ImportadorLote() {
           {/* Song List */}
           {songs.length > 0 && status !== 'done' && (
             <>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground font-body">
-                  {songs.length} músicas encontradas · {selectedCount} selecionadas
+              {/* Cabeçalho com stats e filtros */}
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm text-muted-foreground font-body flex-1">
+                  {songs.length} encontradas · <span className="text-foreground font-medium">{selectedCount} selecionadas</span>
                   {duplicateUrls.size > 0 && (
                     <span className="text-yellow-400 ml-1">· {duplicateUrls.size} já existem</span>
                   )}
                 </span>
-                <Button variant="ghost" size="sm" onClick={toggleAll} className="text-xs text-orange-400 hover:text-orange-300">
-                  {songs.every(s => s.selected) ? (
-                    <><Square className="h-3.5 w-3.5 mr-1" /> Desmarcar Todas</>
-                  ) : (
-                    <><CheckSquare className="h-3.5 w-3.5 mr-1" /> Selecionar Todas</>
+                <div className="flex gap-2">
+                  {duplicateUrls.size > 0 && (
+                    <Button
+                      variant="ghost" size="sm"
+                      onClick={() => setShowDupesOnly(v => !v)}
+                      className={`text-xs ${showDupesOnly ? 'text-yellow-400 bg-yellow-400/10' : 'text-yellow-600 hover:text-yellow-400'}`}
+                    >
+                      <AlertTriangle className="h-3.5 w-3.5 mr-1" />
+                      {showDupesOnly ? 'Ver todas' : 'Ver duplicatas'}
+                    </Button>
                   )}
-                </Button>
+                  <Button variant="ghost" size="sm" onClick={toggleAll} className="text-xs text-orange-400 hover:text-orange-300">
+                    {songs.every(s => s.selected) ? (
+                      <><Square className="h-3.5 w-3.5 mr-1" /> Desmarcar</>
+                    ) : (
+                      <><CheckSquare className="h-3.5 w-3.5 mr-1" /> Todas</>
+                    )}
+                  </Button>
+                </div>
               </div>
+
+              {/* Botão rápido: desmarcar todas as duplicatas */}
+              {duplicateUrls.size > 0 && (
+                <button
+                  onClick={() => setSongs(prev => prev.map(s => duplicateUrls.has(s.url) ? { ...s, selected: false } : s))}
+                  className="text-xs text-yellow-500 hover:text-yellow-300 underline text-left"
+                >
+                  Desmarcar as {duplicateUrls.size} que já existem
+                </button>
+              )}
 
               <ScrollArea className="flex-1 max-h-[60vh] sm:max-h-[400px] rounded-lg border border-border bg-background overflow-y-auto">
                 <div className="divide-y divide-border pb-3">
-                  {songs.map((song, i) => {
-                    const isDupe = duplicateUrls.has(song.url);
-                    return (
-                      <button
-                        key={i}
-                        onClick={() => status === 'idle' && toggleSong(i)}
-                        className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-muted/30 ${
-                          status !== 'idle' ? 'opacity-60 cursor-default' : 'cursor-pointer'
-                        }`}
-                        disabled={status !== 'idle'}
-                      >
-                        {song.selected ? (
-                          <CheckSquare className="h-4 w-4 text-orange-400 shrink-0" />
-                        ) : (
-                          <Square className="h-4 w-4 text-muted-foreground shrink-0" />
-                        )}
-                        <span className="text-sm text-foreground font-body truncate flex-1">{song.titulo}</span>
-                        {isDupe && (
-                          <span className="flex items-center gap-1 text-xs text-yellow-400 shrink-0">
-                            <AlertTriangle className="h-3.5 w-3.5" />
-                            Já existe
+                  {songs
+                    .filter(s => !showDupesOnly || duplicateUrls.has(s.url))
+                    .map((song) => {
+                      const realIndex = songs.indexOf(song);
+                      const isDupe = duplicateUrls.has(song.url);
+                      return (
+                        <button
+                          key={realIndex}
+                          onClick={() => status === 'idle' && toggleSong(realIndex)}
+                          className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-muted/30 ${
+                            isDupe ? 'bg-yellow-500/[0.04]' : ''
+                          } ${
+                            status !== 'idle' ? 'opacity-60 cursor-default' : 'cursor-pointer'
+                          }`}
+                          disabled={status !== 'idle'}
+                        >
+                          {song.selected ? (
+                            <CheckSquare className={`h-4 w-4 shrink-0 ${isDupe ? 'text-yellow-400' : 'text-orange-400'}`} />
+                          ) : (
+                            <Square className="h-4 w-4 text-muted-foreground shrink-0" />
+                          )}
+                          <span className={`text-sm font-body truncate flex-1 ${isDupe ? 'text-yellow-200' : 'text-foreground'}`}>
+                            {song.titulo}
                           </span>
-                        )}
-                      </button>
-                    );
-                  })}
+                          {isDupe && (
+                            <span className="flex items-center gap-1 text-xs text-yellow-500 shrink-0 bg-yellow-500/10 rounded px-1.5 py-0.5">
+                              <AlertTriangle className="h-3 w-3" />
+                              Já existe
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
                 </div>
               </ScrollArea>
 
