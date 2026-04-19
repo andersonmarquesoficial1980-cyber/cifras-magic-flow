@@ -466,51 +466,59 @@ export function CifraViewer({ musica }: CifraViewerProps) {
         {viewMode === 'so-cifras' && (
           <div className="mt-6">
             {(() => {
-              const result: JSX.Element[] = [];
-              // Agrupa linhas consecutivas de acordes em blocos
-              let i = 0;
-              while (i < lines.length) {
-                const line = lines[i];
+              // Agrupa todos os acordes por seção
+              type Section = { label: string; chords: string[] };
+              const sections: Section[] = [];
+              let currentSection: Section = { label: '', chords: [] };
+
+              lines.forEach(line => {
                 const sectionMatch = line.trim().match(/^\[(.+)\]$/);
-
                 if (sectionMatch) {
-                  result.push(
-                    <div key={`s${i}`} className="mt-5 mb-2 text-[10px] uppercase tracking-widest text-muted-foreground">
-                      {sectionMatch[1]}
-                    </div>
-                  );
-                  i++; continue;
-                }
-
-                if (isChordLine(line)) {
-                  // Extrai acordes da linha (sem espaçamento posicional)
+                  // Salva a seção atual se tiver acordes
+                  if (currentSection.chords.length > 0 || currentSection.label) {
+                    sections.push(currentSection);
+                  }
+                  currentSection = { label: sectionMatch[1], chords: [] };
+                } else if (isChordLine(line)) {
                   const tokens = tokenizeChordLine(line);
-                  const chords = tokens
+                  tokens
                     .filter(t => t.type === 'chord')
-                    .map(t => renderChordValue(t.value));
-
-                  result.push(
-                    <div key={i} className="flex flex-wrap items-center gap-1 mb-1" style={{ fontSize: `${fontSize}px` }}>
-                      {chords.map((chord, ci) => (
-                        <span key={ci} className="flex items-center gap-1">
-                          <span className={`font-bold font-mono ${MODE_COLORS[displayMode]}`}>{chord}</span>
-                          {ci < chords.length - 1 && (
-                            <span className="text-white/20 font-mono select-none mx-1">|</span>
-                          )}
-                        </span>
-                      ))}
-                    </div>
-                  );
-                  i++; continue;
+                    .forEach(t => currentSection.chords.push(renderChordValue(t.value)));
                 }
-
-                // Linha vazia entre blocos — espaço visual
-                if (line.trim() === '') {
-                  result.push(<div key={i} className="h-3" />);
-                }
-                i++;
+              });
+              // Salva última seção
+              if (currentSection.chords.length > 0 || currentSection.label) {
+                sections.push(currentSection);
               }
-              return result;
+
+              // Deduplica acordes consecutivos iguais dentro da seção
+              const deduped = sections.map(sec => {
+                const chords: string[] = [];
+                sec.chords.forEach(c => {
+                  if (chords[chords.length - 1] !== c) chords.push(c);
+                });
+                return { ...sec, chords };
+              });
+
+              return deduped.map((sec, si) => (
+                <div key={si} className="mb-5">
+                  {sec.label && (
+                    <div className="mb-2 text-[10px] uppercase tracking-widest text-muted-foreground">
+                      {sec.label}
+                    </div>
+                  )}
+                  <div className="flex flex-wrap items-center gap-x-1 gap-y-1" style={{ fontSize: `${fontSize}px` }}>
+                    {sec.chords.map((chord, ci) => (
+                      <span key={ci} className="flex items-center">
+                        <span className={`font-bold font-mono ${MODE_COLORS[displayMode]}`}>{chord}</span>
+                        {ci < sec.chords.length - 1 && (
+                          <span className="text-white/20 font-mono select-none mx-2">|</span>
+                        )}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ));
             })()}
           </div>
         )}
