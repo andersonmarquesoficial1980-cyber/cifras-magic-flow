@@ -622,21 +622,23 @@ export function CifraViewer({ musica }: CifraViewerProps) {
             style={{ fontSize: `${fontSize}px`, fontFamily: "'Roboto Mono', 'Courier New', Courier, monospace", willChange: 'transform', backfaceVisibility: 'hidden' }}
           >
             {(() => {
-              // Filtra linhas vazias que ficam entre acorde e letra (dentro de uma seção)
-              // Mantém linha vazia apenas quando vem após linha de letra E antes de nova seção ou acorde sem letra imediata
+              // Remove linha vazia SOMENTE quando está entre uma linha de acorde e uma linha de letra
+              // (acorde imediatamente seguido de linha vazia seguido de letra = mesclagem errada)
+              // Em todos os outros casos mantém a linha vazia (separador de seções)
               const filtered: string[] = [];
               for (let i = 0; i < lines.length; i++) {
                 const line = lines[i];
                 if (line.trim() === '') {
-                  // Pula linha vazia se a próxima linha não é seção nem vazia
+                  const prev = filtered[filtered.length - 1];
                   const next = lines[i + 1];
-                  const isBeforeSection = next && /^\[.+\]$/.test(next.trim());
-                  const isBeforeEmpty = !next || next.trim() === '';
-                  // Só mantém linha vazia se for separador de seção
-                  if (isBeforeSection || isBeforeEmpty) {
+                  // Descarta linha vazia só se: anterior é acorde E próxima é letra (não-acorde, não-seção)
+                  const prevIsChord = prev && isChordLine(prev);
+                  const nextIsLyric = next && next.trim() !== '' && !isChordLine(next) && !/^\[.+\]$/.test(next.trim());
+                  if (prevIsChord && nextIsLyric) {
+                    // descarta — é linha vazia entre acorde e letra do mesmo bloco
+                  } else {
                     filtered.push(line);
                   }
-                  // Senão, descarta (era linha vazia dentro do bloco verso/refrão)
                 } else {
                   filtered.push(line);
                 }
