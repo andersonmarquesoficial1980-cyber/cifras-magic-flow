@@ -58,25 +58,33 @@ export function CifraViewer({ musica }: CifraViewerProps) {
         i++;
         continue;
       }
-      // Linha de acorde sozinha (só 1 acorde, sem espaços que indiquem posicionamento)
+      // Linha de acorde sozinha (só 1-2 tokens, sem posicionamento)
       const isSingleChord = isChordLine(line) && line.trim().split(/\s+/).filter(Boolean).length <= 2;
       if (isSingleChord) {
-        // Olha para frente: há mais linhas de acordes antes da próxima linha de letra?
+        // Olha para frente: agrupa acordes sozinhos mesmo com linhas vazias entre eles
+        // Para quando encontrar letra real ou marcador de seção
         const chordGroup: string[] = [line.trim()];
         let j = i + 1;
+        let emptyCount = 0;
         while (j < raw.length) {
           const next = raw[j].trim();
-          if (next === '') { j++; break; } // linha vazia — para o grupo
           if (/^\[.+\]$/.test(next)) break; // seção — para
+          if (next === '') {
+            emptyCount++;
+            if (emptyCount > 2) break; // muitas linhas vazias — para
+            j++;
+            continue;
+          }
+          // Se for acorde sozinho, adiciona ao grupo
           if (isChordLine(raw[j]) && raw[j].trim().split(/\s+/).filter(Boolean).length <= 2) {
             chordGroup.push(raw[j].trim());
+            emptyCount = 0;
             j++;
           } else {
+            // Chegou em letra — para
             break;
           }
         }
-        // Agrupa se tiver 2+ acordes consecutivos
-        // (independente do que vem depois — letra, seção ou fim)
         if (chordGroup.length >= 2) {
           result.push(chordGroup.join('  '));
           i = j;
