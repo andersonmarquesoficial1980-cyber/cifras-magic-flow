@@ -78,15 +78,7 @@ const Dashboard = () => {
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-chord to-chord/60 shadow-[0_0_20px_-4px_rgba(250,204,21,0.3)]">
-              <Music2 className="h-5 w-5 text-black" />
-            </div>
-            <div>
-              <h1 className="font-display text-2xl font-bold text-foreground tracking-tight">
-                Melodai
-              </h1>
-              <p className="text-[11px] text-muted-foreground mt-0.5">Seu companheiro musical</p>
-            </div>
+            <img src="/logo.png" alt="MelodAI" className="h-8 w-auto" />
           </div>
           <div className="flex items-center gap-2">
             {isLoggedIn ? (
