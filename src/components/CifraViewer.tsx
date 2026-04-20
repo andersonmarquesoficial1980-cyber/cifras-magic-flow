@@ -52,6 +52,15 @@ export function CifraViewer({ musica }: CifraViewerProps) {
     while (i < raw.length) {
       const line = raw[i];
       const trimmed = line.trim();
+      // Normaliza linhas tipo "Intro: D G7M" → "[Intro]\nD G7M"
+      const introMatch = trimmed.match(/^(Intro|Vers[oó]|Refr[aã]o|Ponte|Final|Pr[eé]-Refr[aã]o)\s*:\s*(.+)$/i);
+      if (introMatch) {
+        result.push(`[${introMatch[1]}]`);
+        const chordPart = introMatch[2].trim();
+        if (chordPart) result.push(chordPart);
+        i++;
+        continue;
+      }
       // Seção ou vazia — passa direto
       if (trimmed === '' || /^\[.+\]$/.test(trimmed) || isMixedSectionChordLine(line)) {
         result.push(line);
