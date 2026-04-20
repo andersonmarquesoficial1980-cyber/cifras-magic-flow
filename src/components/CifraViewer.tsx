@@ -75,8 +75,9 @@ export function CifraViewer({ musica }: CifraViewerProps) {
             break;
           }
         }
-        // Só agrupa se o grupo tiver 2+ acordes E a próxima linha for letra (não acorde)
-        if (chordGroup.length >= 2 && j < raw.length && !isChordLine(raw[j]) && raw[j].trim() !== '') {
+        // Agrupa se tiver 2+ acordes consecutivos
+        // (independente do que vem depois — letra, seção ou fim)
+        if (chordGroup.length >= 2) {
           result.push(chordGroup.join('  '));
           i = j;
         } else {
