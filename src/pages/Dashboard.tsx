@@ -76,10 +76,11 @@ const Dashboard = () => {
         animate={{ opacity: 1, y: 0 }}
         className="px-6 pt-10 pb-2"
       >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img src="/logo.png" alt="MelodAI" className="h-12 w-auto" />
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-center">
+            <img src="/logo.png" alt="MelodAI" className="h-16 w-auto" />
           </div>
+          <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             {isLoggedIn ? (
               <div className="flex items-center gap-2">
@@ -98,6 +99,7 @@ const Dashboard = () => {
                 Entrar
               </button>
             )}
+          </div>
           </div>
         </div>
       </motion.div>
