@@ -622,28 +622,40 @@ export function CifraViewer({ musica }: CifraViewerProps) {
             style={{ fontSize: `${fontSize}px`, fontFamily: "'Roboto Mono', 'Courier New', Courier, monospace", willChange: 'transform', backfaceVisibility: 'hidden' }}
           >
             {(() => {
-              // Remove linha vazia SOMENTE quando está entre uma linha de acorde e uma linha de letra
-              // (acorde imediatamente seguido de linha vazia seguido de letra = mesclagem errada)
-              // Em todos os outros casos mantém a linha vazia (separador de seções)
-              const filtered: string[] = [];
+              // Normaliza espaçamento:
+              // 1. Remove linha vazia entre acorde e letra do mesmo bloco
+              // 2. Garante linha vazia antes de cada marcador de seção [Xxx]
+              const normalized: string[] = [];
               for (let i = 0; i < lines.length; i++) {
                 const line = lines[i];
-                if (line.trim() === '') {
-                  const prev = filtered[filtered.length - 1];
+                const trimmed = line.trim();
+                // Marcador de seção: garante linha vazia antes (se não for a primeira linha)
+                if (/^\[.+\]$/.test(trimmed)) {
+                  const prev = normalized[normalized.length - 1];
+                  if (normalized.length > 0 && prev !== undefined && prev.trim() !== '') {
+                    normalized.push('');
+                  }
+                  normalized.push(line);
+                  continue;
+                }
+                // Linha vazia: descarta só se anterior é acorde E próxima é letra
+                if (trimmed === '') {
+                  const prev = normalized[normalized.length - 1];
                   const next = lines[i + 1];
-                  // Descarta linha vazia só se: anterior é acorde E próxima é letra (não-acorde, não-seção)
                   const prevIsChord = prev && isChordLine(prev);
                   const nextIsLyric = next && next.trim() !== '' && !isChordLine(next) && !/^\[.+\]$/.test(next.trim());
                   if (prevIsChord && nextIsLyric) {
-                    // descarta — é linha vazia entre acorde e letra do mesmo bloco
+                    // descarta — linha vazia espúria entre acorde e letra
+                  } else if (normalized[normalized.length - 1]?.trim() === '') {
+                    // descarta — evita dupla linha vazia
                   } else {
-                    filtered.push(line);
+                    normalized.push(line);
                   }
-                } else {
-                  filtered.push(line);
+                  continue;
                 }
+                normalized.push(line);
               }
-              return filtered.map((line, idx) => {
+              return normalized.map((line, idx) => {
               // Linha mista: [Intro] E E7/G# A D7 — separar marcador + acordes
               if (isMixedSectionChordLine(line)) {
                 const { section, chords } = splitSectionAndChords(line);
