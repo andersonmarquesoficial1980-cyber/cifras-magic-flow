@@ -107,6 +107,17 @@ IMPORTANTE para letra_cifrada:
   Antes de eu falar
   A9
   Tu cantavas sobre mim
+- SEÇÕES SÃO BLOCOS SEPARADOS: Cada seção ([Intro], [Verso 1], [Refrão], etc.) é um bloco independente. NUNCA misture acordes de seções diferentes na mesma linha. Após os acordes do [Intro], obrigatoriamente inicie um novo bloco com o marcador da próxima seção.
+- FORMATO DE INTRO/INSTRUMENTAL: Quando uma seção só tem acordes (sem letra), coloque o marcador entre colchetes e na linha seguinte todos os acordes daquela seção numa só linha. Ex:
+  [Intro]
+  D  G7M  D/F#  G  F#/Bb  Bm7
+  [Verso 1]
+  D7M              F#7(13-)        G7M
+  Parece mesmo que este dia nunca vai chegar
+- NUNCA faça isso (errado — mistura intro com verso):
+  [Intro]
+  D  G7M  D/F#  G  D7M  F#7(13-)  G7M
+  Parece mesmo que este dia nunca vai chegar
 - NUNCA inclua TABs, tablaturas, diagramas de solo (linhas com e|--, B|--, G|--, D|--, A|--, E|--). Remova completamente esses blocos.
 - NUNCA inclua blocos de codigo markdown (tres backticks) — retorne apenas texto puro.
 - NUNCA inclua textos de interface do site como "O que você quer tocar hoje?", "Favoritar Cifra", "Cifra Principal", "Tom:", publicidade, banners ou qualquer texto que não seja letra ou acorde da música.

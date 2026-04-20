@@ -2,10 +2,13 @@ import { useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useMusicas } from '@/hooks/useMusicas';
 import { ArrowLeft, Music2, ChevronRight, Users } from 'lucide-react';
+import { ImportadorFlash } from '@/components/ImportadorFlash';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function Artistas() {
   const navigate = useNavigate();
   const { data: musicas, isLoading } = useMusicas();
+  const { isAdmin } = useAuth();
 
   const artistas = useMemo(() => {
     if (!musicas) return [];
@@ -29,10 +32,11 @@ export default function Artistas() {
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-500/20">
             <Users className="h-4 w-4 text-purple-400" />
           </div>
-          <div>
+          <div className="flex-1">
             <h1 className="font-display text-lg font-bold text-foreground">Artistas</h1>
             <p className="text-xs text-muted-foreground">{artistas.length} artistas</p>
           </div>
+          {isAdmin && <ImportadorFlash />}
         </div>
       </div>
       <div className="container mx-auto max-w-3xl px-4 py-4 space-y-2">

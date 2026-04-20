@@ -3,12 +3,15 @@ import { useMusicas } from '@/hooks/useMusicas';
 import { useMemo } from 'react';
 import { ArrowLeft, Music2 } from 'lucide-react';
 import { SongCard } from '@/components/SongCard';
+import { ImportadorFlash } from '@/components/ImportadorFlash';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function ArtistaDetail() {
   const { nome } = useParams<{ nome: string }>();
   const nomeDecoded = decodeURIComponent(nome || '');
   const navigate = useNavigate();
   const { data: musicas, isLoading } = useMusicas();
+  const { isAdmin } = useAuth();
 
   const songs = useMemo(() => {
     if (!musicas) return [];
@@ -31,10 +34,11 @@ export default function ArtistaDetail() {
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
             <Music2 className="h-5 w-5 text-primary" />
           </div>
-          <div>
+          <div className="flex-1">
             <h1 className="font-display text-xl font-bold text-foreground">{nomeDecoded}</h1>
             <p className="text-xs text-muted-foreground">{songs.length} música{songs.length !== 1 ? 's' : ''}</p>
           </div>
+          {isAdmin && <ImportadorFlash />}
         </div>
       </div>
 

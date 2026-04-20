@@ -3,12 +3,15 @@ import { useMusicas } from '@/hooks/useMusicas';
 import { useMemo } from 'react';
 import { ArrowLeft, Music2, Tag } from 'lucide-react';
 import { SongCard } from '@/components/SongCard';
+import { ImportadorFlash } from '@/components/ImportadorFlash';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function GeneroDetail() {
   const { nome } = useParams<{ nome: string }>();
   const nomeDecoded = decodeURIComponent(nome || '');
   const navigate = useNavigate();
   const { data: musicas, isLoading } = useMusicas();
+  const { isAdmin } = useAuth();
 
   const songs = useMemo(() => {
     if (!musicas) return [];
@@ -27,10 +30,11 @@ export default function GeneroDetail() {
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FACC15]/10">
             <Tag className="h-5 w-5 text-[#FACC15]" />
           </div>
-          <div>
+          <div className="flex-1">
             <h1 className="font-display text-xl font-bold text-foreground">{nomeDecoded}</h1>
             <p className="text-xs text-muted-foreground">{songs.length} música{songs.length !== 1 ? 's' : ''}</p>
           </div>
+          {isAdmin && <ImportadorFlash />}
         </div>
       </div>
       <div className="container mx-auto max-w-3xl px-4 py-5">

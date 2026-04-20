@@ -247,6 +247,10 @@ export function CifraViewer({ musica }: CifraViewerProps) {
             >
               <Star className={`h-4 w-4 transition-colors ${isFav ? 'text-chord fill-chord' : 'text-muted-foreground'}`} />
             </button>
+            <div className="hidden sm:flex flex-col ml-2">
+              <span className="text-sm font-bold text-foreground leading-tight truncate max-w-[160px]">{musica.titulo}</span>
+              <span className="text-xs text-muted-foreground leading-tight truncate max-w-[160px]">{musica.artista}</span>
+            </div>
           </div>
 
           <div className={`flex items-center ${performanceMode ? 'gap-4' : 'gap-3'}`}>
@@ -627,7 +631,27 @@ export function CifraViewer({ musica }: CifraViewerProps) {
             className="mt-6 leading-relaxed whitespace-pre overflow-x-auto text-foreground/85"
             style={{ fontSize: `${fontSize}px`, fontFamily: "'Roboto Mono', 'Courier New', Courier, monospace", willChange: 'transform', backfaceVisibility: 'hidden' }}
           >
-            {lines.map((line, idx) => {
+            {(() => {
+              // Filtra linhas vazias que ficam entre acorde e letra (dentro de uma seção)
+              // Mantém linha vazia apenas quando vem após linha de letra E antes de nova seção ou acorde sem letra imediata
+              const filtered: string[] = [];
+              for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                if (line.trim() === '') {
+                  // Pula linha vazia se a próxima linha não é seção nem vazia
+                  const next = lines[i + 1];
+                  const isBeforeSection = next && /^\[.+\]$/.test(next.trim());
+                  const isBeforeEmpty = !next || next.trim() === '';
+                  // Só mantém linha vazia se for separador de seção
+                  if (isBeforeSection || isBeforeEmpty) {
+                    filtered.push(line);
+                  }
+                  // Senão, descarta (era linha vazia dentro do bloco verso/refrão)
+                } else {
+                  filtered.push(line);
+                }
+              }
+              return filtered.map((line, idx) => {
               // Linha mista: [Intro] E E7/G# A D7 — separar marcador + acordes
               if (isMixedSectionChordLine(line)) {
                 const { section, chords } = splitSectionAndChords(line);
@@ -672,7 +696,7 @@ export function CifraViewer({ musica }: CifraViewerProps) {
                   {line || '\u00A0'}
                 </div>
               );
-            })}
+            })})()}
           </pre>
         )}
       </div>
