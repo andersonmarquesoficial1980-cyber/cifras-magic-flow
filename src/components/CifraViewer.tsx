@@ -86,7 +86,10 @@ export function CifraViewer({ musica }: CifraViewerProps) {
           }
         }
         if (chordGroup.length >= 2) {
+          // Sempre mostra o grupo agrupado (inclusive intro sem letra)
           result.push(chordGroup.join('  '));
+          // Se parou numa linha vazia, pula ela pra não deixar gap duplo
+          while (j < raw.length && raw[j].trim() === '') j++;
           i = j;
         } else {
           result.push(line);
