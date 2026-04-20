@@ -125,6 +125,7 @@ IMPORTANTE para letra_cifrada:
 - ELIMINE REPETIÇÕES DE SEÇÕES: Se um refrão, verso ou ponte aparece mais de uma vez com exatamente os mesmos acordes e letra, escreva apenas UMA VEZ. Onde a seção se repetiria, coloque apenas o marcador da seção entre colchetes (ex: [Refrão], [Repetir Refrão x2]).
 - Mantenha os marcadores de seção entre colchetes: [Intro], [Verso], [Primeira Parte], [Refrão], [Ponte], [Segunda Parte], [Final], etc.
 - Seções com letra/acordes DIFERENTES devem ser escritas por completo mesmo que tenham o mesmo nome.
+- SEMPRE separe as seções com marcadores entre colchetes. Se a cifra original usa apenas linha vazia para separar partes (sem rótulos), identifique e nomeie cada parte: a primeira é [Verso 1], a segunda é [Verso 2] ou [Refrão], etc., de acordo com o conteúdo musical. NUNCA entregue uma cifra onde as seções estão separadas apenas por linhas vazias sem marcador — sempre coloque o marcador [Xxx] antes de cada bloco.
 - O objetivo é ter a cifra mais compacta possível sem perder informação musical.
 
 Para Capotraste: Procure indicações como "Capotraste na Xª casa", "Capo na X casa", "Capo X", "Tom: X (capo Xª casa)". Se encontrar, retorne o número da casa. Se não houver indicação, retorne 0.

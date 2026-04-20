@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Zap, Eye, EyeOff, Plus, Minus, Feather, Star, Music2, AlignLeft } from 'lucide-react';
+import { ArrowLeft, Zap, Eye, EyeOff, Plus, Minus, Feather, Star, AlignLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { Musica } from '@/hooks/useMusicas';
 import { isChordLine, tokenizeChordLine, chordToGrau, chordToOrdinalDegree, isMixedSectionChordLine, splitSectionAndChords } from '@/lib/chordDetector';
@@ -36,7 +36,7 @@ export function CifraViewer({ musica }: CifraViewerProps) {
   const [isFav, setIsFav] = useState(!!musica.is_favorite);
   const [capoFret, setCapoFret] = useState(musica.capo_fret ?? 0);
   const [capoOpen, setCapoOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<'normal' | 'progressao' | 'so-cifras'>('normal');
+  const [viewMode, setViewMode] = useState<'normal' | 'so-cifras'>('normal');
   
   const toggleFav = useToggleFavorite();
   const navigate = useNavigate();
@@ -101,49 +101,6 @@ export function CifraViewer({ musica }: CifraViewerProps) {
     }
     return result;
   }, [musica.letra_cifrada]);
-
-  // ── Detecção de progressão repetida ──
-  const progressaoInfo = useMemo(() => {
-    // Extrai TODOS os acordes da cifra em ordem (ignora letra e marcadores)
-    const allChords: string[] = [];
-    lines.forEach(line => {
-      const chordPart = isMixedSectionChordLine(line)
-        ? splitSectionAndChords(line).chords
-        : line;
-      if (isChordLine(chordPart)) {
-        const tokens = tokenizeChordLine(chordPart);
-        tokens.filter(t => t.type === 'chord').forEach(t => {
-          const val = t.value.trim();
-          // Deduplica consecutivos
-          if (val && allChords[allChords.length - 1] !== val) allChords.push(val);
-        });
-      }
-    });
-
-    if (allChords.length < 4) return null;
-
-    // Tenta detectar padrão de N acordes que se repete na sequência total
-    for (let patLen = 2; patLen <= Math.min(8, Math.floor(allChords.length / 2)); patLen++) {
-      const pattern = allChords.slice(0, patLen);
-      let count = 0;
-      let allMatch = true;
-      for (let i = 0; i + patLen <= allChords.length; i += patLen) {
-        const slice = allChords.slice(i, i + patLen);
-        // Permite que o último bloco seja incompleto (truncado)
-        const isLast = i + patLen >= allChords.length;
-        const matches = isLast
-          ? pattern.slice(0, slice.length).join('|') === slice.join('|')
-          : slice.join('|') === pattern.join('|');
-        if (!matches) { allMatch = false; break; }
-        count++;
-      }
-      // Progressão válida: repete 3x+ e cobre 75%+ dos acordes
-      if (allMatch && count >= 3 && count * patLen >= allChords.length * 0.7) {
-        return { pattern, repeticoes: count };
-      }
-    }
-    return null;
-  }, [lines]);
 
   // ── Render helpers para novos modos ──
   function renderChordLineTokens(line: string) {
@@ -244,19 +201,6 @@ export function CifraViewer({ musica }: CifraViewerProps) {
           </div>
 
           <div className={`flex items-center ${performanceMode ? 'gap-4' : 'gap-3'}`}>
-            {/* Modo Progressão */}
-            <button
-              onClick={() => setViewMode(v => v === 'progressao' ? 'normal' : 'progressao')}
-              className={`${btnSize} rounded-lg transition-all border text-xs font-mono font-bold ${
-                viewMode === 'progressao'
-                  ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400'
-                  : 'border-border text-muted-foreground hover:text-foreground'
-              }`}
-              title="Modo Progressão"
-            >
-              <Music2 size={iconSize} />
-            </button>
-
             {/* Modo Só Cifras */}
             <button
               onClick={() => setViewMode(v => v === 'so-cifras' ? 'normal' : 'so-cifras')}
@@ -465,83 +409,6 @@ export function CifraViewer({ musica }: CifraViewerProps) {
 
       {/* Cifra content */}
       <div className="container mx-auto px-4 pb-24 max-w-3xl" style={{ willChange: 'transform', backfaceVisibility: 'hidden' }}>
-
-        {/* ── MODO PROGRESSÃO ── */}
-        {viewMode === 'progressao' && (
-          <div className="mt-6">
-            {progressaoInfo ? (
-              <>
-                {/* Sequência que se repete */}
-                <div className="mb-6 rounded-xl border border-emerald-500/30 bg-emerald-500/[0.06] p-4">
-                  <p className="text-[10px] uppercase tracking-widest text-emerald-400/70 mb-2">Sequência que se repete</p>
-                  <pre
-                    className="leading-relaxed whitespace-pre overflow-x-auto"
-                    style={{ fontSize: `${fontSize}px`, fontFamily: "'Roboto Mono', 'Courier New', Courier, monospace" }}
-                  >
-                    {progressaoInfo.pattern.map((line, idx) => (
-                      <span key={idx} className="block">
-                        {renderChordLineTokens(line)}
-                      </span>
-                    ))}
-                  </pre>
-                </div>
-                {/* Letra limpa sem cifras e sem repetições de seção */}
-                <div
-                  className="leading-relaxed text-foreground/85"
-                  style={{ fontSize: `${fontSize}px`, fontFamily: "'Roboto Mono', 'Courier New', Courier, monospace" }}
-                >
-                  {(() => {
-                    const seenSections = new Set<string>();
-                    const result: JSX.Element[] = [];
-                    let i = 0;
-                    while (i < lines.length) {
-                      const line = lines[i];
-                      // Pula linhas de acordes
-                      if (isChordLine(line)) { i++; continue; }
-                      // Marcadores de seção — deduplicar
-                      const sectionMatch = line.trim().match(/^\[(.+)\]$/);
-                      if (sectionMatch) {
-                        const secKey = sectionMatch[1].trim().toLowerCase();
-                        if (!seenSections.has(secKey)) {
-                          seenSections.add(secKey);
-                          result.push(
-                            <div key={i} className="mt-4 mb-1 text-[10px] uppercase tracking-widest text-muted-foreground">
-                              {sectionMatch[1]}
-                            </div>
-                          );
-                        }
-                        i++; continue;
-                      }
-                      result.push(
-                        <div key={i} className="min-h-[1.4em]">{line || '\u00A0'}</div>
-                      );
-                      i++;
-                    }
-                    return result;
-                  })()}
-                </div>
-              </>
-            ) : (
-              <>
-                {/* Sem progressão fixa — mostra aviso + cifra normal */}
-                <div className="mb-4 rounded-xl border border-white/10 bg-white/[0.03] p-3 text-xs text-muted-foreground">
-                  Esta música não tem uma progressão fixa que se repete — mostrando cifra completa.
-                </div>
-                <pre
-                  className="mt-2 leading-relaxed whitespace-pre overflow-x-auto text-foreground/85"
-                  style={{ fontSize: `${fontSize}px`, fontFamily: "'Roboto Mono', 'Courier New', Courier, monospace" }}
-                >
-                  {lines.map((line, idx) => {
-                    if (isChordLine(line)) {
-                      return <span key={idx} className="block">{renderChordLineTokens(line)}</span>;
-                    }
-                    return <div key={idx} className="min-h-[1.2em]">{line || '\u00A0'}</div>;
-                  })}
-                </pre>
-              </>
-            )}
-          </div>
-        )}
 
         {/* ── MODO SÓ CIFRAS ── */}
         {viewMode === 'so-cifras' && (
