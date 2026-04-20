@@ -19,6 +19,7 @@ import Artistas from "./pages/Artistas.tsx";
 import Generos from "./pages/Generos.tsx";
 import GeneroDetail from "./pages/GeneroDetail.tsx";
 import CifraRapida from "./pages/CifraRapida.tsx";
+import Landing from "./pages/Landing.tsx";
 import { AuthContext, useAuthState } from "@/hooks/useAuth";
 import { BottomNav } from "@/components/BottomNav";
 
@@ -62,6 +63,7 @@ const App = () => (
             <Route path="/generos" element={<Generos />} />
             <Route path="/genero/:nome" element={<GeneroDetail />} />
             <Route path="/estude/cifra-rapida" element={<CifraRapida />} />
+            <Route path="/landing" element={<Landing />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           </Layout>
