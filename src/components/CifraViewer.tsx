@@ -44,7 +44,52 @@ export function CifraViewer({ musica }: CifraViewerProps) {
   useWakeLock(performanceMode);
 
 
-  const lines = musica.letra_cifrada.split('\n');
+  // Pré-processa linhas: agrupa acordes consecutivos sozinhos em uma linha só
+  const lines = useMemo(() => {
+    const raw = musica.letra_cifrada.split('\n');
+    const result: string[] = [];
+    let i = 0;
+    while (i < raw.length) {
+      const line = raw[i];
+      const trimmed = line.trim();
+      // Seção ou vazia — passa direto
+      if (trimmed === '' || /^\[.+\]$/.test(trimmed) || isMixedSectionChordLine(line)) {
+        result.push(line);
+        i++;
+        continue;
+      }
+      // Linha de acorde sozinha (só 1 acorde, sem espaços que indiquem posicionamento)
+      const isSingleChord = isChordLine(line) && line.trim().split(/\s+/).filter(Boolean).length <= 2;
+      if (isSingleChord) {
+        // Olha para frente: há mais linhas de acordes antes da próxima linha de letra?
+        const chordGroup: string[] = [line.trim()];
+        let j = i + 1;
+        while (j < raw.length) {
+          const next = raw[j].trim();
+          if (next === '') { j++; break; } // linha vazia — para o grupo
+          if (/^\[.+\]$/.test(next)) break; // seção — para
+          if (isChordLine(raw[j]) && raw[j].trim().split(/\s+/).filter(Boolean).length <= 2) {
+            chordGroup.push(raw[j].trim());
+            j++;
+          } else {
+            break;
+          }
+        }
+        // Só agrupa se o grupo tiver 2+ acordes E a próxima linha for letra (não acorde)
+        if (chordGroup.length >= 2 && j < raw.length && !isChordLine(raw[j]) && raw[j].trim() !== '') {
+          result.push(chordGroup.join('  '));
+          i = j;
+        } else {
+          result.push(line);
+          i++;
+        }
+        continue;
+      }
+      result.push(line);
+      i++;
+    }
+    return result;
+  }, [musica.letra_cifrada]);
 
   // ── Detecção de progressão repetida ──
   const progressaoInfo = useMemo(() => {
