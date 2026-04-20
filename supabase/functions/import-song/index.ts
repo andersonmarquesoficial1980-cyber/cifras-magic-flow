@@ -51,6 +51,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: "gpt-4o-mini",
+        max_tokens: 6000,
         tools: [{
           type: "function",
           function: {
