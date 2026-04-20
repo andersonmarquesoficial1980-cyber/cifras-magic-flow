@@ -1,130 +1,127 @@
 import { Link } from 'react-router-dom';
-import { Music2, Zap, Crown, Star, ChevronRight, Guitar, Headphones, Brain } from 'lucide-react';
+import { Music2, Zap, Crown, Star, ChevronRight, Brain, Headphones, Guitar } from 'lucide-react';
 
 export default function Landing() {
   return (
-    <div className="min-h-screen bg-[#0A0A0F] text-white font-body overflow-x-hidden">
+    <div className="min-h-screen bg-[#F9F7F2] text-[#1a1a2e] font-body overflow-x-hidden">
 
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-[#0A0A0F]/90 backdrop-blur border-b border-white/[0.06] px-6 py-4">
+      <header className="sticky top-0 z-50 bg-[#F9F7F2]/95 backdrop-blur border-b border-black/[0.06] px-6 py-3">
         <div className="container mx-auto max-w-5xl flex items-center justify-between">
-          <img src="/logo.png" alt="MelodAI" className="h-8 w-auto" />
-          <Link to="/dashboard" className="text-sm text-[#FACC15] border border-[#FACC15]/30 rounded-full px-4 py-1.5 hover:bg-[#FACC15]/10 transition-colors">
-            Entrar no App →
+          <img src="/logo-dark.png" alt="MelodAI" className="h-10 w-auto" />
+          <Link to="/dashboard" className="text-sm font-bold text-white bg-[#1a1a2e] rounded-full px-5 py-2 hover:bg-[#2d2d4e] transition-colors">
+            Abrir App →
           </Link>
         </div>
       </header>
 
       {/* Hero */}
-      <section className="pt-32 pb-20 px-6 text-center">
-        <div className="container mx-auto max-w-3xl">
-          <div className="inline-flex items-center gap-2 bg-[#FACC15]/10 border border-[#FACC15]/20 rounded-full px-4 py-1.5 text-xs text-[#FACC15] mb-8">
-            <Zap size={12} />
-            O app de cifras com Inteligência Artificial
-          </div>
-          <img src="/logo.png" alt="MelodAI" className="h-20 w-auto mx-auto mb-6" />
-          <p className="text-xl text-white/60 mb-10 max-w-xl mx-auto leading-relaxed">
-            Cifras completas, modo graus, campo harmônico e muito mais.<br />
-            Para quem toca na <strong className="text-white">igreja</strong>, no <strong className="text-white">bar</strong> ou em <strong className="text-white">casa</strong>.
+      <section className="pt-16 pb-12 px-6 text-center bg-gradient-to-b from-[#F9F7F2] to-white">
+        <div className="container mx-auto max-w-2xl">
+          <img src="/logo-dark.png" alt="MelodAI" className="h-24 w-auto mx-auto mb-8" />
+          <h1 className="font-display text-4xl md:text-5xl font-black text-[#1a1a2e] mb-5 leading-tight">
+            O app de cifras feito pra quem <span className="text-[#4F6EF7]">toca de verdade</span>
+          </h1>
+          <p className="text-lg text-[#1a1a2e]/60 mb-8 leading-relaxed">
+            Igreja, bar ou sala de casa — o MelodAI tem tudo que você precisa.<br/>
+            Cifras, modo graus, campo harmônico e muito mais.
           </p>
           <Link to="/dashboard"
-            className="inline-flex items-center gap-2 bg-[#FACC15] hover:bg-[#E6B800] text-black font-bold text-base px-8 py-4 rounded-2xl transition-all active:scale-[0.98] shadow-[0_0_30px_-4px_rgba(250,204,21,0.5)]">
+            className="inline-flex items-center gap-2 bg-[#4F6EF7] hover:bg-[#3a5be0] text-white font-bold text-lg px-10 py-4 rounded-2xl transition-all active:scale-[0.98] shadow-lg shadow-[#4F6EF7]/30">
             Começar Grátis
-            <ChevronRight size={18} />
+            <ChevronRight size={20} />
           </Link>
-          <p className="text-xs text-white/30 mt-4">Sem cartão de crédito. Grátis para sempre no plano Músico.</p>
+          <p className="text-xs text-[#1a1a2e]/30 mt-4">Sem cartão de crédito. Grátis para sempre no plano Músico.</p>
         </div>
       </section>
 
-      {/* Tom */}
-      <section className="py-16 px-6 bg-gradient-to-b from-transparent to-white/[0.02]">
-        <div className="container mx-auto max-w-3xl flex flex-col md:flex-row items-center gap-10">
-          <div className="flex-shrink-0 w-40 h-40 rounded-3xl bg-gradient-to-br from-[#FACC15]/20 to-[#FACC15]/5 border border-[#FACC15]/20 flex items-center justify-center">
-            <Music2 size={64} className="text-[#FACC15]" />
-          </div>
-          <div>
-            <p className="text-xs uppercase tracking-widest text-[#FACC15]/60 mb-2">Apresentando o Tom</p>
-            <h2 className="font-display text-2xl font-bold mb-3">Seu guia musical no MelodAI</h2>
-            <p className="text-white/60 leading-relaxed">
-              O Tom está aqui pra te ajudar a evoluir como músico. Cifras, graus, harmonia — tudo na palma da sua mão. Chega de ficar garimpando em sites bagunçados.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Features */}
-      <section className="py-20 px-6">
+      {/* Features 3 cards */}
+      <section className="py-14 px-6 bg-white">
         <div className="container mx-auto max-w-5xl">
-          <h2 className="font-display text-3xl font-bold text-center mb-4">Tudo que você precisa pra tocar</h2>
-          <p className="text-center text-white/40 mb-14 text-sm">De músico iniciante a instrumentista experiente</p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {[
-              { icon: <Guitar size={28} />, title: 'Cifras Completas', desc: 'Mais de 200 músicas organizadas por artista e gênero. Transposição com um toque.', color: 'from-purple-500/20 to-purple-500/5', border: 'border-purple-500/20', text: 'text-purple-400' },
-              { icon: <Brain size={28} />, title: 'Modo Graus', desc: 'Veja a cifra em graus (I, IV, V) e treine seu ouvido enquanto toca. Exclusivo do MelodAI.', color: 'from-[#FACC15]/20 to-[#FACC15]/5', border: 'border-[#FACC15]/20', text: 'text-[#FACC15]' },
-              { icon: <Headphones size={28} />, title: 'Ferramentas Pro', desc: 'Metrônomo visual, afinador, campo harmônico e modo performance. Tudo integrado.', color: 'from-cyan-500/20 to-cyan-500/5', border: 'border-cyan-500/20', text: 'text-cyan-400' },
+              { icon: <Guitar size={32} />, title: 'Cifras Completas', desc: 'Mais de 200 músicas organizadas. Transposição com um toque.', bg: 'bg-purple-50', border: 'border-purple-100', icon_color: 'text-purple-500' },
+              { icon: <Brain size={32} />, title: 'Modo Graus ⭐', desc: 'Veja I, IV, V na cifra e treine seu ouvido. Exclusivo do MelodAI.', bg: 'bg-blue-50', border: 'border-blue-100', icon_color: 'text-[#4F6EF7]' },
+              { icon: <Headphones size={32} />, title: 'Ferramentas Pro', desc: 'Metrônomo, afinador, campo harmônico e modo performance.', bg: 'bg-yellow-50', border: 'border-yellow-100', icon_color: 'text-yellow-500' },
             ].map((f, i) => (
-              <div key={i} className={`rounded-2xl bg-gradient-to-br ${f.color} border ${f.border} p-6`}>
-                <div className={`mb-4 ${f.text}`}>{f.icon}</div>
-                <h3 className="font-display text-lg font-bold mb-2">{f.title}</h3>
-                <p className="text-white/50 text-sm leading-relaxed">{f.desc}</p>
+              <div key={i} className={`${f.bg} border ${f.border} rounded-3xl p-7`}>
+                <div className={`${f.icon_color} mb-4`}>{f.icon}</div>
+                <h3 className="font-display text-xl font-bold text-[#1a1a2e] mb-2">{f.title}</h3>
+                <p className="text-[#1a1a2e]/50 text-sm leading-relaxed">{f.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
+      {/* Tom */}
+      <section className="py-14 px-6 bg-gradient-to-br from-[#4F6EF7]/10 to-purple-100/50">
+        <div className="container mx-auto max-w-3xl flex flex-col md:flex-row items-center gap-8 text-center md:text-left">
+          <div className="flex-shrink-0 w-28 h-28 rounded-3xl bg-gradient-to-br from-[#4F6EF7] to-purple-500 flex items-center justify-center shadow-lg shadow-[#4F6EF7]/30">
+            <Music2 size={52} className="text-white" />
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-widest text-[#4F6EF7] mb-1">Seu guia musical</p>
+            <h2 className="font-display text-2xl font-black text-[#1a1a2e] mb-2">Conheça o Tom</h2>
+            <p className="text-[#1a1a2e]/60 leading-relaxed">
+              O Tom é o personagem do MelodAI. Músico raiz, apaixonado por ensinar. Ele te guia por cifras, graus e harmonia de um jeito que nenhum outro app faz.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* Planos */}
-      <section className="py-20 px-6 bg-gradient-to-b from-transparent to-white/[0.02]">
+      <section className="py-16 px-6 bg-white">
         <div className="container mx-auto max-w-5xl">
-          <h2 className="font-display text-3xl font-bold text-center mb-4">Escolha seu plano</h2>
-          <p className="text-center text-white/40 mb-14 text-sm">Comece grátis, evolua quando quiser</p>
+          <h2 className="font-display text-3xl font-black text-center text-[#1a1a2e] mb-2">Escolha seu plano</h2>
+          <p className="text-center text-[#1a1a2e]/40 mb-12 text-sm">Comece grátis, evolua quando quiser</p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
             {/* Músico */}
-            <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-6 flex flex-col">
-              <p className="text-xs uppercase tracking-widest text-white/40 mb-2">Músico</p>
-              <p className="font-display text-3xl font-bold mb-1">Grátis</p>
-              <p className="text-xs text-white/30 mb-6">Para sempre</p>
-              <ul className="space-y-2 text-sm text-white/60 flex-1 mb-8">
-                {['Cifras completas', 'Só Cifras', 'Cifra Simplificada', 'Capotraste', 'Músicas Favoritas', 'Pedir Música', 'Cifra Rápida (3x/dia)'].map(f => (
-                  <li key={f} className="flex items-center gap-2"><span className="text-green-400">✓</span>{f}</li>
+            <div className="rounded-3xl border-2 border-[#1a1a2e]/10 bg-[#F9F7F2] p-7 flex flex-col">
+              <p className="text-xs uppercase tracking-widest text-[#1a1a2e]/40 mb-1">Músico</p>
+              <p className="font-display text-4xl font-black text-[#1a1a2e] mb-1">Grátis</p>
+              <p className="text-xs text-[#1a1a2e]/30 mb-6">Para sempre</p>
+              <ul className="space-y-2.5 text-sm text-[#1a1a2e]/60 flex-1 mb-8">
+                {['Cifras completas', 'Só Cifras', 'Cifra Simplificada', 'Capotraste', 'Músicas Favoritas', 'Pedir Música', 'Cifra Rápida (3×/dia)'].map(f => (
+                  <li key={f} className="flex items-center gap-2"><span className="text-green-500 font-bold">✓</span>{f}</li>
                 ))}
               </ul>
-              <Link to="/dashboard" className="block text-center border border-white/20 rounded-xl py-3 text-sm font-semibold hover:bg-white/5 transition-colors">
+              <Link to="/dashboard" className="block text-center border-2 border-[#1a1a2e]/20 rounded-xl py-3 text-sm font-bold text-[#1a1a2e] hover:bg-[#1a1a2e]/5 transition-colors">
                 Começar Grátis
               </Link>
             </div>
 
-            {/* Artista — destaque */}
-            <div className="rounded-2xl border border-[#FACC15]/40 bg-gradient-to-b from-[#FACC15]/10 to-transparent p-6 flex flex-col relative">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#FACC15] text-black text-[10px] font-bold px-3 py-1 rounded-full">MAIS POPULAR</div>
-              <p className="text-xs uppercase tracking-widest text-[#FACC15]/60 mb-2">Artista</p>
-              <p className="font-display text-3xl font-bold mb-1">R$ 14,90<span className="text-base font-normal text-white/40">/mês</span></p>
-              <p className="text-xs text-white/30 mb-6">ou R$ 119/ano</p>
-              <ul className="space-y-2 text-sm text-white/60 flex-1 mb-8">
+            {/* Artista */}
+            <div className="rounded-3xl border-2 border-[#4F6EF7] bg-[#4F6EF7] p-7 flex flex-col relative shadow-xl shadow-[#4F6EF7]/25">
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#FACC15] text-[#1a1a2e] text-[11px] font-black px-4 py-1.5 rounded-full shadow">MAIS POPULAR</div>
+              <p className="text-xs uppercase tracking-widest text-white/60 mb-1">Artista</p>
+              <p className="font-display text-4xl font-black text-white mb-1">R$14,90<span className="text-base font-normal text-white/50">/mês</span></p>
+              <p className="text-xs text-white/40 mb-6">ou R$ 119/ano</p>
+              <ul className="space-y-2.5 text-sm text-white/80 flex-1 mb-8">
                 {['Tudo do Músico +', 'Modo Graus', 'Campo Harmônico', 'Metrônomo Visual', 'Modo Performance', 'Cifra Rápida ilimitado', 'Mestre do Campo Harmônico', 'Mestre do Ritmo', 'Afinador'].map(f => (
-                  <li key={f} className="flex items-center gap-2"><span className="text-[#FACC15]">✓</span>{f}</li>
+                  <li key={f} className="flex items-center gap-2"><span className="text-[#FACC15] font-bold">✓</span>{f}</li>
                 ))}
               </ul>
-              <Link to="/dashboard" className="block text-center bg-[#FACC15] hover:bg-[#E6B800] text-black rounded-xl py-3 text-sm font-bold transition-colors">
+              <Link to="/dashboard" className="block text-center bg-white hover:bg-white/90 text-[#4F6EF7] rounded-xl py-3 text-sm font-black transition-colors">
                 Assinar Artista
               </Link>
             </div>
 
             {/* Maestro */}
-            <div className="rounded-2xl border border-purple-500/30 bg-gradient-to-b from-purple-500/10 to-transparent p-6 flex flex-col">
-              <div className="flex items-center gap-2 mb-2">
-                <Crown size={14} className="text-purple-400" />
-                <p className="text-xs uppercase tracking-widest text-purple-400/60">Maestro</p>
+            <div className="rounded-3xl border-2 border-purple-200 bg-purple-50 p-7 flex flex-col">
+              <div className="flex items-center gap-2 mb-1">
+                <Crown size={14} className="text-purple-500" />
+                <p className="text-xs uppercase tracking-widest text-purple-400">Maestro</p>
               </div>
-              <p className="font-display text-3xl font-bold mb-1">R$ 24,90<span className="text-base font-normal text-white/40">/mês</span></p>
-              <p className="text-xs text-white/30 mb-6">ou R$ 199/ano</p>
-              <ul className="space-y-2 text-sm text-white/60 flex-1 mb-8">
+              <p className="font-display text-4xl font-black text-[#1a1a2e] mb-1">R$24,90<span className="text-base font-normal text-[#1a1a2e]/40">/mês</span></p>
+              <p className="text-xs text-[#1a1a2e]/30 mb-6">ou R$ 199/ano</p>
+              <ul className="space-y-2.5 text-sm text-[#1a1a2e]/60 flex-1 mb-8">
                 {['Tudo do Artista +', 'Ouvido Biônico', 'Inversão & Baixo', 'Progressões Famosas', 'Metrônomo avançado', 'Prioridade em pedidos'].map(f => (
-                  <li key={f} className="flex items-center gap-2"><span className="text-purple-400">✓</span>{f}</li>
+                  <li key={f} className="flex items-center gap-2"><span className="text-purple-500 font-bold">✓</span>{f}</li>
                 ))}
               </ul>
-              <Link to="/dashboard" className="block text-center border border-purple-500/40 rounded-xl py-3 text-sm font-semibold text-purple-300 hover:bg-purple-500/10 transition-colors">
+              <Link to="/dashboard" className="block text-center border-2 border-purple-300 rounded-xl py-3 text-sm font-bold text-purple-600 hover:bg-purple-100 transition-colors">
                 Assinar Maestro
               </Link>
             </div>
@@ -134,22 +131,22 @@ export default function Landing() {
       </section>
 
       {/* CTA final */}
-      <section className="py-20 px-6 text-center">
+      <section className="py-16 px-6 text-center bg-gradient-to-b from-white to-[#F9F7F2]">
         <div className="container mx-auto max-w-xl">
-          <Star size={32} className="text-[#FACC15] mx-auto mb-6 fill-[#FACC15]" />
-          <h2 className="font-display text-3xl font-bold mb-4">Pronto pra evoluir?</h2>
-          <p className="text-white/40 mb-8">Junte-se a músicos de todo o Brasil que já usam o MelodAI para tocar melhor.</p>
+          <Star size={36} className="text-[#FACC15] mx-auto mb-5 fill-[#FACC15]" />
+          <h2 className="font-display text-3xl font-black text-[#1a1a2e] mb-4">Pronto pra tocar melhor?</h2>
+          <p className="text-[#1a1a2e]/40 mb-8 text-sm">Junte-se a músicos de todo o Brasil.</p>
           <Link to="/dashboard"
-            className="inline-flex items-center gap-2 bg-[#FACC15] hover:bg-[#E6B800] text-black font-bold text-base px-8 py-4 rounded-2xl transition-all shadow-[0_0_30px_-4px_rgba(250,204,21,0.4)]">
+            className="inline-flex items-center gap-2 bg-[#4F6EF7] hover:bg-[#3a5be0] text-white font-black text-lg px-10 py-4 rounded-2xl transition-all shadow-lg shadow-[#4F6EF7]/30">
             Começar Agora — É Grátis
-            <ChevronRight size={18} />
+            <ChevronRight size={20} />
           </Link>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="py-8 px-6 border-t border-white/[0.06] text-center text-xs text-white/20">
-        <img src="/logo.png" alt="MelodAI" className="h-6 w-auto mx-auto mb-3 opacity-40" />
+      <footer className="py-8 px-6 border-t border-black/[0.06] text-center text-xs text-[#1a1a2e]/30 bg-[#F9F7F2]">
+        <img src="/logo-dark.png" alt="MelodAI" className="h-7 w-auto mx-auto mb-3 opacity-40" />
         <p>© 2026 MelodAI. Todos os direitos reservados.</p>
         <p className="mt-1">melodai.com.br</p>
       </footer>
