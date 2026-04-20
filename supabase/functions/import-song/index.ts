@@ -109,6 +109,8 @@ IMPORTANTE para letra_cifrada:
   Tu cantavas sobre mim
 - NUNCA inclua TABs, tablaturas, diagramas de solo (linhas com e|--, B|--, G|--, D|--, A|--, E|--). Remova completamente esses blocos.
 - NUNCA inclua blocos de codigo markdown (tres backticks) — retorne apenas texto puro.
+- NUNCA inclua textos de interface do site como "O que você quer tocar hoje?", "Favoritar Cifra", "Cifra Principal", "Tom:", publicidade, banners ou qualquer texto que não seja letra ou acorde da música.
+- Não deixe linhas vazias entre acorde e letra. O padrão é sem linha vazia entre eles: linha de acordes imediatamente seguida de linha de letra.
 - ELIMINE REPETIÇÕES DE SEÇÕES: Se um refrão, verso ou ponte aparece mais de uma vez com exatamente os mesmos acordes e letra, escreva apenas UMA VEZ. Onde a seção se repetiria, coloque apenas o marcador da seção entre colchetes (ex: [Refrão], [Repetir Refrão x2]).
 - Mantenha os marcadores de seção entre colchetes: [Intro], [Verso], [Primeira Parte], [Refrão], [Ponte], [Segunda Parte], [Final], etc.
 - Seções com letra/acordes DIFERENTES devem ser escritas por completo mesmo que tenham o mesmo nome.
