@@ -629,10 +629,11 @@ export function CifraViewer({ musica }: CifraViewerProps) {
               for (let i = 0; i < lines.length; i++) {
                 const line = lines[i];
                 const trimmed = line.trim();
-                // Marcador de seção: garante linha vazia antes (se não for a primeira linha)
+                // Marcador de seção [Xxx]: garante linha vazia antes (exceto se for a primeira linha ou já há linha vazia)
                 if (/^\[.+\]$/.test(trimmed)) {
                   const prev = normalized[normalized.length - 1];
-                  if (normalized.length > 0 && prev !== undefined && prev.trim() !== '') {
+                  const alreadyBlank = prev === undefined || prev.trim() === '';
+                  if (!alreadyBlank) {
                     normalized.push('');
                   }
                   normalized.push(line);
