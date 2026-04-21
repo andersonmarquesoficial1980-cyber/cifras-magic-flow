@@ -18,7 +18,7 @@ export default function Landing() {
       {/* Hero */}
       <section className="pt-16 pb-12 px-6 text-center bg-gradient-to-b from-[#F9F7F2] to-white">
         <div className="container mx-auto max-w-2xl">
-          <img src="/logo-dark.png" alt="MelodAI" className="h-36 w-auto mx-auto mb-8" />
+          <img src="/logo-dark.png" alt="MelodAI" className="h-48 w-auto mx-auto mb-8" />
           <h1 className="font-display text-4xl md:text-5xl font-black text-[#1a1a2e] mb-5 leading-tight">
             O app de cifras feito pra quem <span className="text-[#4F6EF7]">toca de verdade</span>
           </h1>

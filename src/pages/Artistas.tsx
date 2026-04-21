@@ -32,7 +32,7 @@ export default function Artistas() {
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-500/20">
             <Users className="h-4 w-4 text-purple-400" />
           </div>
-          <img src="/logo.png" alt="MelodAI" className="h-6 w-auto" />
+          <img src="/logo.png" alt="MelodAI" className="h-10 w-auto" />
           <div className="flex-1">
             <h1 className="font-display text-lg font-bold text-foreground">Artistas</h1>
             <p className="text-xs text-muted-foreground">{artistas.length} artistas</p>

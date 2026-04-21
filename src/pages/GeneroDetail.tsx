@@ -30,7 +30,7 @@ export default function GeneroDetail() {
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FACC15]/10">
             <Tag className="h-5 w-5 text-[#FACC15]" />
           </div>
-          <img src="/logo.png" alt="MelodAI" className="h-6 w-auto" />
+          <img src="/logo.png" alt="MelodAI" className="h-10 w-auto" />
           <div className="flex-1">
             <h1 className="font-display text-xl font-bold text-foreground">{nomeDecoded}</h1>
             <p className="text-xs text-muted-foreground">{songs.length} música{songs.length !== 1 ? 's' : ''}</p>

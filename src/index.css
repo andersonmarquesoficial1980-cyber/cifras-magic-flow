@@ -6,22 +6,22 @@
 
 @layer base {
   :root {
-    --background: 138 22% 14%;
+    --background: 150 8% 11%;
     --foreground: 0 0% 92%;
 
-    --card: 138 20% 16%;
+    --card: 150 7% 13%;
     --card-foreground: 0 0% 92%;
 
-    --popover: 138 20% 16%;
+    --popover: 150 7% 13%;
     --popover-foreground: 0 0% 92%;
 
     --primary: 145 70% 50%;
     --primary-foreground: 0 0% 2%;
 
-    --secondary: 138 18% 20%;
+    --secondary: 150 7% 17%;
     --secondary-foreground: 0 0% 65%;
 
-    --muted: 138 18% 18%;
+    --muted: 150 7% 15%;
     --muted-foreground: 0 0% 50%;
 
     --accent: 270 60% 60%;
@@ -30,8 +30,8 @@
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 138 15% 22%;
-    --input: 138 15% 22%;
+    --border: 150 6% 20%;
+    --input: 150 6% 20%;
     --ring: 145 70% 50%;
 
     --radius: 0.625rem;
@@ -40,13 +40,13 @@
     --grau: 270 60% 65%;
     --flow-glow: 270 60% 55%;
 
-    --sidebar-background: 138 22% 12%;
+    --sidebar-background: 150 8% 9%;
     --sidebar-foreground: 0 0% 92%;
     --sidebar-primary: 145 70% 50%;
     --sidebar-primary-foreground: 0 0% 2%;
-    --sidebar-accent: 138 18% 20%;
+    --sidebar-accent: 150 7% 17%;
     --sidebar-accent-foreground: 0 0% 92%;
-    --sidebar-border: 138 15% 22%;
+    --sidebar-border: 150 6% 20%;
     --sidebar-ring: 145 70% 50%;
 
     --font-display: 'Nunito', sans-serif;
@@ -62,10 +62,10 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: var(--font-body);
+    font-family: 'Nunito', sans-serif !important;
   }
 
-  h1, h2, h3, h4 {
-    font-family: var(--font-display);
+  h1, h2, h3, h4, p, span, div, button, input, a {
+    font-family: 'Nunito', sans-serif !important;
   }
 }

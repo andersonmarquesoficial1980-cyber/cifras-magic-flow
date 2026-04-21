@@ -77,7 +77,7 @@ const Index = () => {
               <span className="text-sm">Voltar</span>
             </button>
             <div className="h-4 w-px bg-border mx-1" />
-            <img src="/logo.png" alt="MelodAI" className="h-7 w-auto" />
+            <img src="/logo.png" alt="MelodAI" className="h-10 w-auto" />
             {isAdmin && (
               <div className="flex gap-2 ml-auto">
                 <ImportadorFlash />
