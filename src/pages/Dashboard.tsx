@@ -83,15 +83,22 @@ const Dashboard = () => {
           <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             {isLoggedIn ? (
-              <div className="flex items-center gap-2">
-                {isPremium && (
-                  <span className="text-[10px] text-[#FACC15] border border-[#FACC15]/30 rounded-full px-2 py-0.5 flex items-center gap-1">
-                    <Crown size={10} />{isAdmin ? 'Admin' : 'Premium'}
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-2">
+                  {isPremium && (
+                    <span className="text-[10px] text-[#FACC15] border border-[#FACC15]/30 rounded-full px-2 py-0.5 flex items-center gap-1">
+                      <Crown size={10} />{isAdmin ? 'Admin' : 'Premium'}
+                    </span>
+                  )}
+                  <Link to="/configuracoes" className="flex items-center justify-center h-9 w-9 rounded-full border border-white/[0.06] text-gray-500 hover:text-gray-300 transition-colors">
+                    <Settings size={16} />
+                  </Link>
+                </div>
+                {isAdmin && musicas && (
+                  <span className="text-[10px] text-emerald-400 font-mono">
+                    {musicas.length} músicas cadastradas
                   </span>
                 )}
-                <Link to="/configuracoes" className="flex items-center justify-center h-9 w-9 rounded-full border border-white/[0.06] text-gray-500 hover:text-gray-300 transition-colors">
-                  <Settings size={16} />
-                </Link>
               </div>
             ) : (
               <button onClick={() => setShowAuth(true)} className="flex items-center gap-1.5 text-xs text-[#FACC15] border border-[#FACC15]/30 rounded-full px-3 py-1.5 hover:bg-[#FACC15]/10 transition-colors">
