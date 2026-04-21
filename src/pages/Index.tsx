@@ -130,16 +130,16 @@ const Index = () => {
               </Link>
 
               <Link to="/generos" className="group relative overflow-hidden rounded-2xl p-5 flex flex-col gap-2 transition-all active:scale-[0.98]"
-                style={{ background: 'linear-gradient(135deg, #1a2e1a 0%, #162e16 100%)', border: '1px solid rgba(250,204,21,0.3)' }}>
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FACC15]/20">
-                  <Tag className="h-5 w-5 text-[#FACC15]" />
+                style={{ background: 'linear-gradient(135deg, #1a1e2e 0%, #161b3e 100%)', border: '1px solid rgba(59,130,246,0.3)' }}>
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/20">
+                  <Tag className="h-5 w-5 text-blue-400" />
                 </div>
                 <div>
                   <p className="font-display text-base font-bold text-white">Gêneros</p>
-                  <p className="text-xs text-yellow-300/70">{musicas ? new Set(musicas.map(m => (m as any).genero).filter(Boolean)).size : '—'} gêneros</p>
+                  <p className="text-xs text-blue-300/70">{musicas ? new Set(musicas.map(m => (m as any).genero).filter(Boolean)).size : '—'} gêneros</p>
                 </div>
-                <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[#FACC15]/50 group-hover:text-[#FACC15] transition-colors" />
-                <div className="absolute inset-0 bg-[#FACC15]/0 group-hover:bg-[#FACC15]/5 transition-colors rounded-2xl" />
+                <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-blue-400/50 group-hover:text-blue-400 transition-colors" />
+                <div className="absolute inset-0 bg-blue-500/0 group-hover:bg-blue-500/5 transition-colors rounded-2xl" />
               </Link>
             </div>
 
