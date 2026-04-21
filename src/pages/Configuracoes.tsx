@@ -92,8 +92,22 @@ export default function Configuracoes() {
           </div>
         </motion.div>
 
-        {/* Trocar senha */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
+          className="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-5">
+          <div className="flex flex-col items-center justify-center gap-3 py-4 text-center">
+            <Crown className="w-10 h-10 text-[#FACC15]" />
+            <div>
+              <h2 className="font-display font-bold text-lg">Faça um Upgrade</h2>
+              <p className="text-sm text-gray-400 max-w-xs mt-1">Desbloqueie o Ouvido Biônico, Metrônomo visual e Campo Harmônico ilimitado.</p>
+            </div>
+            <Link to="/landing" className="mt-2 bg-[#FACC15] hover:bg-[#FACC15]/90 text-black px-6 py-2.5 rounded-full text-sm font-bold transition-colors w-full">
+              Ver Planos
+            </Link>
+          </div>
+        </motion.div>
+
+        {/* Trocar senha */}
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
           className="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-5">
           <div className="flex items-center gap-2 mb-4">
             <KeyRound size={16} className="text-[#FACC15]" />
