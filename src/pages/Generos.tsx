@@ -32,7 +32,7 @@ export default function Generos() {
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#FACC15]/20">
             <Tag className="h-4 w-4 text-[#FACC15]" />
           </div>
-          <img src="/logo.png" alt="MelodAI" className="h-8 w-auto" />
+          <img src="/logo-dark.png" alt="MelodAI" className="h-8 w-auto" />
           <div className="flex-1">
             <h1 className="font-display text-lg font-bold text-foreground">Gêneros</h1>
             <p className="text-xs text-muted-foreground">{generos.length} gêneros</p>
