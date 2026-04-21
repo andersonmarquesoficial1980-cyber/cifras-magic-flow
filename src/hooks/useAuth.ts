@@ -1,6 +1,6 @@
-import { useState, useEffect, createContext, useContext } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import type { User } from '@supabase/supabase-js';
+import { User } from '@supabase/supabase-js';
 
 export type UserRole = 'free' | 'premium' | 'admin';
 export type UserPlan = 'musico' | 'artista' | 'maestro';
@@ -40,56 +40,75 @@ export function useAuth() {
   return useContext(AuthContext);
 }
 
-export function useAuthState(): AuthContextType {
+export function useAuthState() {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  async function fetchProfile(userId: string) {
+  async function fetchProfile(userId: string, userEmail: string | undefined) {
+    // PROTEÇÃO TOTAL: Se for o email do Andinho, vira Admin e Maestro na marra, mesmo que o banco diga o contrário.
+    const isAndinho = userEmail?.toLowerCase().includes('anderson');
+    
     const { data } = await supabase
       .from('profiles')
-      .select('id, email, role, plan')
+      .select('id, email, role')
       .eq('id', userId)
       .single();
-    if (data) {
-      const normalized = {
-        ...data,
-        plan: (data.plan ?? (data.role === 'premium' ? 'artista' : data.role === 'admin' ? 'maestro' : 'musico')) as UserPlan,
-      };
-      setProfile(normalized as UserProfile);
+
+    if (data || isAndinho) {
+      const role = isAndinho ? 'admin' : (data?.role || 'free');
+      const plan = isAndinho ? 'maestro' : 'musico';
+      
+      setProfile({
+        id: userId,
+        email: userEmail || data?.email || '',
+        role: role as UserRole,
+        plan: plan as UserPlan,
+      });
+    } else {
+      setProfile(null);
     }
   }
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
-      if (session?.user) fetchProfile(session.user.id);
-      setLoading(false);
+      if (session?.user) {
+        fetchProfile(session.user.id, session.user.email);
+      } else {
+        setLoading(false);
+      }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) {
-        fetchProfile(session.user.id);
+        fetchProfile(session.user.id, session.user.email);
       } else {
         setProfile(null);
       }
-      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  const role: UserRole = profile?.role ?? 'free';
-  const plan: UserPlan = profile?.plan ?? 'musico';
+  // Se já temos um profile, garantimos que se for admin, o plan vai ser maestro pro frontend funcionar
+  const isAndinho = user?.email?.toLowerCase().includes('anderson');
+  const role: UserRole = isAndinho ? 'admin' : (profile?.role ?? 'free');
+  const plan: UserPlan = isAndinho ? 'maestro' : (profile?.plan ?? 'musico');
   const isAdmin = role === 'admin';
   const isPremium = isAdmin || role === 'premium' || plan === 'artista' || plan === 'maestro';
+
+  // Só termina de carregar depois que batermos o martelo no profile ou se não houver usuário
+  useEffect(() => {
+    if (!user || profile) setLoading(false);
+  }, [user, profile]);
 
   return {
     user,
     profile,
     role,
-    plan: isAdmin ? 'maestro' : plan, // Admin é forçado a ter plano Maestro visualmente
+    plan,
     isAdmin,
     isPremium,
     isLoggedIn: !!user,
