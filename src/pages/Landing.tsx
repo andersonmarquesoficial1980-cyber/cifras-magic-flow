@@ -8,7 +8,7 @@ export default function Landing() {
       {/* Header */}
       <header className="sticky top-0 z-50 bg-[#F9F7F2]/95 backdrop-blur border-b border-black/[0.06] px-6 py-3">
         <div className="container mx-auto max-w-5xl flex items-center justify-between">
-          <img src="/logo-dark.png" alt="MelodAI" className="h-10 w-auto" />
+          <img src="/logo.png" alt="MelodAI" className="h-10 w-auto" />
           <Link to="/dashboard" className="text-sm font-bold text-white bg-[#1a1a2e] rounded-full px-5 py-2 hover:bg-[#2d2d4e] transition-colors">
             Abrir App →
           </Link>
@@ -18,7 +18,7 @@ export default function Landing() {
       {/* Hero */}
       <section className="pt-16 pb-12 px-6 text-center bg-gradient-to-b from-[#F9F7F2] to-white">
         <div className="container mx-auto max-w-2xl">
-          <img src="/logo-dark.png" alt="MelodAI" className="h-28 w-auto mx-auto mb-8" />
+          <img src="/logo.png" alt="MelodAI" className="h-28 w-auto mx-auto mb-8" />
           <h1 className="font-display text-4xl md:text-5xl font-black text-[#1a1a2e] mb-5 leading-tight">
             O app de cifras feito pra quem <span className="text-[#4F6EF7]">toca de verdade</span>
           </h1>
@@ -148,7 +148,7 @@ export default function Landing() {
 
       {/* Footer */}
       <footer className="py-8 px-6 border-t border-black/[0.06] text-center text-xs text-[#1a1a2e]/30 bg-[#F9F7F2]">
-        <img src="/logo-dark.png" alt="MelodAI" className="h-7 w-auto mx-auto mb-3 opacity-40" />
+        <img src="/logo.png" alt="MelodAI" className="h-7 w-auto mx-auto mb-3 opacity-40" />
         <p>© 2026 MelodAI. Todos os direitos reservados.</p>
         <p className="mt-1">melodai.com.br</p>
       </footer>
