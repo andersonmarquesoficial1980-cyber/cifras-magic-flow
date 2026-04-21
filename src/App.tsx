@@ -12,6 +12,7 @@ import Metronomo from "./pages/Metronomo.tsx";
 import Estude from "./pages/Estude.tsx";
 import MestreDoRitmo from "./pages/MestreDoRitmo.tsx";
 import OuvidoBionico from "./pages/OuvidoBionico.tsx";
+import MestreCampoHarmonico from "./pages/MestreCampoHarmonico.tsx";
 import Configuracoes from "./pages/Configuracoes.tsx";
 import ArtistaDetail from "./pages/ArtistaDetail.tsx";
 import Feedback from "./pages/Feedback.tsx";
@@ -59,6 +60,7 @@ const App = () => (
             <Route path="/estude" element={<Estude />} />
             <Route path="/estude/ritmo" element={<MestreDoRitmo />} />
             <Route path="/estude/ouvido" element={<OuvidoBionico />} />
+            <Route path="/estude/campo-harmonico" element={<MestreCampoHarmonico />} />
             <Route path="/musica/:id" element={<MusicaDetail />} />
             <Route path="/configuracoes" element={<Configuracoes />} />
             <Route path="/artista/:nome" element={<ArtistaDetail />} />

@@ -107,7 +107,7 @@ const TOTAL_QUESTIONS = 10;
 // ── Trail cards ──
 
 const TRAIL = [
-  { id: 'harmonic-field', title: 'Mestre do Campo Harmônico', desc: 'Identifique os graus de qualquer tom', icon: Star, unlocked: true, route: null },
+  { id: 'harmonic-field', title: 'Mestre do Campo Harmônico', desc: 'Identifique os graus de qualquer tom', icon: Star, unlocked: true, route: '/estude/campo-harmonico' },
   { id: 'rhythm-master', title: 'Mestre do Ritmo', desc: 'Treine batidas e levadas no tempo', icon: BookOpen, unlocked: true, route: '/estude/ritmo' },
   { id: 'cifra-rapida', title: 'Cifra Rápida', desc: 'Identifique acordes por grau no tempo', icon: Zap, unlocked: true, route: '/estude/cifra-rapida' },
   { id: 'ear-training', title: 'Ouvido Biônico', desc: 'Identifique intervalos musicais de ouvido', icon: Zap, unlocked: false, route: '/estude/ouvido' },
