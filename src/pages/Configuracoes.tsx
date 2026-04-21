@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 
 export default function Configuracoes() {
-  const { profile, role, isAdmin, isPremium, signOut } = useAuth();
+  const { profile, role, plan, isPremium, signOut } = useAuth();
   const navigate = useNavigate();
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -28,6 +28,12 @@ export default function Configuracoes() {
     admin: 'text-[#FACC15] border-[#FACC15]/30 bg-[#FACC15]/10',
     premium: 'text-purple-400 border-purple-400/30 bg-purple-400/10',
     free: 'text-gray-400 border-gray-400/30 bg-gray-400/10',
+  };
+
+  const PLAN_LABEL: Record<string, string> = {
+    musico: 'Músico',
+    artista: 'Artista',
+    maestro: 'Maestro',
   };
 
   async function handleChangePassword(e: React.FormEvent) {
@@ -81,6 +87,7 @@ export default function Configuracoes() {
                 {isPremium && <Crown size={10} />}
                 {ROLE_LABEL[role]}
               </span>
+              <p className="text-[11px] text-gray-400 mt-1">Plano: {PLAN_LABEL[plan] ?? 'Músico'}</p>
             </div>
           </div>
         </motion.div>

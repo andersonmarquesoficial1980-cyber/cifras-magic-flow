@@ -106,6 +106,30 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          id: string
+          plan: Database["public"]["Enums"]["user_plan"] | null
+          role: string
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          id: string
+          plan?: Database["public"]["Enums"]["user_plan"] | null
+          role?: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          plan?: Database["public"]["Enums"]["user_plan"] | null
+          role?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -114,7 +138,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      user_plan: "musico" | "artista" | "maestro"
     }
     CompositeTypes: {
       [_ in never]: never

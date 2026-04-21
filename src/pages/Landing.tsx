@@ -1,9 +1,52 @@
 import { Link } from 'react-router-dom';
 import { Music2, Zap, Crown, Star, ChevronRight, Brain, Headphones, Guitar } from 'lucide-react';
+import { useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { AuthModal } from '@/components/AuthModal';
 
 export default function Landing() {
+  const [showAuth, setShowAuth] = useState(false);
+  const [loadingPlan, setLoadingPlan] = useState<'artista' | 'maestro' | null>(null);
+  const { toast } = useToast();
+
+  async function handleCheckout(plan: 'artista' | 'maestro') {
+    setLoadingPlan(plan);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          title: 'Faça login para assinar',
+          description: 'Entre na sua conta para continuar com o pagamento.',
+        });
+        setShowAuth(true);
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke('mp-checkout', {
+        body: { plan },
+      });
+
+      if (error || !data?.checkout_url) {
+        throw new Error(error?.message ?? 'Não foi possível iniciar o checkout.');
+      }
+
+      window.location.href = data.checkout_url;
+    } catch (error) {
+      toast({
+        title: 'Erro ao iniciar pagamento',
+        description: error instanceof Error ? error.message : 'Tente novamente em instantes.',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoadingPlan(null);
+    }
+  }
+
   return (
     <div className="min-h-screen bg-[#F9F7F2] text-[#1a1a2e] font-body overflow-x-hidden">
+      <AuthModal open={showAuth} onClose={() => setShowAuth(false)} />
 
       {/* Header */}
       <header className="sticky top-0 z-50 bg-[#F9F7F2]/95 backdrop-blur border-b border-black/[0.06] px-6 py-3">
@@ -105,9 +148,14 @@ export default function Landing() {
                   <li key={f} className="flex items-center gap-2"><span className="text-[#FACC15] font-bold">✓</span>{f}</li>
                 ))}
               </ul>
-              <Link to="/dashboard" className="block text-center bg-white hover:bg-white/90 text-[#4F6EF7] rounded-xl py-3 text-sm font-black transition-colors">
-                Assinar Artista
-              </Link>
+              <button
+                type="button"
+                onClick={() => handleCheckout('artista')}
+                disabled={loadingPlan !== null}
+                className="block w-full text-center bg-white hover:bg-white/90 disabled:bg-white/70 disabled:cursor-not-allowed text-[#4F6EF7] rounded-xl py-3 text-sm font-black transition-colors"
+              >
+                {loadingPlan === 'artista' ? 'Gerando checkout...' : 'Assinar Artista'}
+              </button>
             </div>
 
             {/* Maestro */}
@@ -123,9 +171,14 @@ export default function Landing() {
                   <li key={f} className="flex items-center gap-2"><span className="text-purple-500 font-bold">✓</span>{f}</li>
                 ))}
               </ul>
-              <Link to="/dashboard" className="block text-center border-2 border-purple-300 rounded-xl py-3 text-sm font-bold text-purple-600 hover:bg-purple-100 transition-colors">
-                Assinar Maestro
-              </Link>
+              <button
+                type="button"
+                onClick={() => handleCheckout('maestro')}
+                disabled={loadingPlan !== null}
+                className="block w-full text-center border-2 border-purple-300 rounded-xl py-3 text-sm font-bold text-purple-600 hover:bg-purple-100 disabled:opacity-70 disabled:cursor-not-allowed transition-colors"
+              >
+                {loadingPlan === 'maestro' ? 'Gerando checkout...' : 'Assinar Maestro'}
+              </button>
             </div>
 
           </div>

@@ -3,17 +3,20 @@ import { supabase } from '@/integrations/supabase/client';
 import type { User } from '@supabase/supabase-js';
 
 export type UserRole = 'free' | 'premium' | 'admin';
+export type UserPlan = 'musico' | 'artista' | 'maestro';
 
 export interface UserProfile {
   id: string;
   email: string;
   role: UserRole;
+  plan: UserPlan;
 }
 
 interface AuthContextType {
   user: User | null;
   profile: UserProfile | null;
   role: UserRole;
+  plan: UserPlan;
   isAdmin: boolean;
   isPremium: boolean;
   isLoggedIn: boolean;
@@ -25,6 +28,7 @@ export const AuthContext = createContext<AuthContextType>({
   user: null,
   profile: null,
   role: 'free',
+  plan: 'musico',
   isAdmin: false,
   isPremium: false,
   isLoggedIn: false,
@@ -44,10 +48,16 @@ export function useAuthState(): AuthContextType {
   async function fetchProfile(userId: string) {
     const { data } = await supabase
       .from('profiles')
-      .select('id, email, role')
+      .select('id, email, role, plan')
       .eq('id', userId)
       .single();
-    if (data) setProfile(data as UserProfile);
+    if (data) {
+      const normalized = {
+        ...data,
+        plan: (data.plan ?? (data.role === 'premium' ? 'artista' : data.role === 'admin' ? 'maestro' : 'musico')) as UserPlan,
+      };
+      setProfile(normalized as UserProfile);
+    }
   }
 
   useEffect(() => {
@@ -71,13 +81,15 @@ export function useAuthState(): AuthContextType {
   }, []);
 
   const role: UserRole = profile?.role ?? 'free';
+  const plan: UserPlan = profile?.plan ?? (role === 'premium' ? 'artista' : role === 'admin' ? 'maestro' : 'musico');
 
   return {
     user,
     profile,
     role,
+    plan,
     isAdmin: role === 'admin',
-    isPremium: role === 'premium' || role === 'admin',
+    isPremium: role === 'premium' || role === 'admin' || plan === 'artista' || plan === 'maestro',
     isLoggedIn: !!user,
     loading,
     signOut: () => supabase.auth.signOut(),
