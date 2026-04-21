@@ -6,23 +6,23 @@
 
 @layer base {
   :root {
-    --background: 150 8% 11%;
-    --foreground: 0 0% 92%;
+    --background: 220 18% 11%;
+    --foreground: 0 0% 93%;
 
-    --card: 150 7% 13%;
-    --card-foreground: 0 0% 92%;
+    --card: 220 16% 14%;
+    --card-foreground: 0 0% 93%;
 
-    --popover: 150 7% 13%;
-    --popover-foreground: 0 0% 92%;
+    --popover: 220 16% 14%;
+    --popover-foreground: 0 0% 93%;
 
     --primary: 145 70% 50%;
     --primary-foreground: 0 0% 2%;
 
-    --secondary: 150 7% 17%;
-    --secondary-foreground: 0 0% 65%;
+    --secondary: 220 14% 18%;
+    --secondary-foreground: 0 0% 70%;
 
-    --muted: 150 7% 15%;
-    --muted-foreground: 0 0% 50%;
+    --muted: 220 14% 16%;
+    --muted-foreground: 0 0% 55%;
 
     --accent: 270 60% 60%;
     --accent-foreground: 0 0% 95%;
@@ -30,8 +30,8 @@
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 150 6% 20%;
-    --input: 150 6% 20%;
+    --border: 220 12% 22%;
+    --input: 220 12% 22%;
     --ring: 145 70% 50%;
 
     --radius: 0.625rem;
@@ -40,13 +40,13 @@
     --grau: 270 60% 65%;
     --flow-glow: 270 60% 55%;
 
-    --sidebar-background: 150 8% 9%;
+    --sidebar-background: 220 18% 9%;
     --sidebar-foreground: 0 0% 92%;
     --sidebar-primary: 145 70% 50%;
     --sidebar-primary-foreground: 0 0% 2%;
-    --sidebar-accent: 150 7% 17%;
+    --sidebar-accent: 220 14% 18%;
     --sidebar-accent-foreground: 0 0% 92%;
-    --sidebar-border: 150 6% 20%;
+    --sidebar-border: 220 12% 22%;
     --sidebar-ring: 145 70% 50%;
 
     --font-display: 'Nunito', sans-serif;

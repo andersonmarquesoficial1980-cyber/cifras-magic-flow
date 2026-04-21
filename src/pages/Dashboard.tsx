@@ -78,7 +78,7 @@ const Dashboard = () => {
       >
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-center">
-            <img src="/logo.png" alt="MelodAI" className="h-16 w-auto" />
+            <img src="/logo.png" alt="MelodAI" className="h-14 w-auto" />
           </div>
           <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">

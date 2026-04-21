@@ -34,7 +34,7 @@ export default function ArtistaDetail() {
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
             <Music2 className="h-5 w-5 text-primary" />
           </div>
-          <img src="/logo.png" alt="MelodAI" className="h-10 w-auto" />
+          <img src="/logo.png" alt="MelodAI" className="h-8 w-auto" />
           <div className="flex-1">
             <h1 className="font-display text-xl font-bold text-foreground">{nomeDecoded}</h1>
             <p className="text-xs text-muted-foreground">{songs.length} música{songs.length !== 1 ? 's' : ''}</p>
