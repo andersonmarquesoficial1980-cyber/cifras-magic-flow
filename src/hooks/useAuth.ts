@@ -81,15 +81,17 @@ export function useAuthState(): AuthContextType {
   }, []);
 
   const role: UserRole = profile?.role ?? 'free';
-  const plan: UserPlan = profile?.plan ?? (role === 'premium' ? 'artista' : role === 'admin' ? 'maestro' : 'musico');
+  const plan: UserPlan = profile?.plan ?? 'musico';
+  const isAdmin = role === 'admin';
+  const isPremium = isAdmin || role === 'premium' || plan === 'artista' || plan === 'maestro';
 
   return {
     user,
     profile,
     role,
-    plan,
-    isAdmin: role === 'admin',
-    isPremium: role === 'premium' || role === 'admin' || plan === 'artista' || plan === 'maestro',
+    plan: isAdmin ? 'maestro' : plan, // Admin é forçado a ter plano Maestro visualmente
+    isAdmin,
+    isPremium,
     isLoggedIn: !!user,
     loading,
     signOut: () => supabase.auth.signOut(),
