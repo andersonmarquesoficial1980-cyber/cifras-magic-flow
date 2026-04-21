@@ -22,6 +22,8 @@ import CifraRapida from "./pages/CifraRapida.tsx";
 import Landing from "./pages/Landing.tsx";
 import { AuthContext, useAuthState } from "@/hooks/useAuth";
 import { BottomNav } from "@/components/BottomNav";
+import { ImportProvider } from "@/contexts/ImportContext";
+import { GlobalImportadorLote } from "@/components/GlobalImportadorLote";
 
 const queryClient = new QueryClient();
 
@@ -46,6 +48,8 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
+          <ImportProvider>
+          <GlobalImportadorLote />
           <Layout>
           <Routes>
             <Route path="/" element={<Dashboard />} />
@@ -67,6 +71,7 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
           </Layout>
+          </ImportProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
