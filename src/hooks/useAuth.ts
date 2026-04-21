@@ -47,7 +47,7 @@ export function useAuthState() {
 
   async function fetchProfile(userId: string, userEmail: string | undefined) {
     // PROTEÇÃO TOTAL: Se for o email do Andinho, vira Admin e Maestro na marra, mesmo que o banco diga o contrário.
-    const isAndinho = userEmail?.toLowerCase().includes('anderson');
+    const isAndinho = userEmail?.toLowerCase() === 'andersonmarquesoficial1980@gmail.com';
     
     const { data } = await supabase
       .from('profiles')
@@ -93,7 +93,7 @@ export function useAuthState() {
   }, []);
 
   // Se já temos um profile, garantimos que se for admin, o plan vai ser maestro pro frontend funcionar
-  const isAndinho = user?.email?.toLowerCase().includes('anderson');
+  const isAndinho = user?.email?.toLowerCase() === 'andersonmarquesoficial1980@gmail.com';
   const role: UserRole = isAndinho ? 'admin' : (profile?.role ?? 'free');
   const plan: UserPlan = isAndinho ? 'maestro' : (profile?.plan ?? 'musico');
   const isAdmin = role === 'admin';
