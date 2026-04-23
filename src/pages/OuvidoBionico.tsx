@@ -1,426 +1,486 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Play, Trophy, Zap, BarChart3, RotateCcw, Volume2 } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowLeft, CheckCircle2, Music4, Play, RotateCcw, Volume2, XCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
-// ── Interval definitions ──
+type GamePhase = 'idle' | 'listening' | 'answering' | 'feedback';
 
-interface IntervalDef {
-  id: string;
-  name: string;
-  semitones: number;
-  hint: string;
-  hintSong: string;
+type ChordQuality = 'maj' | 'min' | 'dim';
+
+interface DegreeDef {
+  roman: string;
+  quality: ChordQuality;
 }
 
-const INTERVALS: IntervalDef[] = [
-  { id: '2m', name: '2ª Menor', semitones: 1, hint: '🦈 Tema do Tubarão', hintSong: 'Tubarão (Jaws)' },
-  { id: '2M', name: '2ª Maior', semitones: 2, hint: '🎂 Parabéns pra Você', hintSong: 'Parabéns pra Você' },
-  { id: '3m', name: '3ª Menor', semitones: 3, hint: '💔 Greensleeves', hintSong: 'Greensleeves' },
-  { id: '3M', name: '3ª Maior', semitones: 4, hint: '🌅 Oh When The Saints', hintSong: 'When The Saints Go Marching In' },
-  { id: '4J', name: '4ª Justa', semitones: 5, hint: '🇧🇷 Hino Nacional Brasileiro', hintSong: 'Hino Nacional' },
-  { id: '5J', name: '5ª Justa', semitones: 7, hint: '⭐ Tema de Star Wars', hintSong: 'Star Wars' },
+interface RoundQuestion {
+  key: string;
+  progression: number[];
+}
+
+const TOTAL_ROUNDS = 5;
+
+const KEYS = ['C', 'D', 'E', 'F', 'G', 'A', 'B'] as const;
+const NOTE_TO_SEMITONE: Record<(typeof KEYS)[number], number> = {
+  C: 0,
+  D: 2,
+  E: 4,
+  F: 5,
+  G: 7,
+  A: 9,
+  B: 11,
+};
+
+const MAJOR_SCALE_INTERVALS = [0, 2, 4, 5, 7, 9, 11] as const;
+
+const DEGREES: DegreeDef[] = [
+  { roman: 'I', quality: 'maj' },
+  { roman: 'ii', quality: 'min' },
+  { roman: 'iii', quality: 'min' },
+  { roman: 'IV', quality: 'maj' },
+  { roman: 'V', quality: 'maj' },
+  { roman: 'vi', quality: 'min' },
+  { roman: 'vii°', quality: 'dim' },
 ];
 
-const BASE_FREQ = 261.63; // C4
+const PROGRESSION_LIBRARY: number[][] = [
+  [0, 5, 3, 4], // I vi IV V
+  [0, 4, 5, 3], // I V vi IV
+  [0, 3, 4, 0], // I IV V I
+  [5, 3, 0, 4], // vi IV I V
+  [1, 4, 0, 5], // ii V I vi
+  [0, 2, 5, 4], // I iii vi V
+  [0, 3, 5, 4], // I IV vi V
+  [0, 4, 3, 4], // I V IV V
+];
 
-function freqFromSemitones(semitones: number) {
-  return BASE_FREQ * Math.pow(2, semitones / 12);
+const CHORD_INTERVALS: Record<ChordQuality, number[]> = {
+  maj: [0, 4, 7],
+  min: [0, 3, 7],
+  dim: [0, 3, 6],
+};
+
+const CHORD_STEP_SECONDS = 1.05;
+const CHORD_HOLD_SECONDS = 0.82;
+
+function randomItem<T>(arr: T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)];
 }
 
-// ── Audio ──
-
-function playNote(ctx: AudioContext, freq: number, startTime: number, duration: number) {
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.type = 'sine';
-  osc.frequency.value = freq;
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-  gain.gain.setValueAtTime(0.3, startTime);
-  gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
-  osc.start(startTime);
-  osc.stop(startTime + duration);
+function midiToFrequency(midi: number) {
+  return 440 * Math.pow(2, (midi - 69) / 12);
 }
 
-function playInterval(ctx: AudioContext, semitones: number) {
+function scheduleChord(
+  ctx: AudioContext,
+  chordMidiNotes: number[],
+  startTime: number,
+  holdSeconds: number,
+  velocity = 0.2,
+) {
+  chordMidiNotes.forEach((midi, index) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const filter = ctx.createBiquadFilter();
+
+    osc.type = index === 0 ? 'triangle' : 'sawtooth';
+    osc.frequency.setValueAtTime(midiToFrequency(midi), startTime);
+
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(1200, startTime);
+    filter.Q.setValueAtTime(0.8, startTime);
+
+    gain.gain.setValueAtTime(0.0001, startTime);
+    gain.gain.linearRampToValueAtTime(velocity, startTime + 0.04);
+    gain.gain.exponentialRampToValueAtTime(0.001, startTime + holdSeconds);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(startTime);
+    osc.stop(startTime + holdSeconds + 0.05);
+  });
+}
+
+function scheduleFeedback(ctx: AudioContext, isCorrect: boolean) {
   const now = ctx.currentTime;
-  playNote(ctx, BASE_FREQ, now, 0.6);
-  playNote(ctx, freqFromSemitones(semitones), now + 0.7, 0.8);
-}
-
-function playFeedback(ctx: AudioContext, success: boolean) {
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
+
   osc.connect(gain);
   gain.connect(ctx.destination);
-  if (success) {
-    osc.frequency.value = 880;
-    gain.gain.setValueAtTime(0.2, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + 0.15);
-  } else {
-    osc.type = 'sawtooth';
-    osc.frequency.value = 180;
-    gain.gain.setValueAtTime(0.15, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + 0.25);
+
+  if (isCorrect) {
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(660, now);
+    osc.frequency.exponentialRampToValueAtTime(990, now + 0.18);
+    gain.gain.setValueAtTime(0.18, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+    osc.start(now);
+    osc.stop(now + 0.21);
+    return;
   }
+
+  osc.type = 'square';
+  osc.frequency.setValueAtTime(220, now);
+  gain.gain.setValueAtTime(0.14, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.26);
+  osc.start(now);
+  osc.stop(now + 0.27);
 }
 
-// ── Component ──
-
-type GamePhase = 'menu' | 'playing' | 'feedback' | 'stats';
-
-interface Stats {
-  [intervalId: string]: { correct: number; wrong: number };
+function buildRoundQuestion(): RoundQuestion {
+  return {
+    key: randomItem([...KEYS]),
+    progression: randomItem(PROGRESSION_LIBRARY),
+  };
 }
 
-const OuvidoBionico = () => {
-  const [phase, setPhase] = useState<GamePhase>('menu');
-  const [currentInterval, setCurrentInterval] = useState<IntervalDef>(INTERVALS[0]);
-  const [selected, setSelected] = useState<string | null>(null);
-  const [isCorrect, setIsCorrect] = useState(false);
+export default function OuvidoBionico() {
+  const navigate = useNavigate();
+
+  const [phase, setPhase] = useState<GamePhase>('idle');
+  const [roundIndex, setRoundIndex] = useState(1);
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
   const [bestStreak, setBestStreak] = useState(0);
-  const [questionStart, setQuestionStart] = useState(0);
-  const [round, setRound] = useState(0);
-  const [stats, setStats] = useState<Stats>(() => {
-    const s: Stats = {};
-    INTERVALS.forEach(i => { s[i.id] = { correct: 0, wrong: 0 }; });
-    return s;
-  });
+  const [question, setQuestion] = useState<RoundQuestion>(() => buildRoundQuestion());
+  const [userAnswer, setUserAnswer] = useState<number[]>([]);
+  const [lastAnswerCorrect, setLastAnswerCorrect] = useState<boolean | null>(null);
+  const [activeChordIndex, setActiveChordIndex] = useState<number | null>(null);
+  const [audioEnabled, setAudioEnabled] = useState(true);
 
-  const audioCtxRef = useRef<AudioContext | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const playbackTimerIdsRef = useRef<number[]>([]);
 
-  const getCtx = useCallback(() => {
-    if (!audioCtxRef.current || audioCtxRef.current.state === 'closed') {
-      audioCtxRef.current = new AudioContext();
-    }
-    if (audioCtxRef.current.state === 'suspended') audioCtxRef.current.resume();
-    return audioCtxRef.current;
+  const clearPlaybackTimers = useCallback(() => {
+    playbackTimerIdsRef.current.forEach((id) => window.clearTimeout(id));
+    playbackTimerIdsRef.current = [];
   }, []);
 
-  const pickRandom = useCallback(() => {
-    return INTERVALS[Math.floor(Math.random() * INTERVALS.length)];
+  const getAudioContext = useCallback(() => {
+    if (!audioContextRef.current || audioContextRef.current.state === 'closed') {
+      audioContextRef.current = new AudioContext();
+    }
+
+    if (audioContextRef.current.state === 'suspended') {
+      void audioContextRef.current.resume();
+    }
+
+    return audioContextRef.current;
+  }, []);
+
+  const playProgression = useCallback(() => {
+    clearPlaybackTimers();
+    setActiveChordIndex(null);
+
+    try {
+      const ctx = getAudioContext();
+      const startAt = ctx.currentTime + 0.08;
+      const baseMidi = 48 + NOTE_TO_SEMITONE[question.key as (typeof KEYS)[number]];
+
+      question.progression.forEach((degreeIndex, idx) => {
+        const degree = DEGREES[degreeIndex];
+        const degreeRoot = baseMidi + MAJOR_SCALE_INTERVALS[degreeIndex];
+        const chordMidiNotes = CHORD_INTERVALS[degree.quality].map((interval) => degreeRoot + interval);
+        const chordStart = startAt + idx * CHORD_STEP_SECONDS;
+
+        scheduleChord(ctx, chordMidiNotes, chordStart, CHORD_HOLD_SECONDS);
+
+        const activateId = window.setTimeout(() => {
+          setActiveChordIndex(idx);
+        }, (chordStart - ctx.currentTime) * 1000);
+
+        const deactivateId = window.setTimeout(() => {
+          setActiveChordIndex((prev) => (prev === idx ? null : prev));
+        }, (chordStart - ctx.currentTime + CHORD_HOLD_SECONDS) * 1000);
+
+        playbackTimerIdsRef.current.push(activateId, deactivateId);
+      });
+
+      const endId = window.setTimeout(() => {
+        setActiveChordIndex(null);
+        setPhase('answering');
+      }, question.progression.length * CHORD_STEP_SECONDS * 1000 + 180);
+
+      playbackTimerIdsRef.current.push(endId);
+      setAudioEnabled(true);
+      setPhase('listening');
+    } catch {
+      // Fallback visual mode if Web Audio is blocked/unavailable
+      setAudioEnabled(false);
+      setPhase('answering');
+    }
+  }, [clearPlaybackTimers, getAudioContext, question]);
+
+  const startRound = useCallback((customRoundIndex?: number) => {
+    setQuestion(buildRoundQuestion());
+    setUserAnswer([]);
+    setLastAnswerCorrect(null);
+    setActiveChordIndex(null);
+    setPhase('listening');
+
+    if (typeof customRoundIndex === 'number') {
+      setRoundIndex(customRoundIndex);
+    }
   }, []);
 
   const startGame = useCallback(() => {
     setScore(0);
     setStreak(0);
-    setRound(0);
-    setStats(prev => {
-      const s: Stats = {};
-      INTERVALS.forEach(i => { s[i.id] = { correct: 0, wrong: 0 }; });
-      return s;
-    });
-    nextQuestion();
-  }, []);
+    setBestStreak(0);
+    startRound(1);
+  }, [startRound]);
 
-  const nextQuestion = useCallback(() => {
-    const interval = pickRandom();
-    setCurrentInterval(interval);
-    setSelected(null);
-    setPhase('playing');
-    setRound(r => r + 1);
-    setQuestionStart(Date.now());
-
-    // Auto-play the interval
-    setTimeout(() => {
-      const ctx = getCtx();
-      playInterval(ctx, interval.semitones);
-    }, 300);
-  }, [pickRandom, getCtx]);
-
-  const replayInterval = useCallback(() => {
-    const ctx = getCtx();
-    playInterval(ctx, currentInterval.semitones);
-  }, [currentInterval, getCtx]);
-
-  const handleAnswer = useCallback((intervalId: string) => {
-    if (selected) return;
-    setSelected(intervalId);
-
-    const correct = intervalId === currentInterval.id;
-    setIsCorrect(correct);
-
-    const ctx = getCtx();
-    playFeedback(ctx, correct);
-
-    // Time bonus: faster = more points (max 100, min 10)
-    const elapsed = (Date.now() - questionStart) / 1000;
-    const timeBonus = Math.max(10, Math.round(100 - elapsed * 10));
-
-    if (correct) {
-      setScore(s => s + timeBonus);
-      setStreak(s => {
-        const next = s + 1;
-        setBestStreak(b => Math.max(b, next));
-        return next;
-      });
-    } else {
-      setStreak(0);
+  useEffect(() => {
+    if (phase !== 'listening') {
+      return;
     }
 
-    setStats(prev => ({
-      ...prev,
-      [currentInterval.id]: {
-        correct: prev[currentInterval.id].correct + (correct ? 1 : 0),
-        wrong: prev[currentInterval.id].wrong + (correct ? 0 : 1),
-      },
-    }));
+    playProgression();
+  }, [phase, playProgression]);
 
-    setPhase('feedback');
-  }, [selected, currentInterval, questionStart, getCtx]);
+  useEffect(() => {
+    return () => {
+      clearPlaybackTimers();
+      if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+        void audioContextRef.current.close();
+      }
+    };
+  }, [clearPlaybackTimers]);
 
-  const totalQuestions = Object.values(stats).reduce((a, s) => a + s.correct + s.wrong, 0);
-  const worstIntervals = [...INTERVALS]
-    .map(i => ({ ...i, errorRate: stats[i.id].wrong / Math.max(1, stats[i.id].correct + stats[i.id].wrong) }))
-    .filter(i => stats[i.id].correct + stats[i.id].wrong > 0)
-    .sort((a, b) => b.errorRate - a.errorRate);
+  const isRoundComplete = userAnswer.length === question.progression.length;
 
-  // ── Menu ──
-  if (phase === 'menu') {
-    return (
-      <div className="min-h-screen bg-[#050505] flex flex-col">
-        <div className="flex items-center gap-3 px-4 pt-6 pb-4">
-          <button onClick={() => navigate(-1)}><Button variant="ghost" size="icon" className="text-muted-foreground"><ArrowLeft className="h-5 w-5" /></Button></button>
-          <div>
-            <h1 className="font-display text-xl font-bold text-foreground">Ouvido Biônico</h1>
-            <p className="text-[11px] text-muted-foreground">Treine sua percepção de intervalos</p>
-          </div>
-        </div>
+  const roundedProgress = useMemo(() => {
+    return Math.round((roundIndex / TOTAL_ROUNDS) * 100);
+  }, [roundIndex]);
 
-        <div className="flex-1 flex flex-col items-center justify-center px-6 gap-6">
-          <div className="rounded-full h-28 w-28 bg-[#A855F7]/10 border-2 border-[#A855F7]/30 flex items-center justify-center shadow-[0_0_40px_-8px_rgba(168,85,247,0.4)]">
-            <Zap className="h-14 w-14 text-[#A855F7]" />
-          </div>
+  const validateCurrentAnswer = useCallback(
+    (candidate: number[]) => {
+      if (candidate.length !== question.progression.length) {
+        return;
+      }
 
-          <div className="text-center">
-            <h2 className="font-display text-lg font-bold text-foreground">Identifique Intervalos</h2>
-            <p className="text-sm text-muted-foreground mt-2 max-w-xs">
-              Ouça duas notas e identifique a distância entre elas. Quanto mais rápido, mais pontos!
-            </p>
-          </div>
+      const correct = candidate.every((degree, index) => degree === question.progression[index]);
+      setLastAnswerCorrect(correct);
 
-          <div className="grid grid-cols-3 gap-2 w-full max-w-xs">
-            {INTERVALS.map(i => (
-              <div key={i.id} className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-2 text-center">
-                <span className="text-xs font-mono font-bold text-[#A855F7]">{i.name}</span>
-              </div>
-            ))}
-          </div>
+      try {
+        const ctx = getAudioContext();
+        scheduleFeedback(ctx, correct);
+      } catch {
+        // no-op
+      }
 
-          <Button onClick={startGame} className="bg-[#A855F7] hover:bg-[#9333EA] text-white mt-4 px-8">
-            <Play className="h-4 w-4 mr-2" /> Começar
-          </Button>
+      if (correct) {
+        setScore((prev) => prev + 100);
+        setStreak((prev) => {
+          const next = prev + 1;
+          setBestStreak((best) => Math.max(best, next));
+          return next;
+        });
+      } else {
+        setStreak(0);
+      }
 
-          {bestStreak > 0 && (
-            <p className="text-xs text-muted-foreground">Melhor sequência: <span className="text-[#A855F7] font-bold">{bestStreak}</span></p>
-          )}
-        </div>
-      </div>
-    );
-  }
+      setPhase('feedback');
+    },
+    [getAudioContext, question.progression],
+  );
 
-  // ── Stats ──
-  if (phase === 'stats') {
-    return (
-      <div className="min-h-screen bg-[#050505] flex flex-col">
-        <div className="flex items-center gap-3 px-4 pt-6 pb-4">
-          <button onClick={() => setPhase('menu')} className="text-muted-foreground"><ArrowLeft className="h-5 w-5" /></button>
-          <h1 className="font-display text-lg font-bold text-foreground">Evolução</h1>
-        </div>
+  const handleDegreeClick = useCallback(
+    (degreeIndex: number) => {
+      if (phase !== 'answering') {
+        return;
+      }
 
-        <div className="px-4 pb-8 flex flex-col gap-4">
-          {/* Summary */}
-          <div className="rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/[0.04] p-5 text-center">
-            <div className="flex justify-center gap-8">
-              <div>
-                <span className="text-2xl font-mono font-bold text-[#A855F7]">{score}</span>
-                <p className="text-[10px] text-muted-foreground">Pontos</p>
-              </div>
-              <div>
-                <span className="text-2xl font-mono font-bold text-[#10B981]">{bestStreak}</span>
-                <p className="text-[10px] text-muted-foreground">Melhor Sequência</p>
-              </div>
-              <div>
-                <span className="text-2xl font-mono font-bold text-foreground">{totalQuestions}</span>
-                <p className="text-[10px] text-muted-foreground">Rodadas</p>
-              </div>
-            </div>
-          </div>
+      const nextAnswer = [...userAnswer, degreeIndex];
+      setUserAnswer(nextAnswer);
 
-          {/* Per-interval breakdown */}
-          <p className="text-xs text-muted-foreground mt-2">Desempenho por Intervalo</p>
-          {INTERVALS.map(interval => {
-            const s = stats[interval.id];
-            const total = s.correct + s.wrong;
-            const pct = total > 0 ? Math.round((s.correct / total) * 100) : 0;
-            const barColor = pct >= 70 ? 'bg-[#10B981]' : pct >= 40 ? 'bg-[#FACC15]' : 'bg-[#EF4444]';
-            return (
-              <div key={interval.id} className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-sm font-mono font-bold text-foreground">{interval.name}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {total > 0 ? `${pct}% (${s.correct}/${total})` : '—'}
-                  </span>
-                </div>
-                <div className="h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
-                  <div className={`h-full rounded-full ${barColor} transition-all`} style={{ width: `${pct}%` }} />
-                </div>
-              </div>
-            );
-          })}
+      if (nextAnswer.length === question.progression.length) {
+        validateCurrentAnswer(nextAnswer);
+      }
+    },
+    [phase, question.progression.length, userAnswer, validateCurrentAnswer],
+  );
 
-          {/* Worst intervals hint */}
-          {worstIntervals.length > 0 && worstIntervals[0].errorRate > 0 && (
-            <div className="rounded-xl border border-[#EF4444]/20 bg-[#EF4444]/[0.04] p-4 mt-2">
-              <p className="text-xs text-[#EF4444] font-bold mb-1">🎯 Foque o treino em:</p>
-              {worstIntervals.slice(0, 2).map(i => (
-                <p key={i.id} className="text-xs text-muted-foreground">
-                  {i.name} — Dica: {i.hint}
-                </p>
-              ))}
-            </div>
-          )}
+  const handleBackspace = useCallback(() => {
+    if (phase !== 'answering' || userAnswer.length === 0) {
+      return;
+    }
 
-          <div className="flex gap-3 mt-4">
-            <Button onClick={startGame} className="bg-[#A855F7] hover:bg-[#9333EA] text-white flex-1">
-              <RotateCcw className="h-4 w-4 mr-2" /> Jogar novamente
-            </Button>
-            <Button variant="outline" onClick={() => setPhase('menu')} className="border-white/10">
-              Menu
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+    setUserAnswer((prev) => prev.slice(0, -1));
+  }, [phase, userAnswer.length]);
 
-  // ── Playing / Feedback ──
+  const handleNext = useCallback(() => {
+    if (phase !== 'feedback') {
+      return;
+    }
+
+    if (roundIndex >= TOTAL_ROUNDS) {
+      setPhase('idle');
+      return;
+    }
+
+    startRound(roundIndex + 1);
+  }, [phase, roundIndex, startRound]);
+
+  const answerSlots = useMemo(() => {
+    return Array.from({ length: 4 }, (_, index) => userAnswer[index] ?? null);
+  }, [userAnswer]);
+
+  const currentSequenceLabel = useMemo(() => {
+    return question.progression.map((index) => DEGREES[index].roman).join(' - ');
+  }, [question.progression]);
+
   return (
-    <div className="min-h-screen bg-[#050505] flex flex-col">
-      {/* Header */}
-      <div className="px-4 pt-6 pb-2">
-        <div className="flex items-center justify-between mb-3">
-          <button onClick={() => { setPhase('stats'); }} className="text-muted-foreground hover:text-foreground transition-colors">
-            <ArrowLeft className="h-5 w-5" />
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,#0f172a_0%,#020617_55%,#000000_100%)] text-white">
+      <div className="mx-auto flex min-h-screen w-full max-w-3xl flex-col px-4 pb-10 pt-6 sm:px-6">
+        <div className="mb-6 flex items-center justify-between">
+          <button onClick={() => navigate(-1)}>
+            <Button variant="ghost" size="icon" className="text-slate-300 hover:text-white">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
           </button>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1 text-[#FACC15]">
-              <Zap className="h-4 w-4" />
-              <span className="text-sm font-mono font-bold">{streak}</span>
-            </div>
-            <div className="flex items-center gap-1 text-[#A855F7]">
-              <Trophy className="h-4 w-4" />
-              <span className="text-sm font-mono font-bold">{score}</span>
-            </div>
+
+          <div className="rounded-full border border-cyan-400/30 bg-cyan-400/10 px-3 py-1 text-xs font-semibold text-cyan-200">
+            Plano Maestro
           </div>
         </div>
-      </div>
 
-      <div className="flex-1 flex flex-col items-center justify-center px-6 gap-6">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={round}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="text-center w-full max-w-sm"
-          >
-            {/* Reference badge */}
-            <div className="inline-flex items-center gap-2 rounded-full border border-[#A855F7]/30 bg-[#A855F7]/10 px-4 py-1.5 mb-4">
-              <span className="text-xs font-mono font-bold text-[#A855F7]">Dó (C4)</span>
-              <span className="text-xs text-muted-foreground">→ ?</span>
+        <div className="mb-6 rounded-3xl border border-slate-800/90 bg-slate-900/55 p-5 shadow-[0_24px_60px_-30px_rgba(6,182,212,0.55)]">
+          <div className="mb-3 flex items-center gap-2 text-cyan-200">
+            <Music4 className="h-5 w-5" />
+            <h1 className="font-display text-xl font-bold">Ouvido Biônico</h1>
+          </div>
+          <p className="text-sm text-slate-300">
+            Ditado musical: ouça uma progressão de 4 acordes e selecione os graus na ordem correta.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-300">
+            <span className="rounded-full border border-slate-700 bg-slate-800/70 px-3 py-1">Tom: {question.key} maior</span>
+            <span className="rounded-full border border-slate-700 bg-slate-800/70 px-3 py-1">Rodada {roundIndex}/{TOTAL_ROUNDS}</span>
+            <span className="rounded-full border border-slate-700 bg-slate-800/70 px-3 py-1">Pontos: {score}</span>
+            <span className="rounded-full border border-slate-700 bg-slate-800/70 px-3 py-1">Streak: {streak}</span>
+          </div>
+          <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-800">
+            <div className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-emerald-400 transition-all" style={{ width: `${roundedProgress}%` }} />
+          </div>
+        </div>
+
+        {phase === 'idle' ? (
+          <div className="mt-6 flex flex-1 flex-col items-center justify-center gap-6 text-center">
+            <div className="rounded-3xl border border-emerald-400/30 bg-emerald-400/10 p-6 shadow-[0_16px_40px_-25px_rgba(16,185,129,0.6)]">
+              <p className="text-sm text-emerald-100">Pronto para treinar reconhecimento de progressões?</p>
+              <p className="mt-2 text-xs text-slate-300">Melhor streak atual: {bestStreak}</p>
             </div>
-
-            <h2 className="font-display text-xl font-bold text-foreground mb-2">
-              Qual é o intervalo?
-            </h2>
-            <p className="text-sm text-muted-foreground mb-6">
-              Rodada {round}
-            </p>
-
-            {/* Replay button */}
-            <Button
-              onClick={replayInterval}
-              variant="outline"
-              size="sm"
-              className="border-[#A855F7]/30 text-[#A855F7] mb-6 gap-2"
-              disabled={phase === 'feedback'}
-            >
-              <Volume2 className="h-4 w-4" /> Ouvir novamente
+            <Button onClick={startGame} className="h-12 rounded-xl bg-cyan-500 px-8 text-base font-semibold text-slate-950 hover:bg-cyan-400">
+              <Play className="mr-2 h-4 w-4" />
+              Começar treino
             </Button>
-
-            {/* Answer grid */}
-            <div className="grid grid-cols-3 gap-3">
-              {INTERVALS.map((interval) => {
-                let style = 'border-white/10 bg-white/[0.03] text-foreground hover:border-[#A855F7]/40 hover:bg-[#A855F7]/[0.06]';
-                if (phase === 'feedback' && selected) {
-                  if (interval.id === currentInterval.id) {
-                    style = 'border-emerald-500 bg-emerald-500/10 text-emerald-400 shadow-[0_0_20px_-5px_rgba(16,185,129,0.4)]';
-                  } else if (interval.id === selected) {
-                    style = 'border-red-500 bg-red-500/10 text-red-400';
-                  } else {
-                    style = 'border-white/[0.04] bg-white/[0.01] text-muted-foreground opacity-40';
-                  }
-                }
+          </div>
+        ) : (
+          <>
+            <div className="mb-6 grid grid-cols-4 gap-3">
+              {answerSlots.map((value, idx) => {
+                const isActive = activeChordIndex === idx;
                 return (
-                  <motion.button
-                    key={interval.id}
-                    whileTap={phase !== 'feedback' ? { scale: 0.95 } : {}}
-                    onClick={() => handleAnswer(interval.id)}
-                    disabled={phase === 'feedback'}
-                    className={`rounded-xl border p-3 text-center transition-all ${style}`}
+                  <div
+                    key={idx}
+                    className={`rounded-xl border p-4 text-center transition-all ${
+                      isActive
+                        ? 'border-cyan-300 bg-cyan-400/20 shadow-[0_0_30px_-10px_rgba(34,211,238,0.8)]'
+                        : 'border-slate-700 bg-slate-900/70'
+                    }`}
                   >
-                    <span className="text-sm font-mono font-bold block">{interval.name}</span>
-                  </motion.button>
+                    <p className="mb-1 text-[10px] uppercase tracking-widest text-slate-400">Acorde {idx + 1}</p>
+                    <p className="font-mono text-lg font-bold text-white">{value === null ? '•' : DEGREES[value].roman}</p>
+                  </div>
                 );
               })}
             </div>
 
-            {/* Feedback */}
+            <div className="mb-6 flex flex-wrap items-center gap-3">
+              <Button
+                type="button"
+                onClick={playProgression}
+                variant="outline"
+                className="border-cyan-400/35 bg-cyan-400/10 text-cyan-100 hover:bg-cyan-400/20"
+              >
+                <Volume2 className="mr-2 h-4 w-4" />
+                Ouvir progressão
+              </Button>
+
+              <Button
+                type="button"
+                onClick={handleBackspace}
+                variant="outline"
+                disabled={phase !== 'answering' || userAnswer.length === 0 || isRoundComplete}
+                className="border-slate-600 bg-slate-800/70 text-slate-200 hover:bg-slate-700"
+              >
+                Corrigir último
+              </Button>
+
+              {!audioEnabled && (
+                <span className="text-xs text-amber-300">
+                  Audio indisponível no navegador. Continue usando apenas o modo visual.
+                </span>
+              )}
+            </div>
+
+            <div className="grid grid-cols-4 gap-3 sm:grid-cols-7">
+              {DEGREES.map((degree, idx) => {
+                const disabled = phase !== 'answering' || isRoundComplete;
+                return (
+                  <button
+                    key={degree.roman}
+                    type="button"
+                    onClick={() => handleDegreeClick(idx)}
+                    disabled={disabled}
+                    className={`rounded-xl border px-2 py-4 text-center font-mono text-lg font-bold transition ${
+                      disabled
+                        ? 'cursor-not-allowed border-slate-800 bg-slate-900/45 text-slate-500'
+                        : 'border-slate-700 bg-slate-900/80 text-slate-100 hover:border-emerald-300 hover:bg-emerald-500/15 hover:text-emerald-100 active:scale-[0.98]'
+                    }`}
+                  >
+                    {degree.roman}
+                  </button>
+                );
+              })}
+            </div>
+
             {phase === 'feedback' && (
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-6">
-                {isCorrect ? (
-                  <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.06] p-4">
-                    <p className="text-sm text-emerald-400 font-bold">✅ Correto!</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Sequência: {streak} | Bônus de velocidade aplicado
-                    </p>
+              <div className="mt-6 rounded-2xl border border-slate-700 bg-slate-900/70 p-5">
+                {lastAnswerCorrect ? (
+                  <div className="flex items-center gap-2 text-emerald-300">
+                    <CheckCircle2 className="h-5 w-5" />
+                    <p className="font-semibold">Correto! +100 pontos</p>
                   </div>
                 ) : (
-                  <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 text-left">
-                    <p className="text-sm text-red-400 font-bold mb-2">❌ Era {currentInterval.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      💡 <span className="text-[#A855F7] font-medium">{currentInterval.hint}</span>
-                    </p>
-                    <p className="text-[11px] text-muted-foreground/60 mt-1">
-                      Lembre da música: "{currentInterval.hintSong}"
-                    </p>
+                  <div className="flex items-center gap-2 text-rose-300">
+                    <XCircle className="h-5 w-5" />
+                    <p className="font-semibold">Não foi dessa vez.</p>
                   </div>
                 )}
 
-                <div className="flex gap-3 mt-5 justify-center">
-                  <Button onClick={nextQuestion} className="bg-[#A855F7] hover:bg-[#9333EA] text-white">
-                    Próxima
+                <p className="mt-3 text-sm text-slate-300">Sequência correta: <span className="font-mono text-cyan-200">{currentSequenceLabel}</span></p>
+
+                <div className="mt-4 flex gap-3">
+                  <Button onClick={handleNext} className="bg-emerald-500 text-slate-950 hover:bg-emerald-400">
+                    {roundIndex >= TOTAL_ROUNDS ? 'Ver resultado' : 'Próxima rodada'}
                   </Button>
-                  <Button variant="outline" onClick={() => setPhase('stats')} className="border-white/10 gap-2">
-                    <BarChart3 className="h-4 w-4" /> Estatísticas
+                  <Button
+                    onClick={startGame}
+                    variant="outline"
+                    className="border-slate-600 bg-slate-800/70 text-slate-200 hover:bg-slate-700"
+                  >
+                    <RotateCcw className="mr-2 h-4 w-4" />
+                    Reiniciar
                   </Button>
                 </div>
-              </motion.div>
+              </div>
             )}
-          </motion.div>
-        </AnimatePresence>
+          </>
+        )}
       </div>
     </div>
   );
-};
-
-export default OuvidoBionico;
+}
