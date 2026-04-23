@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Crown, LogOut, KeyRound, User, Loader2, Check } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -14,6 +14,15 @@ export default function Configuracoes() {
   const navigate = useNavigate();
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+
+  // Redireciona se o Mercado Pago mandar um ?payment=success
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('payment') === 'success') {
+      toast({ title: '✅ Pagamento aprovado!', description: 'Seu plano foi ativado. Bem-vindo ao Premium!' });
+      navigate('/configuracoes', { replace: true });
+    }
+  }, []);
   const [loading, setLoading] = useState(false);
   const [changed, setChanged] = useState(false);
   const { toast } = useToast();
@@ -148,7 +157,7 @@ export default function Configuracoes() {
 
         {/* Sair */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          <Button onClick={signOut} variant="ghost"
+          <Button onClick={async () => { await signOut(); navigate('/'); }} variant="ghost"
             className="w-full border border-red-500/20 text-red-400 hover:bg-red-500/10 hover:text-red-300 gap-2">
             <LogOut size={15} />
             Sair da conta
