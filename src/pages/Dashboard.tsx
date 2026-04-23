@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Music2, BookOpen, Timer, Guitar, Star, LogIn, LogOut, Crown, Settings, MessageSquare } from 'lucide-react';
+import { Music2, BookOpen, Timer, Guitar, Star, LogIn, LogOut, Crown, Settings, MessageSquare, Lock, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useMusicas } from '@/hooks/useMusicas';
 import { useToggleFavorite } from '@/hooks/useToggleFavorite';
@@ -17,6 +17,7 @@ const GRID_ITEMS = [
     glow: 'shadow-[0_0_40px_-8px_rgba(250,204,21,0.35)]',
     iconColor: 'text-black',
     desc: 'Buscar músicas',
+    requiresPremium: false
   },
   {
     label: 'Estude',
@@ -26,6 +27,7 @@ const GRID_ITEMS = [
     glow: 'shadow-[0_0_40px_-8px_rgba(59,130,246,0.35)]',
     iconColor: 'text-white',
     desc: 'Campo harmônico',
+    requiresPremium: false
   },
   {
     label: 'Metrônomo',
@@ -35,6 +37,7 @@ const GRID_ITEMS = [
     glow: 'shadow-[0_0_40px_-8px_rgba(16,185,129,0.35)]',
     iconColor: 'text-white',
     desc: 'Marcar tempo',
+    requiresPremium: true
   },
   {
     label: 'Afinador',
@@ -44,15 +47,17 @@ const GRID_ITEMS = [
     glow: 'shadow-[0_0_40px_-8px_rgba(168,85,247,0.35)]',
     iconColor: 'text-white',
     desc: 'Afinar violão',
+    requiresPremium: true
   },
   {
     label: 'Fale Conosco',
     icon: MessageSquare,
     to: '/feedback',
-    color: 'from-[#10B981] to-[#059669]',
-    glow: 'shadow-[0_0_40px_-8px_rgba(16,185,129,0.35)]',
+    color: 'from-[#EC4899] to-[#C026D3]',
+    glow: 'shadow-[0_0_40px_-8px_rgba(236,72,153,0.35)]',
     iconColor: 'text-white',
-    desc: 'Pedidos e sugestões',
+    desc: 'Ajuda e ideias',
+    requiresPremium: false
   },
 ];
 
@@ -120,22 +125,42 @@ const Dashboard = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.08 + i * 0.05, duration: 0.3 }}
           >
-            <Link
-              to={item.to}
-              className={`group flex items-center gap-4 rounded-2xl border border-white/[0.08] bg-white/[0.03] px-5 py-4 transition-all hover:bg-white/[0.06] hover:border-white/[0.12] active:scale-[0.98] ${item.glow}`}
-            >
-              <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${item.color}`}>
-                <item.icon className={`h-5 w-5 ${item.iconColor}`} />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-sm font-display font-bold text-foreground tracking-wide">
-                  {item.label}
-                </span>
-                <span className="text-[11px] text-muted-foreground">
-                  {item.desc}
-                </span>
-              </div>
-            </Link>
+            {item.requiresPremium && !isPremium ? (
+              <Link
+                to="/landing"
+                className="group flex items-center gap-4 rounded-2xl border border-white/[0.04] bg-white/[0.02] px-5 py-4 transition-all opacity-70 hover:bg-white/[0.04]"
+              >
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/[0.05] grayscale">
+                  <item.icon className="h-5 w-5 text-gray-500" />
+                </div>
+                <div className="flex flex-col flex-1">
+                  <span className="text-sm font-display font-bold text-gray-400 tracking-wide flex items-center gap-2">
+                    {item.label} <Lock size={12} className="text-gray-500" />
+                  </span>
+                  <span className="text-[11px] text-gray-500">
+                    Exclusivo Premium
+                  </span>
+                </div>
+                <ChevronRight className="text-gray-600 h-4 w-4 opacity-50" />
+              </Link>
+            ) : (
+              <Link
+                to={item.to}
+                className={`group flex items-center gap-4 rounded-2xl border border-white/[0.08] bg-white/[0.03] px-5 py-4 transition-all hover:bg-white/[0.06] hover:border-white/[0.12] active:scale-[0.98] ${item.glow}`}
+              >
+                <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${item.color}`}>
+                  <item.icon className={`h-5 w-5 ${item.iconColor}`} />
+                </div>
+                <div className="flex flex-col flex-1">
+                  <span className="text-sm font-display font-bold text-foreground tracking-wide">
+                    {item.label}
+                  </span>
+                  <span className="text-[11px] text-muted-foreground">
+                    {item.desc}
+                  </span>
+                </div>
+              </Link>
+            )}
           </motion.div>
         ))}
       </div>
