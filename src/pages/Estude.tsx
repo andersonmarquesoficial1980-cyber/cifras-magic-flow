@@ -223,7 +223,7 @@ const Estude = () => {
                 {(card.unlocked || isAdmin || isPremium) && <ChevronRight className="h-5 w-5 text-[#3B82F6]/60 shrink-0" />}
               </button>
             </motion.div>
-          ))}}
+          ))}
         </div>
       </div>
     );
