@@ -486,8 +486,8 @@ export function CifraViewer({ musica }: CifraViewerProps) {
         {/* ── MODO NORMAL (padrão) ── */}
         {viewMode === 'normal' && (
           <pre
-            className="mt-6 leading-relaxed whitespace-pre-wrap break-words text-foreground/85"
-            style={{ fontSize: `${fontSize}px`, fontFamily: "'Roboto Mono', 'Courier New', Courier, monospace", willChange: 'transform', backfaceVisibility: 'hidden' }}
+            className="mt-6 leading-relaxed whitespace-pre overflow-x-hidden text-foreground/85"
+            style={{ fontSize: `${fontSize}px`, fontFamily: "'Roboto Mono', 'Courier New', Courier, monospace", willChange: 'transform', backfaceVisibility: 'hidden', maxWidth: '100%', wordBreak: 'break-word', overflowWrap: 'anywhere' }}
           >
             {(() => {
               // Normaliza espaçamento:
