@@ -250,8 +250,6 @@ function TiraMusicaInner() {
     const { data, error } = await supabase
       .from('musicas')
       .select('*')
-      .not('source_url', 'is', null)
-      .ilike('source_url', '%cifraclub%')
       .limit(5000);
 
     if (error) {
