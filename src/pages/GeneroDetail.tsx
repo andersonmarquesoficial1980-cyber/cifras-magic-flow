@@ -1,8 +1,7 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useMusicas } from '@/hooks/useMusicas';
 import { useMemo } from 'react';
-import { ArrowLeft, Music2, Tag } from 'lucide-react';
-import { SongCard } from '@/components/SongCard';
+import { ArrowLeft, Music2, Tag, Mic2, ChevronRight } from 'lucide-react';
 import { ImportadorFlash } from '@/components/ImportadorFlash';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -13,9 +12,24 @@ export default function GeneroDetail() {
   const { data: musicas, isLoading } = useMusicas();
   const { isAdmin } = useAuth();
 
-  const songs = useMemo(() => {
+  const artists = useMemo(() => {
     if (!musicas) return [];
-    return musicas.filter(m => ((m as any).genero || 'Sem gênero') === nomeDecoded);
+    
+    // Filtra músicas do gênero
+    const songsInGenre = musicas.filter(m => ((m as any).genero || 'Sem gênero') === nomeDecoded);
+    
+    // Agrupa por artista
+    const grouped = songsInGenre.reduce((acc, song) => {
+      const art = song.artista || 'Desconhecido';
+      if (!acc[art]) acc[art] = 0;
+      acc[art]++;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    // Retorna array ordenado alfabeticamente
+    return Object.entries(grouped)
+      .map(([nome, count]) => ({ nome, count }))
+      .sort((a, b) => a.nome.localeCompare(b.nome));
   }, [musicas, nomeDecoded]);
 
   return (
@@ -30,23 +44,42 @@ export default function GeneroDetail() {
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FACC15]/10">
             <Tag className="h-5 w-5 text-[#FACC15]" />
           </div>
-          <img src="/logo-dark.png" alt="MelodAI" className="h-8 w-auto" />
           <div className="flex-1">
             <h1 className="font-display text-xl font-bold text-foreground">{nomeDecoded}</h1>
-            <p className="text-xs text-muted-foreground">{songs.length} música{songs.length !== 1 ? 's' : ''}</p>
+            <p className="text-xs text-muted-foreground">{artists.length} artista{artists.length !== 1 ? 's' : ''}</p>
           </div>
           {isAdmin && <ImportadorFlash />}
         </div>
       </div>
+      
       <div className="container mx-auto max-w-3xl px-4 py-5">
         {isLoading ? (
-          <div className="space-y-2">{[...Array(5)].map((_, i) => <div key={i} className="h-[72px] animate-pulse rounded-lg bg-card" />)}</div>
-        ) : songs.length > 0 ? (
-          <div className="space-y-2">{songs.map((m, i) => <SongCard key={m.id} musica={m} index={i} />)}</div>
+          <div className="space-y-2">{[...Array(5)].map((_, i) => <div key={i} className="h-16 animate-pulse rounded-lg bg-card" />)}</div>
+        ) : artists.length > 0 ? (
+          <div className="flex flex-col gap-2">
+            {artists.map((artist) => (
+              <Link 
+                to={`/artista/${encodeURIComponent(artist.nome)}`} 
+                key={artist.nome}
+                className="group flex items-center justify-between rounded-xl border border-white/[0.04] bg-white/[0.02] p-4 transition-all hover:bg-white/[0.04] hover:border-white/[0.08]"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/[0.05] text-muted-foreground group-hover:bg-[#FACC15]/10 group-hover:text-[#FACC15] transition-colors">
+                    <Mic2 className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h2 className="font-display font-bold text-foreground">{artist.nome}</h2>
+                    <p className="text-xs text-muted-foreground">{artist.count} música{artist.count !== 1 ? 's' : ''}</p>
+                  </div>
+                </div>
+                <ChevronRight className="h-5 w-5 text-muted-foreground/30 group-hover:text-[#FACC15] group-hover:translate-x-1 transition-all" />
+              </Link>
+            ))}
+          </div>
         ) : (
           <div className="py-16 text-center">
             <Music2 className="mx-auto h-10 w-10 text-muted-foreground/20" />
-            <p className="mt-3 text-sm text-muted-foreground">Nenhuma música encontrada.</p>
+            <p className="mt-3 text-sm text-muted-foreground">Nenhum artista encontrado.</p>
           </div>
         )}
       </div>
