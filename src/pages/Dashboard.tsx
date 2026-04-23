@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { Music2, BookOpen, Timer, Guitar, Star, LogIn, LogOut, Crown, Settings, MessageSquare, Lock, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useMusicas } from '@/hooks/useMusicas';
+import { useMusicas, useMusicasCount } from '@/hooks/useMusicas';
 import { useToggleFavorite } from '@/hooks/useToggleFavorite';
 import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -63,6 +63,7 @@ const GRID_ITEMS = [
 
 const Dashboard = () => {
   const { data: musicas } = useMusicas();
+  const { data: totalMusicas } = useMusicasCount();
   const toggleFav = useToggleFavorite();
   const { isLoggedIn, isPremium, isAdmin, profile, signOut } = useAuth();
   const [showAuth, setShowAuth] = useState(false);
@@ -99,9 +100,9 @@ const Dashboard = () => {
                     <Settings size={16} />
                   </Link>
                 </div>
-                {isAdmin && musicas && (
+                {isAdmin && (
                   <span className="text-[10px] text-emerald-400 font-mono">
-                    {musicas.length} músicas cadastradas
+                    {totalMusicas ?? musicas?.length ?? '...'} músicas cadastradas
                   </span>
                 )}
               </div>
