@@ -107,10 +107,10 @@ const TOTAL_QUESTIONS = 10;
 // ── Trail cards ──
 
 const TRAIL = [
-  { id: 'harmonic-field', title: 'Mestre do Campo Harmônico', desc: 'Identifique os graus de qualquer tom', icon: Star, unlocked: true, route: '/estude/campo-harmonico' },
-  { id: 'rhythm-master', title: 'Mestre do Ritmo', desc: 'Treine batidas e levadas no tempo', icon: BookOpen, unlocked: true, route: '/estude/ritmo' },
   { id: 'cifra-rapida', title: 'Cifra Rápida', desc: 'Identifique acordes por grau no tempo', icon: Zap, unlocked: true, route: '/estude/cifra-rapida' },
-  { id: 'ear-training', title: 'Ouvido Biônico', desc: 'Identifique intervalos musicais de ouvido', icon: Zap, unlocked: false, route: '/estude/ouvido' },
+  { id: 'harmonic-field', title: 'Mestre do Campo Harmônico', desc: 'Identifique os graus de qualquer tom', icon: Star, unlocked: false, route: '/estude/campo-harmonico' },
+  { id: 'rhythm-master', title: 'Mestre do Ritmo', desc: 'Treine batidas e levadas no tempo', icon: BookOpen, unlocked: false, route: '/estude/ritmo' },
+  { id: 'ear-training', title: 'Ouvido Biônico', desc: 'Ditado Musical de Progressões', icon: Zap, unlocked: false, route: '/estude/ouvido' },
   { id: 'inversions', title: 'Inversões & Baixos', desc: 'Domine acordes invertidos', icon: BookOpen, unlocked: false, route: null },
   { id: 'progressions', title: 'Progressões Famosas', desc: 'Reconheça I-V-VIm-IV e mais', icon: Trophy, unlocked: false, route: null },
 ];
@@ -188,12 +188,18 @@ const Estude = () => {
               transition={{ delay: i * 0.08 }}
             >
               <button
-                onClick={() => card.unlocked && (card.route ? navigate(card.route) : startGame())}
-                disabled={!card.unlocked}
+                onClick={() => {
+                  if (card.unlocked) {
+                    if (card.route) navigate(card.route);
+                    else startGame();
+                  } else {
+                    navigate('/landing');
+                  }
+                }}
                 className={`w-full flex items-center gap-4 rounded-2xl border p-5 text-left transition-all ${
                   card.unlocked
                     ? 'border-[#3B82F6]/30 bg-[#3B82F6]/[0.06] hover:bg-[#3B82F6]/[0.12] hover:border-[#3B82F6]/50 active:scale-[0.98] shadow-[0_0_30px_-8px_rgba(59,130,246,0.2)]'
-                    : 'border-white/[0.04] bg-white/[0.02] opacity-50 cursor-not-allowed'
+                    : 'border-white/[0.04] bg-white/[0.02] opacity-50 cursor-pointer hover:bg-white/[0.04]'
                 }`}
               >
                 <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${

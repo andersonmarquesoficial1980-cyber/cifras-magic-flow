@@ -1,139 +1,84 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-type Plan = "musico" | "artista" | "maestro";
-
-function parseSignature(signatureHeader: string | null): { ts: string; v1: string } | null {
-  if (!signatureHeader) return null;
-
-  const parts = signatureHeader.split(",").map((part) => part.trim());
-  const ts = parts.find((part) => part.startsWith("ts="))?.split("=")[1];
-  const v1 = parts.find((part) => part.startsWith("v1="))?.split("=")[1];
-
-  if (!ts || !v1) return null;
-  return { ts, v1 };
-}
-
-async function hmacSha256Hex(secret: string, message: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    "raw",
-    encoder.encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"],
-  );
-
-  const signature = await crypto.subtle.sign("HMAC", key, encoder.encode(message));
-  return Array.from(new Uint8Array(signature))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-}
-
-async function isSignatureValid(req: Request, paymentId: string): Promise<boolean> {
-  const webhookSecret = Deno.env.get("MP_WEBHOOK_SECRET");
-  if (!webhookSecret) return true;
-
-  const signature = parseSignature(req.headers.get("x-signature"));
-  const requestId = req.headers.get("x-request-id") ?? "";
-  if (!signature) return false;
-
-  const manifest = `id:${paymentId};request-id:${requestId};ts:${signature.ts};`;
-  const expected = await hmacSha256Hex(webhookSecret, manifest);
-
-  return expected === signature.v1;
-}
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok");
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    const MP_ACCESS_TOKEN = Deno.env.get("MP_ACCESS_TOKEN");
-
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-      throw new Error("Configuração Supabase ausente");
-    }
-    if (!MP_ACCESS_TOKEN) throw new Error("MP_ACCESS_TOKEN não configurado");
-
     const url = new URL(req.url);
-    const body = await req.json().catch(() => ({}));
-
-    const paymentId = String(
-      body?.data?.id ??
-      body?.resource?.split("/").pop() ??
-      url.searchParams.get("data.id") ??
-      url.searchParams.get("id") ??
-      "",
-    );
-
-    const eventType = String(
-      body?.type ??
-      body?.topic ??
-      url.searchParams.get("type") ??
-      url.searchParams.get("topic") ??
-      "",
-    );
-
-    if (!paymentId) {
-      return new Response("missing payment id", { status: 200 });
+    const action = req.method;
+    console.log(`Webhook recebido: ${action} ${url.search}`);
+    
+    let body;
+    try {
+      body = await req.json();
+      console.log("Body do webhook:", JSON.stringify(body));
+    } catch (e) {
+      console.log("Corpo não é JSON ou vazio");
+      return new Response("OK", { status: 200, headers: corsHeaders });
     }
 
-    const isPaymentEvent = eventType.includes("payment") || eventType === "";
-    if (!isPaymentEvent) {
-      return new Response("ignored", { status: 200 });
+    // Mercado Pago envia o ID do pagamento quando aprovado
+    const paymentId = body.data?.id || body.id;
+    const type = body.type || url.searchParams.get("type") || url.searchParams.get("topic");
+
+    if (type !== "payment" || !paymentId) {
+      return new Response("Ignorado, não é pagamento", { status: 200, headers: corsHeaders });
     }
 
-    const validSignature = await isSignatureValid(req, paymentId);
-    if (!validSignature) {
-      return new Response("invalid signature", { status: 401 });
-    }
+    const MP_ACCESS_TOKEN = Deno.env.get("MP_ACCESS_TOKEN");
+    if (!MP_ACCESS_TOKEN) throw new Error("Sem token do MP");
 
-    const paymentRes = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
-      headers: {
-        Authorization: `Bearer ${MP_ACCESS_TOKEN}`,
-      },
+    // Consulta o status real do pagamento no Mercado Pago
+    const mpRes = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
+      headers: { Authorization: `Bearer ${MP_ACCESS_TOKEN}` },
     });
+    
+    if (!mpRes.ok) throw new Error("Falha ao buscar pagamento no MP");
+    const paymentData = await mpRes.json();
+    
+    console.log(`Status do pagamento ${paymentId}: ${paymentData.status}`);
 
-    if (!paymentRes.ok) {
-      const errorText = await paymentRes.text();
-      console.error("Mercado Pago payment fetch error:", paymentRes.status, errorText);
-      return new Response("payment lookup failed", { status: 502 });
+    if (paymentData.status === "approved") {
+      const externalReference = paymentData.external_reference; // Que é o ID do usuário que mandamos
+      const plan = paymentData.metadata?.plan || (paymentData.description?.toLowerCase().includes("maestro") ? "maestro" : "artista");
+      
+      if (!externalReference || externalReference === "default-user") {
+        console.error("Pagamento aprovado, mas sem ID de usuário atrelado.");
+        return new Response("OK, mas sem usuário", { status: 200, headers: corsHeaders });
+      }
+
+      const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+      const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+      
+      if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
+        const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+        
+        console.log(`Promovendo usuário ${externalReference} para o plano ${plan}...`);
+        
+        const { error: updateError } = await supabaseAdmin
+          .from("profiles")
+          .update({ role: "premium", plan: plan }) // Seta premium no banco
+          .eq("id", externalReference);
+          
+        if (updateError) {
+          console.error("Erro ao atualizar banco:", updateError);
+        } else {
+          console.log(`Sucesso! Usuário promovido.`);
+        }
+      }
     }
 
-    const payment = await paymentRes.json();
-    if (payment.status !== "approved") {
-      return new Response("payment not approved", { status: 200 });
-    }
-
-    const metadataUserId = payment.metadata?.user_id;
-    const externalReference = payment.external_reference;
-    const userId = String(metadataUserId ?? externalReference ?? "");
-    const plan = String(payment.metadata?.plan ?? "") as Plan;
-
-    if (!userId || (plan !== "artista" && plan !== "maestro")) {
-      console.error("Webhook sem user_id/plan válido", { userId, plan, paymentId });
-      return new Response("missing metadata", { status: 200 });
-    }
-
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-
-    const { error: profileError } = await supabase
-      .from("profiles")
-      .update({ plan, role: "premium" })
-      .eq("id", userId);
-
-    if (profileError) {
-      console.error("Erro ao atualizar profile:", profileError);
-      return new Response("profile update failed", { status: 500 });
-    }
-
-    return new Response("ok", { status: 200 });
+    return new Response("Webhook processado", { status: 200, headers: corsHeaders });
   } catch (error) {
-    console.error("mp-webhook error:", error);
-    return new Response("error", { status: 500 });
+    console.error("Webhook error:", error);
+    return new Response(String(error), { status: 500, headers: corsHeaders });
   }
 });

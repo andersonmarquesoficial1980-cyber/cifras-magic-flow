@@ -6,13 +6,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-type Plan = "musico" | "artista" | "maestro";
-
-const PLAN_CONFIG: Record<Exclude<Plan, "musico">, { title: string; price: number }> = {
-  artista: { title: "MelodAI - Plano Artista", price: 14.9 },
-  maestro: { title: "MelodAI - Plano Maestro", price: 24.9 },
-};
-
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -20,77 +13,60 @@ serve(async (req) => {
 
   try {
     const MP_ACCESS_TOKEN = Deno.env.get("MP_ACCESS_TOKEN");
+    if (!MP_ACCESS_TOKEN) throw new Error("Chave do Mercado Pago não encontrada no servidor.");
+
+    const { plan } = await req.json();
+    if (!plan) throw new Error("Plano não informado");
+
+    // Pegar infos do usuário para mandar pro MP
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY");
-    const WEB_BASE_URL = Deno.env.get("WEB_BASE_URL") ?? "http://localhost:5173";
-
-    if (!MP_ACCESS_TOKEN) throw new Error("MP_ACCESS_TOKEN não configurado");
-    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) throw new Error("Configuração Supabase ausente");
-
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Não autenticado" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+    
+    let userEmail = "cliente@melodai.com.br";
+    let userId = "default-user";
+    
+    if (SUPABASE_URL && SUPABASE_ANON_KEY && authHeader) {
+      const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        global: { headers: { Authorization: authHeader } },
       });
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        userEmail = user.email || userEmail;
+        userId = user.id;
+      }
     }
 
-    const { plan } = await req.json() as { plan?: Plan };
-    if (!plan || (plan !== "artista" && plan !== "maestro")) {
-      return new Response(JSON.stringify({ error: "Plano inválido para checkout" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      global: {
-        headers: {
-          Authorization: authHeader,
-        },
-      },
-    });
-
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError || !user) {
-      return new Response(JSON.stringify({ error: "Sessão inválida" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const planInfo = PLAN_CONFIG[plan];
-    const webhookUrl = Deno.env.get("MP_WEBHOOK_URL") ?? `${SUPABASE_URL}/functions/v1/mp-webhook`;
+    const title = plan === "maestro" ? "MelodAI - Plano Maestro" : "MelodAI - Plano Artista";
+    const price = plan === "maestro" ? 24.9 : 14.9;
 
     const preferenceBody = {
       items: [
         {
           id: `melodai-${plan}`,
-          title: planInfo.title,
+          title: title,
           quantity: 1,
           currency_id: "BRL",
-          unit_price: planInfo.price,
+          unit_price: price,
         },
       ],
       payer: {
-        email: user.email,
+        email: userEmail
       },
-      external_reference: user.id,
-      metadata: {
-        user_id: user.id,
-        plan,
+      payment_methods: {
+        installments: 1
       },
       back_urls: {
-        success: `${WEB_BASE_URL}/configuracoes?payment=success`,
-        pending: `${WEB_BASE_URL}/configuracoes?payment=pending`,
-        failure: `${WEB_BASE_URL}/landing?payment=failure`,
+        success: `https://melodai.com.br/configuracoes?payment=success`,
+        pending: `https://melodai.com.br/configuracoes?payment=pending`,
+        failure: `https://melodai.com.br/landing?payment=failure`,
       },
       auto_return: "approved",
-      notification_url: webhookUrl,
+      external_reference: userId,
+      metadata: {
+        plan: plan,
+        user_id: userId
+      }
     };
 
     const mpRes = await fetch("https://api.mercadopago.com/checkout/preferences", {
@@ -102,42 +78,18 @@ serve(async (req) => {
       body: JSON.stringify(preferenceBody),
     });
 
-    if (!mpRes.ok) {
-      const errorText = await mpRes.text();
-      console.error("Mercado Pago checkout error:", mpRes.status, errorText);
-      return new Response(JSON.stringify({ error: "Falha ao criar checkout no Mercado Pago" }), {
-        status: 502,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     const mpData = await mpRes.json();
-    const checkoutUrl = mpData.init_point ?? mpData.sandbox_init_point;
-
-    if (!checkoutUrl) {
-      return new Response(JSON.stringify({ error: "Checkout sem URL de redirecionamento" }), {
-        status: 502,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    
+    if (!mpRes.ok) throw new Error(`Erro do Mercado Pago: ${JSON.stringify(mpData)}`);
 
     return new Response(
-      JSON.stringify({
-        checkout_url: checkoutUrl,
-        preference_id: mpData.id,
-      }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      },
+      JSON.stringify({ checkout_url: mpData.init_point }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
-    console.error("mp-checkout error:", error);
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Erro inesperado" }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      },
+      JSON.stringify({ error: error instanceof Error ? error.message : "Erro crítico" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
