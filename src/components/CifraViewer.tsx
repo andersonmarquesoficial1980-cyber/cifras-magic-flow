@@ -179,9 +179,10 @@ export function CifraViewer({ musica }: CifraViewerProps) {
 
       {/* Sticky header */}
       <div className="sticky top-0 z-10 border-b border-border bg-background/95 backdrop-blur-xl">
-        <div className="container mx-auto flex items-center justify-between px-4 py-3 max-w-3xl">
-          <div className="flex items-center gap-2">
-            <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+        <div className="container mx-auto px-4 py-2 max-w-3xl">
+          {/* Linha 1: Navegação + Título */}
+          <div className="flex items-center gap-2 mb-2">
+            <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors shrink-0">
               <ArrowLeft className="h-4 w-4" />
               <span className="text-sm font-body">Voltar</span>
             </button>
@@ -190,17 +191,17 @@ export function CifraViewer({ musica }: CifraViewerProps) {
                 setIsFav(!isFav);
                 toggleFav.mutate({ id: musica.id, isFavorite: isFav });
               }}
-              className="p-1.5 rounded-full hover:bg-white/10 transition-colors"
+              className="p-1.5 rounded-full hover:bg-white/10 transition-colors shrink-0"
             >
               <Star className={`h-4 w-4 transition-colors ${isFav ? 'text-chord fill-chord' : 'text-muted-foreground'}`} />
             </button>
-            <div className="hidden sm:flex flex-col ml-2">
-              <span className="text-sm font-bold text-foreground leading-tight truncate max-w-[160px]">{musica.titulo}</span>
-              <span className="text-xs text-muted-foreground leading-tight truncate max-w-[160px]">{musica.artista}</span>
+            <div className="flex flex-col ml-1 min-w-0">
+              <span className="text-sm font-bold text-foreground leading-tight truncate">{musica.titulo}</span>
+              <span className="text-xs text-muted-foreground leading-tight truncate">{musica.artista}</span>
             </div>
           </div>
-
-          <div className={`flex items-center ${performanceMode ? 'gap-4' : 'gap-3'}`}>
+          {/* Linha 2: Botões de controle em 2 linhas se necessário */}
+          <div className="flex flex-wrap items-center gap-1.5">
             {/* Modo Só Cifras */}
             <button
               onClick={() => setViewMode(v => v === 'so-cifras' ? 'normal' : 'so-cifras')}
@@ -321,7 +322,7 @@ export function CifraViewer({ musica }: CifraViewerProps) {
                 {displayMode === 'cifra' ? '1' : displayMode === 'grau' ? '2' : '3'}
               </Badge>
             </button>
-          </div>
+          </div>{/* fim flex-wrap botões */}
         </div>
       </div>
 
@@ -485,7 +486,7 @@ export function CifraViewer({ musica }: CifraViewerProps) {
         {/* ── MODO NORMAL (padrão) ── */}
         {viewMode === 'normal' && (
           <pre
-            className="mt-6 leading-relaxed whitespace-pre overflow-x-auto text-foreground/85"
+            className="mt-6 leading-relaxed whitespace-pre-wrap break-words text-foreground/85"
             style={{ fontSize: `${fontSize}px`, fontFamily: "'Roboto Mono', 'Courier New', Courier, monospace", willChange: 'transform', backfaceVisibility: 'hidden' }}
           >
             {(() => {
