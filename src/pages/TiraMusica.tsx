@@ -252,7 +252,7 @@ function TiraMusicaInner() {
       .select('*')
       .not('source_url', 'is', null)
       .ilike('source_url', '%cifraclub%')
-      .limit(400);
+      .limit(5000);
 
     if (error) {
       setStatusError('Não foi possível carregar as músicas do banco agora.');
