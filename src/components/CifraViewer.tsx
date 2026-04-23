@@ -409,7 +409,7 @@ export function CifraViewer({ musica }: CifraViewerProps) {
       </div>
 
       {/* Cifra content */}
-      <div className="container mx-auto px-4 pb-24 max-w-3xl" style={{ willChange: 'transform', backfaceVisibility: 'hidden' }}>
+      <div className="container mx-auto px-4 pb-24 max-w-3xl overflow-hidden" style={{ willChange: 'transform', backfaceVisibility: 'hidden' }}>
 
         {/* ── MODO SÓ CIFRAS ── */}
         {viewMode === 'so-cifras' && (

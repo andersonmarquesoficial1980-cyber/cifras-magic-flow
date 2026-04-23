@@ -2,7 +2,7 @@ import { chordToDegree, chordToOrdinal } from './transpose';
 
 // Regex to match common chord patterns including complex extensions
 // e.g. G, Am, D/F#, Cmaj7, Bb7, G9, Em7(b5), E7(4/9), D9(11), C(add9), F7M
-const CHORD_RE = /\b([A-G][#b]?)(m|maj|min|dim|aug|sus[24]?|add)?(M)?(\d+)?(M)?(\([^)]*\))*(\/[A-G][#b]?)?/g;
+const CHORD_RE = /\b([A-G][#b]?)(m|maj|min|dim|aug|sus[24]?|add|no)?(M)?(\d+)?(M)?(b\d+)?(#\d+)?(\([^)]*\))*(\/[A-G][#b]?)?(?=[\s,|$]|$)/g;
 
 /**
  * Determine if a line is a "chord line" — mostly chords and whitespace, little lyrics.
@@ -19,7 +19,8 @@ export function isChordLine(line: string): boolean {
   const chordMatches = withoutSection.match(CHORD_RE);
   if (!chordMatches || chordMatches.length === 0) return false;
   // A chord line has mostly chords — remaining non-space/paren chars should be minimal
-  return stripped.length <= 3;
+  // Mais tolerante: até 5 chars restantes (ex: traços, pipes, letras isoladas)
+  return stripped.length <= 5;
 }
 
 /**
