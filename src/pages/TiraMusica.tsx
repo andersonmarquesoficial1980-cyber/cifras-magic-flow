@@ -410,14 +410,18 @@ function TiraMusicaInner() {
 
               {challenge ? (
                 <>
-                  <div className="max-h-[340px] overflow-auto rounded-xl border border-white/10 bg-black/40 p-4 font-mono text-sm leading-6">
-                    {challenge.cifraComOculto.split('?').map((part, i, arr) => (
-                      <span key={i}>
-                        <span className="text-[#EAEAEA]">{part}</span>
-                        {i < arr.length - 1 && (
-                          <span className="animate-pulse rounded bg-orange-500 px-2 py-0.5 font-bold text-white shadow-[0_0_10px_rgba(249,115,22,0.8)]">?</span>
-                        )}
-                      </span>
+                  <div className="max-h-[340px] overflow-auto rounded-xl border border-white/10 bg-black/40 p-4 font-mono text-sm leading-7">
+                    {challenge.cifraComOculto.split('\n').map((line, lineIdx) => (
+                      <div key={lineIdx}>
+                        {line.split('?').map((part, i, arr) => (
+                          <span key={i}>
+                            <span className="text-[#EAEAEA]">{part}</span>
+                            {i < arr.length - 1 && (
+                              <span className="animate-pulse rounded bg-orange-500 px-2 py-0.5 font-bold text-white shadow-[0_0_10px_rgba(249,115,22,0.8)]">?</span>
+                            )}
+                          </span>
+                        ))}
+                      </div>
                     ))}
                   </div>
 
