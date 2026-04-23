@@ -280,7 +280,7 @@ function TiraMusicaInner() {
       setSelectedGenero('');
       setSelectedArtista('');
       setSelectedMusicaId('');
-      setStatusError('Nenhuma música com source_url do Cifra Club foi encontrada.');
+      setStatusError('Nenhuma música encontrada no banco.');
     }
 
     setLoadingMusicas(false);
