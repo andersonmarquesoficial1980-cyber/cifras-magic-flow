@@ -410,19 +410,44 @@ function TiraMusicaInner() {
 
               {challenge ? (
                 <>
-                  <div className="max-h-[340px] overflow-auto rounded-xl border border-white/10 bg-black/40 p-4 font-mono text-sm leading-7">
-                    {challenge.cifraComOculto.split('\n').map((line, lineIdx) => (
-                      <div key={lineIdx}>
-                        {line.split('?').map((part, i, arr) => (
-                          <span key={i}>
-                            <span className="text-[#EAEAEA]">{part}</span>
-                            {i < arr.length - 1 && (
-                              <span className="animate-pulse rounded bg-orange-500 px-2 py-0.5 font-bold text-white shadow-[0_0_10px_rgba(249,115,22,0.8)]">?</span>
-                            )}
-                          </span>
-                        ))}
-                      </div>
-                    ))}
+                  <div className="max-h-[340px] overflow-auto rounded-xl border border-white/10 bg-black/40 p-4 font-mono text-sm">
+                    {(() => {
+                      const rawLines = challenge.cifraComOculto.split('\n');
+                      const groups: Array<{ chords: string | null; lyrics: string | null }> = [];
+                      let i = 0;
+                      while (i < rawLines.length) {
+                        const curr = rawLines[i];
+                        const next = rawLines[i + 1];
+                        // Verifica se a linha atual é de acordes (contém ? ou acordes maiúsculos)
+                        const isChordLine = /^[A-G?]/.test(curr.trim()) || curr.includes('?');
+                        if (isChordLine && next !== undefined && !/^[A-G?]/.test(next.trim()) && !next.includes('[')) {
+                          groups.push({ chords: curr, lyrics: next });
+                          i += 2;
+                        } else {
+                          groups.push({ chords: isChordLine ? curr : null, lyrics: isChordLine ? null : curr });
+                          i += 1;
+                        }
+                      }
+                      return groups.map((g, gi) => (
+                        <div key={gi} className="mb-1">
+                          {g.chords && (
+                            <div className="leading-5">
+                              {g.chords.split('?').map((part, pi, arr) => (
+                                <span key={pi}>
+                                  <span className="text-orange-300">{part}</span>
+                                  {pi < arr.length - 1 && (
+                                    <span className="animate-pulse rounded bg-orange-500 px-1.5 py-0.5 font-bold text-white shadow-[0_0_10px_rgba(249,115,22,0.8)]">?</span>
+                                  )}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                          {g.lyrics && (
+                            <div className="leading-5 text-[#EAEAEA]">{g.lyrics}</div>
+                          )}
+                        </div>
+                      ));
+                    })()}
                   </div>
 
                   <div className="mt-4 grid gap-2 sm:grid-cols-2">
