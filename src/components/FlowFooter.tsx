@@ -4,16 +4,23 @@ import { supabase } from '@/integrations/supabase/client';
 import type { Musica } from '@/hooks/useMusicas';
 import { Loader2, Sparkles, Play } from 'lucide-react';
 
+import { useAuth } from '@/hooks/useAuth';
+
 interface FlowFooterProps {
   musica: Musica;
 }
 
 export function FlowFooter({ musica }: FlowFooterProps) {
+  const { isPremium } = useAuth();
   const [suggestions, setSuggestions] = useState<Musica[] | null>(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const fetchSuggestions = async () => {
+    if (!isPremium) {
+      navigate('/landing');
+      return;
+    }
     if (loading) return;
     setLoading(true);
     try {
@@ -41,7 +48,7 @@ export function FlowFooter({ musica }: FlowFooterProps) {
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-10 border-t border-border bg-card/95 backdrop-blur-xl">
+    <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-border bg-card/95 backdrop-blur-xl">
       <div className="container mx-auto max-w-3xl px-4 py-3">
         {!suggestions ? (
           <button
