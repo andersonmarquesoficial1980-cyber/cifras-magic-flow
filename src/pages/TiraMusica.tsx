@@ -250,6 +250,7 @@ function TiraMusicaInner() {
     const { data, error } = await supabase
       .from('musicas')
       .select('*')
+      .order('titulo', { ascending: true })
       .limit(5000);
 
     if (error) {
