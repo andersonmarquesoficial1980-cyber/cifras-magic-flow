@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Trophy, BookOpen, Lock, Star, ChevronRight, RotateCcw, Zap } from 'lucide-react';
+import { ArrowLeft, Trophy, BookOpen, Lock, Star, ChevronRight, RotateCcw, Zap, Music2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -112,6 +112,7 @@ const TRAIL = [
   { id: 'harmonic-field', title: 'Mestre do Campo Harmônico', desc: 'Identifique os graus de qualquer tom', icon: Star, unlocked: false, route: '/estude/campo-harmonico' },
   { id: 'rhythm-master', title: 'Mestre do Ritmo', desc: 'Treine batidas e levadas no tempo', icon: BookOpen, unlocked: false, route: '/estude/ritmo' },
   { id: 'ear-training', title: 'Ouvido Biônico', desc: 'Ditado Musical de Progressões', icon: Zap, unlocked: false, route: '/estude/ouvido' },
+  { id: 'tira-musica', title: 'Tira-Música', desc: 'Adivinhe o acorde oculto ouvindo o trecho da música', icon: Music2, unlocked: false, route: '/estude/tira-musica' },
   { id: 'inversions', title: 'Inversões & Baixos', desc: 'Domine acordes invertidos', icon: BookOpen, unlocked: false, route: null },
   { id: 'progressions', title: 'Progressões Famosas', desc: 'Reconheça I-V-VIm-IV e mais', icon: Trophy, unlocked: false, route: null },
 ];
