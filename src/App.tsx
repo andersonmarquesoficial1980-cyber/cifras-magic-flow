@@ -26,6 +26,7 @@ import { AuthContext, useAuthState } from "@/hooks/useAuth";
 import { BottomNav } from "@/components/BottomNav";
 import { ImportProvider } from "@/contexts/ImportContext";
 import { GlobalImportadorLote } from "@/components/GlobalImportadorLote";
+import { TopBar } from "@/components/TopBar";
 
 const queryClient = new QueryClient();
 
@@ -52,6 +53,7 @@ const App = () => (
         <AuthProvider>
           <ImportProvider>
           <GlobalImportadorLote />
+          <TopBar />
           <Layout>
           <Routes>
             <Route path="/" element={<Dashboard />} />

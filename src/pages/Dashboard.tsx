@@ -84,7 +84,7 @@ const Dashboard = () => {
       >
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-center">
-            <img src="/logo-dark.png" alt="MelodAI" className="h-14 w-auto" />
+            <Link to="/"><img src="/logo-dark.png" alt="MelodAI" className="h-14 w-auto" /></Link>
           </div>
           <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
