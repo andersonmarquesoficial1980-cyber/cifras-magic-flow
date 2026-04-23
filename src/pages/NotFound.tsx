@@ -1,21 +1,27 @@
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 
 const NotFound = () => {
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    console.error("404 Error: User attempted to access non-existent route:", location.pathname);
-  }, [location.pathname]);
+    // Se vier do Mercado Pago com payment=success, vai direto pra configuracoes
+    const params = new URLSearchParams(location.search);
+    if (params.get('payment') === 'success' || params.get('collection_status') === 'approved') {
+      navigate('/configuracoes?payment=success', { replace: true });
+      return;
+    }
+    // Qualquer outra rota desconhecida → Home
+    const timer = setTimeout(() => navigate('/', { replace: true }), 2000);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted">
+    <div className="flex min-h-screen items-center justify-center bg-background">
       <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">404</h1>
-        <p className="mb-4 text-xl text-muted-foreground">Oops! Page not found</p>
-        <a href="/" className="text-primary underline hover:text-primary/90">
-          Return to Home
-        </a>
+        <h1 className="mb-4 text-4xl font-bold text-foreground">404</h1>
+        <p className="mb-4 text-sm text-muted-foreground">Redirecionando...</p>
       </div>
     </div>
   );
