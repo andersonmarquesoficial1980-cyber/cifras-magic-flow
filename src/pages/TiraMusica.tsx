@@ -19,6 +19,7 @@ type MusicaRow = {
   id: string;
   titulo: string;
   artista: string | null;
+  genero: string | null;
   letra_cifrada: string;
   source_url: string | null;
 };
@@ -31,8 +32,11 @@ type ParsedLine = {
 
 type MaskedChallenge = {
   cifraComOculto: string;
-  acordeCorreto: string;
-  opcoes: string[];
+  ocultos: Array<{
+    id: string;
+    acordeCorreto: string;
+    opcoes: string[];
+  }>;
 };
 
 function pickRandom<T>(arr: T[]): T {
@@ -63,7 +67,7 @@ function parseLines(cifra: string): ParsedLine[] {
   });
 }
 
-function buildMaskedChallenge(cifra: string): MaskedChallenge | null {
+function buildMaskedChallenge(cifra: string, count: number): MaskedChallenge | null {
   const parsedLines = parseLines(cifra);
   const candidates: Array<{ lineIndex: number; tokenIndex: number; chord: string }> = [];
 
@@ -80,18 +84,25 @@ function buildMaskedChallenge(cifra: string): MaskedChallenge | null {
     return null;
   }
 
-  const selected = pickRandom(candidates);
+  const effectiveCount = Math.max(1, Math.min(count, candidates.length));
+  const selectedCandidates = shuffle(candidates).slice(0, effectiveCount);
+  const selectedPositions = new Set(selectedCandidates.map((item) => `${item.lineIndex}-${item.tokenIndex}`));
   const uniqueChords = Array.from(new Set(candidates.map((c) => c.chord)));
+  const ocultos = selectedCandidates.map((selected, index) => {
+    const wrongChoices = uniqueChords.filter((chord) => chord !== selected.chord);
+    const fallbackPool = FALLBACK_WRONG_CHORDS.filter((chord) => chord !== selected.chord && !wrongChoices.includes(chord));
+    const allWrongs = shuffle([...wrongChoices, ...fallbackPool]);
 
-  const wrongChoices = uniqueChords.filter((chord) => chord !== selected.chord);
-  const fallbackPool = FALLBACK_WRONG_CHORDS.filter((chord) => chord !== selected.chord && !wrongChoices.includes(chord));
-  const allWrongs = shuffle([...wrongChoices, ...fallbackPool]);
+    while (allWrongs.length < 3) {
+      allWrongs.push(pickRandom(FALLBACK_WRONG_CHORDS));
+    }
 
-  while (allWrongs.length < 3) {
-    allWrongs.push(pickRandom(FALLBACK_WRONG_CHORDS));
-  }
-
-  const opcoes = shuffle([selected.chord, ...allWrongs.slice(0, 3)]);
+    return {
+      id: `${selected.lineIndex}-${selected.tokenIndex}-${index}`,
+      acordeCorreto: selected.chord,
+      opcoes: shuffle([selected.chord, ...allWrongs.slice(0, 3)]),
+    };
+  });
 
   const cifraComOculto = parsedLines
     .map((line, lineIndex) => {
@@ -99,7 +110,7 @@ function buildMaskedChallenge(cifra: string): MaskedChallenge | null {
 
       const rendered = line.tokens
         .map((token, tokenIndex) => {
-          const isHidden = lineIndex === selected.lineIndex && tokenIndex === selected.tokenIndex;
+          const isHidden = selectedPositions.has(`${lineIndex}-${tokenIndex}`);
           if (isHidden && token.type === 'chord') return '?';
           return token.value;
         })
@@ -115,8 +126,7 @@ function buildMaskedChallenge(cifra: string): MaskedChallenge | null {
 
   return {
     cifraComOculto,
-    acordeCorreto: selected.chord,
-    opcoes,
+    ocultos,
   };
 }
 
@@ -192,10 +202,14 @@ function TiraMusicaInner() {
 
   const [musicas, setMusicas] = useState<MusicaRow[]>([]);
   const [loadingMusicas, setLoadingMusicas] = useState(true);
+  const [selectedGenero, setSelectedGenero] = useState<string>('');
+  const [selectedArtista, setSelectedArtista] = useState<string>('');
   const [selectedMusicaId, setSelectedMusicaId] = useState<string>('');
   const [youtubeVideoId, setYoutubeVideoId] = useState<string | null>(null);
+  const [audioOnly, setAudioOnly] = useState(false);
+  const [difficultyCount, setDifficultyCount] = useState<1 | 3 | 5>(1);
   const [challenge, setChallenge] = useState<MaskedChallenge | null>(null);
-  const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
   const [statusError, setStatusError] = useState<string | null>(null);
   const [googleProfile, setGoogleProfile] = useState<{ email?: string; name?: string } | null>(null);
 
@@ -203,6 +217,31 @@ function TiraMusicaInner() {
     () => musicas.find((musica) => musica.id === selectedMusicaId) ?? null,
     [musicas, selectedMusicaId],
   );
+
+  const generos = useMemo(
+    () => Array.from(new Set(musicas.map((musica) => musica.genero ?? 'Sem gênero'))).sort((a, b) => a.localeCompare(b)),
+    [musicas],
+  );
+
+  const artistasFiltrados = useMemo(() => {
+    if (!selectedGenero) return [];
+    return Array.from(
+      new Set(
+        musicas
+          .filter((musica) => (musica.genero ?? 'Sem gênero') === selectedGenero)
+          .map((musica) => musica.artista ?? 'Artista desconhecido'),
+      ),
+    ).sort((a, b) => a.localeCompare(b));
+  }, [musicas, selectedGenero]);
+
+  const musicasFiltradas = useMemo(() => {
+    if (!selectedGenero || !selectedArtista) return [];
+    return musicas.filter(
+      (musica) =>
+        (musica.genero ?? 'Sem gênero') === selectedGenero &&
+        (musica.artista ?? 'Artista desconhecido') === selectedArtista,
+    );
+  }, [musicas, selectedGenero, selectedArtista]);
 
   async function fetchMusicas() {
     setLoadingMusicas(true);
@@ -227,6 +266,7 @@ function TiraMusicaInner() {
         id: row.id,
         titulo: row.titulo,
         artista: row.artista,
+        genero: ((row as unknown as { genero?: string | null }).genero) ?? null,
         letra_cifrada: row.letra_cifrada,
         source_url: ((row as unknown as { source_url?: string | null }).source_url) ?? null,
       }));
@@ -235,8 +275,12 @@ function TiraMusicaInner() {
 
     if (normalized.length > 0) {
       const randomSong = pickRandom(normalized);
+      setSelectedGenero(randomSong.genero ?? 'Sem gênero');
+      setSelectedArtista(randomSong.artista ?? 'Artista desconhecido');
       setSelectedMusicaId(randomSong.id);
     } else {
+      setSelectedGenero('');
+      setSelectedArtista('');
       setSelectedMusicaId('');
       setStatusError('Nenhuma música com source_url do Cifra Club foi encontrada.');
     }
@@ -258,13 +302,13 @@ function TiraMusicaInner() {
       if (!selectedMusica) {
         setChallenge(null);
         setYoutubeVideoId(null);
-        setSelectedOption(null);
+        setSelectedOptions({});
         return;
       }
 
-      setSelectedOption(null);
+      setSelectedOptions({});
 
-      const built = buildMaskedChallenge(selectedMusica.letra_cifrada);
+      const built = buildMaskedChallenge(selectedMusica.letra_cifrada, difficultyCount);
       if (!built) {
         setChallenge(null);
         setStatusError('Essa música não tem linhas de acordes válidas para o Tira-Música.');
@@ -279,7 +323,7 @@ function TiraMusicaInner() {
     }
 
     prepareChallenge();
-  }, [selectedMusica]);
+  }, [selectedMusica, difficultyCount]);
 
   async function handleGoogleLogin(response: CredentialResponse) {
     if (!response.credential) {
@@ -303,12 +347,30 @@ function TiraMusicaInner() {
   }
 
   function handleRandomSong() {
-    if (!musicas.length) return;
-    const randomSong = pickRandom(musicas);
+    if (!musicasFiltradas.length) return;
+    const randomSong = pickRandom(musicasFiltradas);
     setSelectedMusicaId(randomSong.id);
   }
+  
+  function handleSelectGenero(genero: string) {
+    setSelectedGenero(genero);
+    setSelectedArtista('');
+    setSelectedMusicaId('');
+  }
 
-  const acertou = selectedOption && challenge ? selectedOption === challenge.acordeCorreto : null;
+  function handleSelectArtista(artista: string) {
+    setSelectedArtista(artista);
+    setSelectedMusicaId('');
+  }
+
+  function handleSelectOption(hiddenId: string, option: string) {
+    setSelectedOptions((prev) => ({ ...prev, [hiddenId]: option }));
+  }
+
+  const allAnswered = challenge ? challenge.ocultos.every((oculto) => selectedOptions[oculto.id]) : false;
+  const allCorrect = challenge
+    ? challenge.ocultos.every((oculto) => selectedOptions[oculto.id] === oculto.acordeCorreto)
+    : false;
 
   return (
     <div className="min-h-screen bg-[#050505] text-white pb-20">
@@ -354,22 +416,67 @@ function TiraMusicaInner() {
 
             <div className="grid gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4 md:grid-cols-[1fr_auto]">
               <div>
-                <label htmlFor="musicaSelect" className="mb-2 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Música
-                </label>
-                <select
-                  id="musicaSelect"
-                  className="h-11 w-full rounded-xl border border-white/10 bg-[#0E0E0E] px-3 text-sm text-foreground outline-none focus:border-[#3B82F6]"
-                  value={selectedMusicaId}
-                  onChange={(event) => setSelectedMusicaId(event.target.value)}
-                  disabled={loadingMusicas || !musicas.length}
-                >
-                  {musicas.map((musica) => (
-                    <option key={musica.id} value={musica.id}>
-                      {musica.artista ? `${musica.artista} - ` : ''}{musica.titulo}
-                    </option>
-                  ))}
-                </select>
+                <div className="grid gap-3 md:grid-cols-3">
+                  <div>
+                    <label htmlFor="generoSelect" className="mb-2 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Gênero
+                    </label>
+                    <select
+                      id="generoSelect"
+                      className="h-11 w-full rounded-xl border border-white/10 bg-[#0E0E0E] px-3 text-sm text-foreground outline-none focus:border-[#3B82F6]"
+                      value={selectedGenero}
+                      onChange={(event) => handleSelectGenero(event.target.value)}
+                      disabled={loadingMusicas || !generos.length}
+                    >
+                      <option value="">Selecione um gênero</option>
+                      {generos.map((genero) => (
+                        <option key={genero} value={genero}>
+                          {genero}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label htmlFor="artistaSelect" className="mb-2 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Artista
+                    </label>
+                    <select
+                      id="artistaSelect"
+                      className="h-11 w-full rounded-xl border border-white/10 bg-[#0E0E0E] px-3 text-sm text-foreground outline-none focus:border-[#3B82F6]"
+                      value={selectedArtista}
+                      onChange={(event) => handleSelectArtista(event.target.value)}
+                      disabled={loadingMusicas || !selectedGenero || !artistasFiltrados.length}
+                    >
+                      <option value="">Selecione um artista</option>
+                      {artistasFiltrados.map((artista) => (
+                        <option key={artista} value={artista}>
+                          {artista}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label htmlFor="musicaSelect" className="mb-2 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Música
+                    </label>
+                    <select
+                      id="musicaSelect"
+                      className="h-11 w-full rounded-xl border border-white/10 bg-[#0E0E0E] px-3 text-sm text-foreground outline-none focus:border-[#3B82F6]"
+                      value={selectedMusicaId}
+                      onChange={(event) => setSelectedMusicaId(event.target.value)}
+                      disabled={loadingMusicas || !selectedArtista || !musicasFiltradas.length}
+                    >
+                      <option value="">Selecione uma música</option>
+                      {musicasFiltradas.map((musica) => (
+                        <option key={musica.id} value={musica.id}>
+                          {musica.titulo}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
               </div>
 
               <div className="flex items-end">
@@ -377,7 +484,7 @@ function TiraMusicaInner() {
                   type="button"
                   variant="outline"
                   onClick={handleRandomSong}
-                  disabled={!musicas.length}
+                  disabled={!musicasFiltradas.length}
                   className="w-full border-white/10 bg-white/[0.03] hover:bg-white/[0.08] md:w-auto"
                 >
                   <RefreshCw className="mr-2 h-4 w-4" /> Outra música
@@ -385,17 +492,52 @@ function TiraMusicaInner() {
               </div>
             </div>
 
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Nível de dificuldade</p>
+              <div className="grid gap-2 sm:grid-cols-3">
+                {[
+                  { label: 'Fácil', value: 1 as const },
+                  { label: 'Médio', value: 3 as const },
+                  { label: 'Difícil', value: 5 as const },
+                ].map((level) => (
+                  <button
+                    key={level.label}
+                    type="button"
+                    onClick={() => setDifficultyCount(level.value)}
+                    className={`rounded-xl border px-4 py-3 text-sm font-semibold transition-colors ${
+                      difficultyCount === level.value
+                        ? 'border-[#3B82F6]/80 bg-[#3B82F6]/20 text-[#93C5FD]'
+                        : 'border-white/10 bg-white/[0.03] hover:bg-white/[0.08]'
+                    }`}
+                  >
+                    {level.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="overflow-hidden rounded-2xl border border-white/10 bg-black">
               {youtubeVideoId ? (
-                <div className="aspect-video">
-                  <iframe
-                    title="Trecho da música no YouTube"
-                    src={`https://www.youtube.com/embed/${youtubeVideoId}?start=${YOUTUBE_EMBED_START_SECONDS}&autoplay=1`}
-                    className="h-full w-full"
-                    allow="autoplay; encrypted-media; picture-in-picture"
-                    allowFullScreen
-                  />
-                </div>
+                <>
+                  <div className="flex justify-end border-b border-white/10 bg-white/[0.03] p-2">
+                    <button
+                      type="button"
+                      onClick={() => setAudioOnly((prev) => !prev)}
+                      className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs font-semibold transition-colors hover:bg-white/[0.08]"
+                    >
+                      {audioOnly ? 'Ver Vídeo' : 'Só Áudio'}
+                    </button>
+                  </div>
+                  <div className={audioOnly ? 'h-0 overflow-hidden' : 'aspect-video'}>
+                    <iframe
+                      title="Trecho da música no YouTube"
+                      src={`https://www.youtube.com/embed/${youtubeVideoId}?start=${YOUTUBE_EMBED_START_SECONDS}&autoplay=1`}
+                      className={`w-full ${audioOnly ? 'h-0 invisible' : 'h-full visible'}`}
+                      allow="autoplay; encrypted-media; picture-in-picture"
+                      allowFullScreen
+                    />
+                  </div>
+                </>
               ) : (
                 <div className="flex h-56 items-center justify-center px-6 text-center text-sm text-muted-foreground">
                   Não foi possível localizar vídeo no YouTube para esta música.
@@ -450,40 +592,52 @@ function TiraMusicaInner() {
                     })()}
                   </div>
 
-                  <div className="mt-4 grid gap-2 sm:grid-cols-2">
-                    {challenge.opcoes.map((option) => {
-                      const isSelected = selectedOption === option;
-                      const isCorrect = option === challenge.acordeCorreto;
+                  <div className="mt-4 space-y-4">
+                    {challenge.ocultos.map((oculto, hiddenIndex) => (
+                      <div key={oculto.id}>
+                        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          Acorde oculto {hiddenIndex + 1}
+                        </p>
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          {oculto.opcoes.map((option) => {
+                            const selectedForThis = selectedOptions[oculto.id];
+                            const isSelected = selectedForThis === option;
+                            const isCorrect = option === oculto.acordeCorreto;
 
-                      let className = 'border-white/10 bg-white/[0.03] hover:bg-white/[0.08]';
+                            let className = 'border-white/10 bg-white/[0.03] hover:bg-white/[0.08]';
 
-                      if (selectedOption) {
-                        if (isCorrect) {
-                          className = 'border-emerald-500/70 bg-emerald-500/15 text-emerald-300';
-                        } else if (isSelected) {
-                          className = 'border-red-500/70 bg-red-500/15 text-red-300';
-                        } else {
-                          className = 'border-white/10 bg-white/[0.02] text-muted-foreground';
-                        }
-                      }
+                            if (selectedForThis) {
+                              if (isCorrect) {
+                                className = 'border-emerald-500/70 bg-emerald-500/15 text-emerald-300';
+                              } else if (isSelected) {
+                                className = 'border-red-500/70 bg-red-500/15 text-red-300';
+                              } else {
+                                className = 'border-white/10 bg-white/[0.02] text-muted-foreground';
+                              }
+                            }
 
-                      return (
-                        <button
-                          key={option}
-                          type="button"
-                          disabled={!!selectedOption}
-                          onClick={() => setSelectedOption(option)}
-                          className={`rounded-xl border px-4 py-3 text-left font-mono text-lg font-semibold transition-colors ${className}`}
-                        >
-                          {option}
-                        </button>
-                      );
-                    })}
+                            return (
+                              <button
+                                key={`${oculto.id}-${option}`}
+                                type="button"
+                                disabled={!!selectedForThis}
+                                onClick={() => handleSelectOption(oculto.id, option)}
+                                className={`rounded-xl border px-4 py-3 text-left font-mono text-lg font-semibold transition-colors ${className}`}
+                              >
+                                {option}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
                   </div>
 
-                  {selectedOption && (
-                    <div className={`mt-4 rounded-xl border p-3 text-sm ${acertou ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : 'border-red-500/30 bg-red-500/10 text-red-300'}`}>
-                      {acertou ? 'Boa! Você acertou o acorde oculto.' : `Quase. O acorde correto era ${challenge.acordeCorreto}.`}
+                  {allAnswered && (
+                    <div className={`mt-4 rounded-xl border p-3 text-sm ${allCorrect ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : 'border-red-500/30 bg-red-500/10 text-red-300'}`}>
+                      {allCorrect
+                        ? 'Boa! Você acertou todos os acordes ocultos.'
+                        : `Quase. Os acordes corretos eram ${challenge.ocultos.map((oculto) => oculto.acordeCorreto).join(', ')}.`}
                     </div>
                   )}
                 </>
