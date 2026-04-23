@@ -4,6 +4,7 @@ import { ArrowLeft, Trophy, BookOpen, Lock, Star, ChevronRight, RotateCcw, Zap }
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { useAuth } from '@/hooks/useAuth';
 
 // ── Music theory data ──
 
@@ -119,6 +120,7 @@ type GameState = 'trail' | 'playing' | 'result';
 
 const Estude = () => {
   const navigate = useNavigate();
+  const { isPremium, isAdmin } = useAuth();
   const [gameState, setGameState] = useState<GameState>('trail');
   const [questionIdx, setQuestionIdx] = useState(0);
   const [score, setScore] = useState(0);
@@ -189,7 +191,8 @@ const Estude = () => {
             >
               <button
                 onClick={() => {
-                  if (card.unlocked) {
+                  const unlocked = card.unlocked || isAdmin || isPremium;
+                  if (unlocked) {
                     if (card.route) navigate(card.route);
                     else startGame();
                   } else {
@@ -197,30 +200,30 @@ const Estude = () => {
                   }
                 }}
                 className={`w-full flex items-center gap-4 rounded-2xl border p-5 text-left transition-all ${
-                  card.unlocked
+                  (card.unlocked || isAdmin || isPremium)
                     ? 'border-[#3B82F6]/30 bg-[#3B82F6]/[0.06] hover:bg-[#3B82F6]/[0.12] hover:border-[#3B82F6]/50 active:scale-[0.98] shadow-[0_0_30px_-8px_rgba(59,130,246,0.2)]'
                     : 'border-white/[0.04] bg-white/[0.02] opacity-50 cursor-pointer hover:bg-white/[0.04]'
                 }`}
               >
                 <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${
-                  card.unlocked ? 'bg-[#3B82F6]/20' : 'bg-white/[0.05]'
+                  (card.unlocked || isAdmin || isPremium) ? 'bg-[#3B82F6]/20' : 'bg-white/[0.05]'
                 }`}>
-                  {card.unlocked ? (
+                  {(card.unlocked || isAdmin || isPremium) ? (
                     <card.icon className="h-6 w-6 text-[#3B82F6]" />
                   ) : (
                     <Lock className="h-5 w-5 text-muted-foreground/40" />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className={`text-sm font-display font-bold ${card.unlocked ? 'text-foreground' : 'text-muted-foreground'}`}>
+                  <h3 className={`text-sm font-display font-bold ${(card.unlocked || isAdmin || isPremium) ? 'text-foreground' : 'text-muted-foreground'}`}>
                     {card.title}
                   </h3>
                   <p className="text-[11px] text-muted-foreground mt-0.5">{card.desc}</p>
                 </div>
-                {card.unlocked && <ChevronRight className="h-5 w-5 text-[#3B82F6]/60 shrink-0" />}
+                {(card.unlocked || isAdmin || isPremium) && <ChevronRight className="h-5 w-5 text-[#3B82F6]/60 shrink-0" />}
               </button>
             </motion.div>
-          ))}
+          ))}}
         </div>
       </div>
     );
