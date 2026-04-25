@@ -82,7 +82,7 @@ export function AutoScrollBar({ bpm }: AutoScrollBarProps) {
   }, [playing, speed]);
 
   return (
-    <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 px-5 py-2.5 rounded-2xl border border-white/10 bg-background/70 backdrop-blur-xl shadow-xl">
+    <div className="fixed bottom-48 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 px-5 py-2.5 rounded-2xl border border-white/10 bg-background/70 backdrop-blur-xl shadow-xl">
       <button
         onClick={() => setPlaying(!playing)}
         className={`p-2 rounded-full transition-colors ${playing ? 'bg-chord/20 text-chord' : 'bg-secondary text-muted-foreground hover:text-foreground'}`}
