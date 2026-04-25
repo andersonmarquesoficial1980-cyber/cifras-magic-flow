@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Play, Pause, Minus, Plus } from 'lucide-react';
-import { Slider } from '@/components/ui/slider';
+import { Play, Pause, ChevronUp, ChevronDown } from 'lucide-react';
 
 interface AutoScrollBarProps {
   bpm?: number | null;
@@ -29,12 +28,6 @@ export function AutoScrollBar({ bpm }: AutoScrollBarProps) {
   const playingRef = useRef(false);
   const offsetRef = useRef(0);
   const lastTimeRef = useRef(0);
-  const containerRef = useRef<HTMLDivElement | null>(null);
-
-  // Find and cache the scroll container on mount
-  useEffect(() => {
-    containerRef.current = document.getElementById('cifra-scroll-content') as HTMLDivElement | null;
-  }, []);
 
   // Pause on manual interaction
   useEffect(() => {
@@ -62,11 +55,10 @@ export function AutoScrollBar({ bpm }: AutoScrollBarProps) {
           rafRef.current = requestAnimationFrame(tick);
           return;
         }
-        const dt = (time - lastTimeRef.current) / 1000; // seconds
+        const dt = (time - lastTimeRef.current) / 1000;
         lastTimeRef.current = time;
         offsetRef.current += pxPerSec * dt;
 
-        // Clamp to max scroll
         const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
         if (offsetRef.current > maxScroll) offsetRef.current = maxScroll;
 
@@ -81,22 +73,72 @@ export function AutoScrollBar({ bpm }: AutoScrollBarProps) {
     }
   }, [playing, speed]);
 
+  // Vertical slider height in px (track)
+  const TRACK_H = 80;
+  const thumbPct = (speed - 1) / 99; // 0..1, 0=slow (bottom), 1=fast (top)
+
   return (
-    <div className="fixed bottom-48 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 px-5 py-2.5 rounded-2xl border border-white/10 bg-background/70 backdrop-blur-xl shadow-xl">
+    <div className="fixed right-3 top-1/2 -translate-y-1/2 z-40 flex flex-col items-center gap-2 py-3 px-2 rounded-2xl border border-white/10 bg-background/60 backdrop-blur-xl shadow-lg">
+      {/* Play/Pause */}
       <button
         onClick={() => setPlaying(!playing)}
-        className={`p-2 rounded-full transition-colors ${playing ? 'bg-chord/20 text-chord' : 'bg-secondary text-muted-foreground hover:text-foreground'}`}
+        className={`p-2 rounded-full transition-colors ${
+          playing
+            ? 'bg-chord/20 text-chord shadow-[0_0_10px_2px_hsl(47,95%,54%,0.3)]'
+            : 'bg-secondary/60 text-muted-foreground hover:text-foreground'
+        }`}
       >
-        {playing ? <Pause size={18} /> : <Play size={18} />}
+        {playing ? <Pause size={16} /> : <Play size={16} />}
       </button>
-      <button onClick={() => setSpeed(s => Math.max(1, s - 5))} className="p-1 text-muted-foreground hover:text-foreground transition-colors">
-        <Minus size={14} />
+
+      {/* Speed up */}
+      <button
+        onClick={() => setSpeed(s => Math.min(100, s + 5))}
+        className="p-1 text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <ChevronUp size={14} />
       </button>
-      <Slider min={1} max={100} step={1} value={[speed]} onValueChange={([v]) => setSpeed(v)} className="w-32" />
-      <span className="text-[11px] font-mono text-muted-foreground min-w-[24px] text-center">{speed}</span>
-      <button onClick={() => setSpeed(s => Math.min(100, s + 5))} className="p-1 text-muted-foreground hover:text-foreground transition-colors">
-        <Plus size={14} />
+
+      {/* Vertical slider track */}
+      <div
+        className="relative w-1.5 rounded-full bg-white/10 cursor-pointer"
+        style={{ height: TRACK_H }}
+        onClick={(e) => {
+          const rect = e.currentTarget.getBoundingClientRect();
+          const pct = 1 - (e.clientY - rect.top) / rect.height;
+          setSpeed(Math.round(Math.max(0, Math.min(1, pct)) * 99 + 1));
+        }}
+      >
+        {/* filled portion */}
+        <div
+          className="absolute bottom-0 left-0 right-0 rounded-full transition-all"
+          style={{
+            height: `${thumbPct * 100}%`,
+            background: playing ? 'hsl(47,95%,54%)' : 'hsl(var(--muted-foreground))',
+            opacity: playing ? 1 : 0.5,
+          }}
+        />
+        {/* thumb */}
+        <div
+          className="absolute left-1/2 -translate-x-1/2 w-3.5 h-3.5 rounded-full border-2 transition-all"
+          style={{
+            bottom: `calc(${thumbPct * 100}% - 7px)`,
+            borderColor: playing ? 'hsl(47,95%,54%)' : 'hsl(var(--muted-foreground))',
+            background: 'hsl(var(--background))',
+          }}
+        />
+      </div>
+
+      {/* Speed down */}
+      <button
+        onClick={() => setSpeed(s => Math.max(1, s - 5))}
+        className="p-1 text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <ChevronDown size={14} />
       </button>
+
+      {/* Speed label */}
+      <span className="text-[9px] font-mono text-muted-foreground">{speed}</span>
     </div>
   );
 }
